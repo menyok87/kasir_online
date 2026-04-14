@@ -8,6 +8,7 @@ const titles = {
   '/products':     'Manajemen Produk',
   '/categories':   'Manajemen Kategori',
   '/transactions': 'Riwayat Transaksi',
+  '/users':        'Manajemen User',
 }
 
 export default function Topbar({ onMenuClick }) {

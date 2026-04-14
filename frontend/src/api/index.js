@@ -29,6 +29,12 @@ export const createProduct    = (data)    => api.post('/products', data);
 export const updateProduct    = (id, data)=> api.put(`/products/${id}`, data);
 export const deleteProduct    = (id)      => api.delete(`/products/${id}`);
 
+// Users (admin only)
+export const getUsers      = ()        => api.get('/users');
+export const createUser    = (data)    => api.post('/users', data);
+export const updateUser    = (id, data)=> api.put(`/users/${id}`, data);
+export const toggleUser    = (id)      => api.patch(`/users/${id}/toggle`);
+
 // Image upload
 export const uploadProductImage = (file) => {
   const form = new FormData();
