@@ -2,7 +2,8 @@
  * Seed data awal untuk testing
  * Jalankan: node database/seed.js
  */
-const db = require('./db');
+require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+const pool = require('./db');
 
 const categories = ['Makanan', 'Minuman', 'Snack', 'Produk Rumah Tangga'];
 
@@ -23,25 +24,41 @@ const products = [
   { name: 'Shampo Sachet',         sku: 'RT-002',  price: 3000,  stock: 50,  category: 'Produk Rumah Tangga' },
 ];
 
-// Insert categories
-const insertCat = db.prepare('INSERT OR IGNORE INTO categories (name) VALUES (?)');
-for (const name of categories) {
-  insertCat.run(name);
-}
-console.log(`✓ ${categories.length} kategori ditambahkan`);
+async function seed() {
+  const client = await pool.connect();
+  try {
+    // Insert categories
+    for (const name of categories) {
+      await client.query(
+        'INSERT INTO categories (name) VALUES ($1) ON CONFLICT (name) DO NOTHING',
+        [name]
+      );
+    }
+    console.log(`✓ ${categories.length} kategori ditambahkan`);
 
-// Insert products
-const getCatId = db.prepare('SELECT id FROM categories WHERE name = ?');
-const insertProd = db.prepare(`
-  INSERT OR IGNORE INTO products (name, sku, price, stock, category_id)
-  VALUES (?, ?, ?, ?, ?)
-`);
+    // Insert products
+    let count = 0;
+    for (const p of products) {
+      const { rows } = await client.query('SELECT id FROM categories WHERE name = $1', [p.category]);
+      const categoryId = rows[0]?.id || null;
 
-let count = 0;
-for (const p of products) {
-  const cat = getCatId.get(p.category);
-  insertProd.run(p.name, p.sku, p.price, p.stock, cat?.id || null);
-  count++;
+      await client.query(
+        `INSERT INTO products (name, sku, price, stock, category_id)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (sku) DO NOTHING`,
+        [p.name, p.sku, p.price, p.stock, categoryId]
+      );
+      count++;
+    }
+    console.log(`✓ ${count} produk ditambahkan`);
+    console.log('Seed data selesai!');
+  } finally {
+    client.release();
+    await pool.end();
+  }
 }
-console.log(`✓ ${count} produk ditambahkan`);
-console.log('Seed data selesai!');
+
+seed().catch(err => {
+  console.error('Seed gagal:', err.message);
+  process.exit(1);
+});

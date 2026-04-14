@@ -96,20 +96,29 @@ npm run build
 # Output: frontend/dist/
 ```
 
-### 2. Install backend
+### 2. Setup PostgreSQL
+```bash
+cd /var/www/kasir_online
+chmod +x deploy/setup-postgres.sh
+sudo bash deploy/setup-postgres.sh
+# Script akan: install PostgreSQL, buat database & user, jalankan schema
+```
+
+### 3. Install backend
 ```bash
 cd /var/www/kasir_online/backend
 npm install --omit=dev
-node database/seed.js   # seed data awal
+node database/seed.js   # seed data awal (opsional)
 ```
 
-### 3. Buat file .env
+### 4. Buat file .env (jika setup-postgres.sh belum membuatnya)
 ```bash
 cp /var/www/kasir_online/.env.example /var/www/kasir_online/.env
-# Isi: PORT=3002, NODE_ENV=production
+# Edit DATABASE_URL sesuai user/password PostgreSQL yang dibuat
+nano /var/www/kasir_online/.env
 ```
 
-### 4. Nginx config
+### 5. Nginx config
 ```bash
 sudo cp /var/www/kasir_online/deploy/nginx.conf \
         /etc/nginx/sites-available/kasir_online
@@ -118,7 +127,7 @@ sudo ln -s /etc/nginx/sites-available/kasir_online \
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-### 5. Jalankan backend (pilih salah satu)
+### 6. Jalankan backend (pilih salah satu)
 
 **Opsi A — Systemd (direkomendasikan):**
 ```bash
@@ -181,8 +190,8 @@ kasir_online/
 ├── backend/
 │   ├── server.js              # Entry point, port 3002
 │   ├── database/
-│   │   ├── db.js              # SQLite singleton
-│   │   ├── schema.sql         # Skema tabel
+│   │   ├── db.js              # PostgreSQL pool (pg)
+│   │   ├── schema.sql         # Skema tabel PostgreSQL
 │   │   └── seed.js            # Data contoh
 │   ├── routes/
 │   │   ├── categories.js
@@ -204,8 +213,8 @@ kasir_online/
 │   └── deploy.sh              # Script deploy otomatis
 ├── ecosystem.config.cjs       # PM2 config
 ├── .env.example               # Template environment variables
-└── data/
-    └── kasir.db               # Database SQLite (dibuat otomatis)
+└── deploy/
+    ├── setup-postgres.sh      # Setup PostgreSQL (install, buat DB & schema)
 ```
 
 ## Tech Stack
@@ -214,6 +223,6 @@ kasir_online/
 |-----------|----------------------------------------|
 | Frontend  | Vite, React 19, Tailwind CSS, Recharts |
 | Backend   | Node.js 20, Express 4, Port **3002**   |
-| Database  | SQLite via better-sqlite3              |
+| Database  | PostgreSQL via pg (node-postgres)      |
 | Web Server| Nginx (reverse proxy)                  |
 | Process   | Systemd / PM2                          |

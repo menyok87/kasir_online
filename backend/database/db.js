@@ -1,16 +1,13 @@
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+const { Pool } = require('pg');
 
-const DB_PATH = path.join(__dirname, '../../data/kasir.db');
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+});
 
-const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+pool.on('error', (err) => {
+  console.error('PostgreSQL pool error:', err);
+});
 
-// Jalankan schema saat startup
-const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
-db.exec(schema);
-
-module.exports = db;
+module.exports = pool;
