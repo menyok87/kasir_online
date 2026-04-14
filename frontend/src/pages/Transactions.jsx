@@ -7,6 +7,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog'
 import EmptyState from '../components/ui/EmptyState'
 import Badge from '../components/ui/Badge'
 import { FullPageSpinner } from '../components/ui/Spinner'
+import { printReceipt } from '../utils/printReceipt'
 
 function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -120,6 +121,15 @@ export default function Transactions() {
     }
   }
 
+  async function openAndPrint(id) {
+    try {
+      const { data } = await getTransaction(id)
+      printReceipt(data)
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
+
   async function handleDelete() {
     try {
       await deleteTransaction(deleteTarget.id)
@@ -192,6 +202,13 @@ export default function Transactions() {
                           <Eye size={15} />
                         </button>
                         <button
+                          className="p-1.5 rounded-lg hover:bg-green-50 text-green-600 transition-colors"
+                          onClick={() => openAndPrint(tx.id)}
+                          title="Cetak Struk"
+                        >
+                          <Printer size={15} />
+                        </button>
+                        <button
                           className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
                           onClick={() => setDeleteTarget(tx)}
                           title="Batalkan Transaksi"
@@ -218,7 +235,10 @@ export default function Transactions() {
               <ReceiptContent tx={detail} />
             </div>
             <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
-              <button className="btn-secondary flex items-center gap-2" onClick={() => window.print()}>
+              <button
+                className="btn-secondary flex items-center gap-2"
+                onClick={() => printReceipt(detail)}
+              >
                 <Printer size={16} /> Cetak Struk
               </button>
             </div>

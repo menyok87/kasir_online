@@ -31,8 +31,5 @@
   }
 }
 
-/* Print: tampilkan hanya area struk */
-@media print {
-  body > * { display: none !important; }
-  .receipt-print-area { display: block !important; }
-}
+/* Print: struk dicetak via popup window terpisah (printReceipt.js),
+   sehingga tidak perlu CSS print di halaman utama */

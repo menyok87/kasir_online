@@ -5,6 +5,7 @@ import { getProducts, getCategories, createTransaction } from '../api'
 import Modal from '../components/ui/Modal'
 import Badge from '../components/ui/Badge'
 import { FullPageSpinner } from '../components/ui/Spinner'
+import { printReceipt } from '../utils/printReceipt'
 
 function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -144,8 +145,11 @@ function ReceiptModal({ isOpen, transaction, onClose }) {
       </div>
 
       <div className="flex gap-3 mt-4">
-        <button className="btn-secondary flex-1 flex items-center justify-center gap-2" onClick={() => window.print()}>
-          <Printer size={15} /> Cetak
+        <button
+          className="btn-secondary flex-1 flex items-center justify-center gap-2"
+          onClick={() => printReceipt(transaction)}
+        >
+          <Printer size={15} /> Cetak Struk
         </button>
         <button className="btn-primary flex-1" onClick={onClose}>
           Transaksi Baru
