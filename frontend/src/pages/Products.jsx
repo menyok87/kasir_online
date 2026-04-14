@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
-import { Plus, Pencil, Trash2, Search, AlertTriangle } from 'lucide-react'
-import { getProducts, createProduct, updateProduct, deleteProduct, getCategories } from '../api'
+import { Plus, Pencil, Trash2, Search, AlertTriangle, ImagePlus, X } from 'lucide-react'
+import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadProductImage, deleteProductImage } from '../api'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import EmptyState from '../components/ui/EmptyState'
@@ -14,31 +14,115 @@ function formatRupiah(n) {
 
 function ProductForm({ initial, categories, onSubmit, onClose }) {
   const [form, setForm] = useState({
-    name:       initial?.name       || '',
-    category_id:initial?.category_id|| '',
-    price:      initial?.price      || '',
-    stock:      initial?.stock      ?? '',
-    sku:        initial?.sku        || '',
-    image_url:  initial?.image_url  || '',
+    name:        initial?.name        || '',
+    category_id: initial?.category_id || '',
+    price:       initial?.price       || '',
+    stock:       initial?.stock       ?? '',
+    sku:         initial?.sku         || '',
+    image_url:   initial?.image_url   || '',
   })
-  const [loading, setLoading] = useState(false)
+  const [imageFile, setImageFile]     = useState(null)   // file object baru
+  const [imagePreview, setImagePreview] = useState(initial?.image_url || null)
+  const [uploading, setUploading]     = useState(false)
+  const [loading, setLoading]         = useState(false)
+  const fileInputRef = useRef(null)
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  function handleFileChange(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  function handleRemoveImage() {
+    setImageFile(null)
+    setImagePreview(null)
+    setForm(f => ({ ...f, image_url: '' }))
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
     try {
-      await onSubmit({
-        ...form,
-        price: Number(form.price),
-        stock: Number(form.stock),
-        category_id: form.category_id || null,
-      })
+      let image_url = form.image_url
+
+      // Upload file baru jika ada
+      if (imageFile) {
+        setUploading(true)
+        const { data } = await uploadProductImage(imageFile)
+        image_url = data.url
+        // Hapus gambar lama jika diganti
+        if (initial?.image_url && initial.image_url.startsWith('/uploads/')) {
+          await deleteProductImage(initial.image_url.replace('/uploads/', '')).catch(() => {})
+        }
+        setUploading(false)
+      }
+
+      // Jika gambar dihapus (imagePreview null & ada gambar lama)
+      if (!imagePreview && initial?.image_url && initial.image_url.startsWith('/uploads/')) {
+        await deleteProductImage(initial.image_url.replace('/uploads/', '')).catch(() => {})
+      }
+
+      await onSubmit({ ...form, image_url, price: Number(form.price), stock: Number(form.stock), category_id: form.category_id || null })
+    } catch (err) {
+      setUploading(false)
+      throw err
     } finally { setLoading(false) }
   }
 
+  const isLoading = loading || uploading
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Upload Gambar */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Gambar Produk</label>
+        {imagePreview ? (
+          <div className="relative inline-block">
+            <img
+              src={imagePreview}
+              alt="preview"
+              className="w-28 h-28 object-cover rounded-xl border border-gray-200 shadow-sm"
+            />
+            <button
+              type="button"
+              onClick={handleRemoveImage}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow hover:bg-red-600"
+            >
+              <X size={11} />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex flex-col items-center justify-center w-28 h-28 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-400 hover:text-blue-500"
+          >
+            <ImagePlus size={24} />
+            <span className="text-xs mt-1">Pilih Foto</span>
+          </button>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        {imagePreview && (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="mt-2 text-xs text-blue-600 hover:underline block"
+          >
+            Ganti gambar
+          </button>
+        )}
+        <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP — maks 3 MB</p>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Nama Produk <span className="text-red-500">*</span></label>
@@ -63,15 +147,11 @@ function ProductForm({ initial, categories, onSubmit, onClose }) {
           <label className="block text-sm font-medium text-gray-700 mb-1">Stok <span className="text-red-500">*</span></label>
           <input className="input" type="number" min="0" value={form.stock} onChange={set('stock')} required placeholder="0" />
         </div>
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">URL Gambar</label>
-          <input className="input" value={form.image_url} onChange={set('image_url')} placeholder="https://..." />
-        </div>
       </div>
       <div className="flex justify-end gap-3 pt-2">
         <button type="button" className="btn-secondary" onClick={onClose}>Batal</button>
-        <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? 'Menyimpan...' : (initial ? 'Simpan Perubahan' : 'Tambah Produk')}
+        <button type="submit" className="btn-primary" disabled={isLoading}>
+          {uploading ? 'Mengupload...' : loading ? 'Menyimpan...' : (initial ? 'Simpan Perubahan' : 'Tambah Produk')}
         </button>
       </div>
     </form>

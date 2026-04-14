@@ -23,6 +23,14 @@ export const createProduct    = (data)    => api.post('/products', data);
 export const updateProduct    = (id, data)=> api.put(`/products/${id}`, data);
 export const deleteProduct    = (id)      => api.delete(`/products/${id}`);
 
+// Image upload
+export const uploadProductImage = (file) => {
+  const form = new FormData();
+  form.append('image', file);
+  return api.post('/uploads', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+};
+export const deleteProductImage = (filename) => api.delete('/uploads', { data: { filename } });
+
 // Transactions
 export const getTransactions  = (params)  => api.get('/transactions', { params });
 export const getTransaction   = (id)      => api.get(`/transactions/${id}`);

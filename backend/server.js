@@ -11,11 +11,18 @@ const isProd = process.env.NODE_ENV === 'production';
 app.use(cors());
 app.use(bodyParser.json());
 
+// ── Uploaded images (harus sebelum static frontend) ─────────
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '30d',
+  etag: true,
+}));
+
 // ── API Routes ───────────────────────────────────────────────
 app.use('/api/categories',   require('./routes/categories'));
 app.use('/api/products',     require('./routes/products'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/dashboard',    require('./routes/dashboard'));
+app.use('/api/uploads',      require('./routes/uploads'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', env: process.env.NODE_ENV }));

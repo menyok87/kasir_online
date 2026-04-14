@@ -6,6 +6,10 @@ backend/node_modules/
 # Database (data lokal)
 data/
 
+# Upload gambar produk (disimpan di server, tidak di repo)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
 # Build output
 frontend/dist/
 frontend/.vite/
