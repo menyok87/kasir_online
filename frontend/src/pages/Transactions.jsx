@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { Eye, Trash2, Printer } from 'lucide-react'
 import { getTransactions, getTransaction, deleteTransaction } from '../api'
+import { useAuth } from '../contexts/AuthContext'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import EmptyState from '../components/ui/EmptyState'
@@ -64,6 +65,7 @@ function ReceiptContent({ tx }) {
 }
 
 export default function Transactions() {
+  const { isAdmin } = useAuth()
   const [transactions, setTransactions] = useState([])
   const [total, setTotal]               = useState(0)
   const [loading, setLoading]           = useState(true)
@@ -184,7 +186,9 @@ export default function Transactions() {
                       <div className="flex items-center justify-end gap-1">
                         <button className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600" onClick={() => openDetail(tx.id)} title="Detail"><Eye size={14}/></button>
                         <button className="p-1.5 rounded-lg hover:bg-green-50 text-green-600" onClick={() => openAndPrint(tx.id)} title="Cetak"><Printer size={14}/></button>
-                        <button className="p-1.5 rounded-lg hover:bg-red-50 text-red-600" onClick={() => setDeleteTarget(tx)} title="Batalkan"><Trash2 size={14}/></button>
+                        {isAdmin && (
+                          <button className="p-1.5 rounded-lg hover:bg-red-50 text-red-600" onClick={() => setDeleteTarget(tx)} title="Batalkan"><Trash2 size={14}/></button>
+                        )}
                       </div>
                     </td>
                   </tr>

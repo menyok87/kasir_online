@@ -46,6 +46,17 @@ CREATE TABLE IF NOT EXISTS transaction_items (
   subtotal       NUMERIC(15,2) NOT NULL
 );
 
+-- Tabel pengguna
+CREATE TABLE IF NOT EXISTS users (
+  id         SERIAL PRIMARY KEY,
+  username   VARCHAR(50)  NOT NULL UNIQUE,
+  password   TEXT         NOT NULL,
+  role       VARCHAR(10)  NOT NULL DEFAULT 'kasir' CHECK(role IN ('admin', 'kasir')),
+  name       VARCHAR(100) NOT NULL,
+  is_active  BOOLEAN      NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ  DEFAULT NOW()
+);
+
 -- Index untuk performa
 CREATE INDEX IF NOT EXISTS idx_products_category  ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_items_transaction   ON transaction_items(transaction_id);

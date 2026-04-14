@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../database/db');
+const { requireAdmin } = require('../middleware/authMiddleware');
 
 async function generateInvoiceNumber(client) {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -139,8 +140,8 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// DELETE /api/transactions/:id - Batalkan transaksi & kembalikan stok
-router.delete('/:id', async (req, res, next) => {
+// DELETE /api/transactions/:id - Batalkan transaksi & kembalikan stok (admin only)
+router.delete('/:id', requireAdmin, async (req, res, next) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');

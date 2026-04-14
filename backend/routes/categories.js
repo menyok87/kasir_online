@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../database/db');
+const { requireAdmin } = require('../middleware/authMiddleware');
 
 // GET /api/categories - Daftar semua kategori
 router.get('/', async (req, res, next) => {
@@ -11,7 +12,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // POST /api/categories - Buat kategori baru
-router.post('/', async (req, res, next) => {
+router.post('/', requireAdmin, async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name || !name.trim()) {
@@ -31,7 +32,7 @@ router.post('/', async (req, res, next) => {
 });
 
 // PUT /api/categories/:id - Update kategori
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name || !name.trim()) {
@@ -52,7 +53,7 @@ router.put('/:id', async (req, res, next) => {
 });
 
 // DELETE /api/categories/:id - Hapus kategori (jika tidak ada produk)
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { rows: countRows } = await pool.query(
       'SELECT COUNT(*)::int as cnt FROM products WHERE category_id = $1 AND is_active = TRUE',

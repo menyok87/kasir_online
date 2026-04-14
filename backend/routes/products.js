@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../database/db');
+const { requireAdmin } = require('../middleware/authMiddleware');
 
 const PRODUCT_SELECT = `
   SELECT p.*, c.name as category_name
@@ -42,7 +43,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // POST /api/products - Buat produk baru
-router.post('/', async (req, res, next) => {
+router.post('/', requireAdmin, async (req, res, next) => {
   try {
     const { name, category_id, price, stock, sku, image_url } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Nama produk wajib diisi' });
@@ -67,7 +68,7 @@ router.post('/', async (req, res, next) => {
 });
 
 // PUT /api/products/:id - Update produk
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { name, category_id, price, stock, sku, image_url } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Nama produk wajib diisi' });
@@ -114,7 +115,7 @@ router.patch('/:id/stock', async (req, res, next) => {
 });
 
 // DELETE /api/products/:id - Soft delete produk
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       'UPDATE products SET is_active=FALSE, updated_at=NOW() WHERE id=$1 AND is_active=TRUE RETURNING id',

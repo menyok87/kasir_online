@@ -3,7 +3,8 @@
  * Jalankan: node database/seed.js
  */
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
-const pool = require('./db');
+const pool   = require('./db');
+const bcrypt = require('bcryptjs');
 
 const categories = ['Makanan', 'Minuman', 'Snack', 'Produk Rumah Tangga'];
 
@@ -51,6 +52,18 @@ async function seed() {
       count++;
     }
     console.log(`✓ ${count} produk ditambahkan`);
+
+    // Insert default users
+    const adminHash = await bcrypt.hash('admin123', 10);
+    const kasirHash = await bcrypt.hash('kasir123', 10);
+    await client.query(
+      `INSERT INTO users (username, password, role, name) VALUES
+         ('admin', $1, 'admin', 'Administrator'),
+         ('kasir', $2, 'kasir',  'Kasir')
+       ON CONFLICT (username) DO NOTHING`,
+      [adminHash, kasirHash]
+    );
+    console.log('✓ Default users: admin/admin123, kasir/kasir123');
     console.log('Seed data selesai!');
   } finally {
     client.release();

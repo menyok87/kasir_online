@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Layout from './components/layout/Layout'
+import Login from './pages/Login'
 
 const Dashboard    = lazy(() => import('./pages/Dashboard'))
 const Categories   = lazy(() => import('./pages/Categories'))
@@ -16,19 +18,62 @@ function PageLoader() {
   )
 }
 
+// Redirect ke login jika belum login; redirect dari /login jika sudah login
+function RequireAuth({ children }) {
+  const { user, loading } = useAuth()
+  const location = useLocation()
+  if (loading) return <PageLoader />
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />
+  return children
+}
+
+function RequireAdmin({ children }) {
+  const { isAdmin } = useAuth()
+  if (!isAdmin) return <Navigate to="/pos" replace />
+  return children
+}
+
+function PublicOnly({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return <PageLoader />
+  if (user) return <Navigate to={user.role === 'admin' ? '/dashboard' : '/pos'} replace />
+  return children
+}
+
+function wrap(Component) {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Component />
+    </Suspense>
+  )
+}
+
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard"    element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
-          <Route path="categories"   element={<Suspense fallback={<PageLoader />}><Categories /></Suspense>} />
-          <Route path="products"     element={<Suspense fallback={<PageLoader />}><Products /></Suspense>} />
-          <Route path="pos"          element={<Suspense fallback={<PageLoader />}><POS /></Suspense>} />
-          <Route path="transactions" element={<Suspense fallback={<PageLoader />}><Transactions /></Suspense>} />
-        </Route>
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          {/* Public */}
+          <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
+
+          {/* Protected */}
+          <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+
+            {/* Admin only */}
+            <Route path="dashboard"  element={<RequireAdmin>{wrap(Dashboard)}</RequireAdmin>} />
+            <Route path="categories" element={<RequireAdmin>{wrap(Categories)}</RequireAdmin>} />
+            <Route path="products"   element={<RequireAdmin>{wrap(Products)}</RequireAdmin>} />
+
+            {/* All roles */}
+            <Route path="pos"          element={wrap(POS)} />
+            <Route path="transactions" element={wrap(Transactions)} />
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

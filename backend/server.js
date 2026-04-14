@@ -11,21 +11,24 @@ const isProd = process.env.NODE_ENV === 'production';
 app.use(cors());
 app.use(bodyParser.json());
 
+const { authenticate, requireAdmin } = require('./middleware/authMiddleware');
+
 // ── Uploaded images (harus sebelum static frontend) ─────────
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   maxAge: '30d',
   etag: true,
 }));
 
-// ── API Routes ───────────────────────────────────────────────
-app.use('/api/categories',   require('./routes/categories'));
-app.use('/api/products',     require('./routes/products'));
-app.use('/api/transactions', require('./routes/transactions'));
-app.use('/api/dashboard',    require('./routes/dashboard'));
-app.use('/api/uploads',      require('./routes/uploads'));
-
-// Health check
+// ── Public routes ────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok', env: process.env.NODE_ENV }));
+app.use('/api/auth', require('./routes/auth'));
+
+// ── Protected API Routes (semua butuh login) ─────────────────
+app.use('/api/categories',   authenticate, require('./routes/categories'));
+app.use('/api/products',     authenticate, require('./routes/products'));
+app.use('/api/transactions', authenticate, require('./routes/transactions'));
+app.use('/api/dashboard',    authenticate, requireAdmin, require('./routes/dashboard'));
+app.use('/api/uploads',      authenticate, require('./routes/uploads'));
 
 // ── Static Frontend (production) ────────────────────────────
 // Nginx memproksi semua request ke Express, jadi Express
