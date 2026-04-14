@@ -69,21 +69,19 @@ chmod +x deploy/deploy.sh
 sudo ./deploy/deploy.sh
 ```
 
-### Konfigurasi Domain/IP
-Edit file nginx setelah deploy:
-```bash
-sudo nano /etc/nginx/sites-available/kasir_online
-# Ubah baris: server_name your-domain.com www.your-domain.com;
-# Menjadi   : server_name 192.168.1.100;  (IP server Anda)
-# atau      : server_name kasir.toko-anda.com;
+### Domain
+Domain sudah dikonfigurasi: **kasir.keuangan99.com**
 
-sudo nginx -t && sudo systemctl reload nginx
+Pastikan DNS A record domain sudah mengarah ke IP server sebelum deploy:
+```
+kasir.keuangan99.com  →  A  →  [IP Server Anda]
 ```
 
-### HTTPS dengan Certbot (Opsional)
+### HTTPS dengan Certbot
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+sudo certbot --nginx -d kasir.keuangan99.com
+# Certbot akan otomatis mengisi blok SSL di nginx.conf
 ```
 
 ---
