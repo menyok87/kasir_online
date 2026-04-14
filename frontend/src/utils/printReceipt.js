@@ -1,12 +1,10 @@
 /**
  * Cetak struk ke popup window terpisah agar hanya konten struk yang dicetak.
  * Kompatibel dengan printer thermal 80mm maupun printer biasa.
+ *
+ * @param {object} transaction  — data transaksi dari API (termasuk .items[])
+ * @param {object} [settings]   — data pengaturan toko dari /api/settings
  */
-
-const STORE_NAME  = 'KASIR ONLINE'
-const STORE_ADDR  = 'Jl. Toko No. 1, Kota Anda'
-const STORE_PHONE = 'Telp: 0812-3456-7890'
-const FOOTER_MSG  = 'Terima kasih telah berbelanja!\nBarang yang sudah dibeli\ntidak dapat dikembalikan.'
 
 const paymentLabel = { cash: 'Tunai', transfer: 'Transfer Bank', card: 'Kartu Debit/Kredit' }
 
@@ -26,13 +24,20 @@ function line(char = '-', len = 40) {
   return char.repeat(len)
 }
 
-/**
- * @param {object} transaction  — data transaksi dari API (termasuk .items[])
- */
-export function printReceipt(transaction) {
+export function printReceipt(transaction, settings = {}) {
   if (!transaction) return
 
   const tx = transaction
+
+  // Ambil nilai dari settings, fallback ke default
+  const storeName       = settings.store_name     || 'KASIR ONLINE'
+  const storeTagline    = settings.store_tagline   || ''
+  const storeAddress    = settings.store_address   || ''
+  const storePhone      = settings.store_phone     || ''
+  const storeEmail      = settings.store_email     || ''
+  const storeWebsite    = settings.store_website   || ''
+  const footerMsg       = settings.footer_msg      || 'Terima kasih telah berbelanja!'
+  const showFooterNote  = settings.show_footer_note !== false
   const win = window.open('', '_blank', 'width=400,height=700,scrollbars=yes')
   if (!win) {
     alert('Popup diblokir browser. Izinkan popup untuk mencetak struk.')
@@ -227,10 +232,10 @@ export function printReceipt(transaction) {
 <body>
 
   <!-- ── Kop Toko ── -->
-  <div class="store-name">${STORE_NAME}</div>
+  <div class="store-name">${storeName.toUpperCase()}</div>
   <div class="store-info">
-    ${STORE_ADDR}<br>
-    ${STORE_PHONE}
+    ${[storeTagline, storeAddress, storePhone ? 'Telp: ' + storePhone : '', storeEmail, storeWebsite]
+        .filter(Boolean).join('<br>')}
   </div>
 
   <hr class="separator-solid">
@@ -287,8 +292,8 @@ export function printReceipt(transaction) {
 
   <!-- ── Footer ── -->
   <div class="footer">
-    ${FOOTER_MSG.split('\n').map(l => `<p>${l}</p>`).join('')}
-    <p style="margin-top:6px;font-size:9px">*** Simpan struk ini sebagai bukti pembelian ***</p>
+    ${footerMsg.split('\n').map(l => `<p>${l}</p>`).join('')}
+    ${showFooterNote ? '<p style="margin-top:6px;font-size:9px">*** Simpan struk ini sebagai bukti pembelian ***</p>' : ''}
   </div>
 
   <!-- ── Tombol Cetak (hilang saat print) ── -->

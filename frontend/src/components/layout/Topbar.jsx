@@ -9,6 +9,7 @@ const titles = {
   '/categories':   'Manajemen Kategori',
   '/transactions': 'Riwayat Transaksi',
   '/users':        'Manajemen User',
+  '/settings':     'Pengaturan Toko',
 }
 
 export default function Topbar({ onMenuClick }) {

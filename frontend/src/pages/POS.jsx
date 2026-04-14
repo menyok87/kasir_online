@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { Search, Plus, Minus, Trash2, ShoppingCart, Printer, CheckCircle, Tag, ArrowLeft } from 'lucide-react'
-import { getProducts, getCategories, createTransaction } from '../api'
+import { getProducts, getCategories, createTransaction, getSettings } from '../api'
 import Modal from '../components/ui/Modal'
 import Badge from '../components/ui/Badge'
 import { FullPageSpinner } from '../components/ui/Spinner'
@@ -128,7 +128,7 @@ function ReceiptModal({ isOpen, transaction, onClose }) {
       <div className="flex gap-3 mt-4">
         <button
           className="btn-secondary flex-1 flex items-center justify-center gap-2"
-          onClick={() => printReceipt(transaction)}
+          onClick={() => printReceipt(transaction, settings)}
         >
           <Printer size={15} /> Cetak Struk
         </button>
@@ -357,17 +357,20 @@ export default function POS() {
   const [amountPaid, setAmountPaid]   = useState('')
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [receipt, setReceipt]         = useState(null)
+  const [settings, setSettings]       = useState({})
   // Mobile: 'products' | 'cart'
   const [mobileTab, setMobileTab]     = useState('products')
 
   const fetchData = useCallback(async () => {
     try {
-      const [{ data: prods }, { data: cats }] = await Promise.all([
+      const [{ data: prods }, { data: cats }, { data: stg }] = await Promise.all([
         getProducts(),
         getCategories(),
+        getSettings(),
       ])
       setProducts(prods)
       setCategories(cats)
+      setSettings(stg)
     } catch (err) {
       toast.error(err.message)
     } finally {

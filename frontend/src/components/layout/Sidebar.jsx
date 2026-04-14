@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Tags, Package,
-  ShoppingCart, Receipt, Store, X, LogOut, User, Users
+  ShoppingCart, Receipt, Store, X, LogOut, User, Users, Settings
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -12,6 +12,7 @@ const adminNav = [
   { to: '/categories',   icon: Tags,            label: 'Kategori' },
   { to: '/transactions', icon: Receipt,         label: 'Transaksi' },
   { to: '/users',        icon: Users,           label: 'Manajemen User' },
+  { to: '/settings',    icon: Settings,        label: 'Pengaturan' },
 ]
 
 const kasirNav = [

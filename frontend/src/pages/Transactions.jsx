@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { Eye, Trash2, Printer } from 'lucide-react'
-import { getTransactions, getTransaction, deleteTransaction } from '../api'
+import { getTransactions, getTransaction, deleteTransaction, getSettings } from '../api'
 import { useAuth } from '../contexts/AuthContext'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
@@ -16,12 +16,15 @@ function formatRupiah(n) {
 
 const paymentLabel = { cash: 'Tunai', transfer: 'Transfer', card: 'Kartu' }
 
-function ReceiptContent({ tx }) {
+function ReceiptContent({ tx, settings = {} }) {
   if (!tx) return null
   return (
     <div className="text-sm space-y-3">
       <div className="text-center border-b border-dashed border-gray-300 pb-3">
-        <p className="font-bold text-base">KASIR ONLINE</p>
+        <p className="font-bold text-base">{settings.store_name || 'KASIR ONLINE'}</p>
+        {settings.store_tagline && <p className="text-gray-400 text-xs">{settings.store_tagline}</p>}
+        {settings.store_address && <p className="text-gray-500 text-xs">{settings.store_address}</p>}
+        {settings.store_phone   && <p className="text-gray-500 text-xs">Telp: {settings.store_phone}</p>}
         <p className="text-gray-500 text-xs">Struk Pembelian</p>
         <p className="font-mono font-bold mt-1">{tx.invoice_number}</p>
         <p className="text-xs text-gray-400">{new Date(tx.created_at).toLocaleString('id-ID')}</p>
@@ -67,6 +70,7 @@ function ReceiptContent({ tx }) {
 export default function Transactions() {
   const { isAdmin } = useAuth()
   const [transactions, setTransactions] = useState([])
+  const [settings, setSettings]         = useState({})
   const [total, setTotal]               = useState(0)
   const [loading, setLoading]           = useState(true)
   const [from, setFrom]                 = useState('')
@@ -89,6 +93,7 @@ export default function Transactions() {
   }, [from, to])
 
   useEffect(() => { fetchTransactions() }, [fetchTransactions])
+  useEffect(() => { getSettings().then(r => setSettings(r.data)).catch(() => {}) }, [])
 
   async function openDetail(id) {
     setDetailLoading(true)
@@ -107,7 +112,7 @@ export default function Transactions() {
   async function openAndPrint(id) {
     try {
       const { data } = await getTransaction(id)
-      printReceipt(data)
+      printReceipt(data, settings)
     } catch (err) { toast.error(err.message) }
   }
 
@@ -205,9 +210,9 @@ export default function Transactions() {
           <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-blue-600" /></div>
         ) : (
           <>
-            <ReceiptContent tx={detail} />
+            <ReceiptContent tx={detail} settings={settings} />
             <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
-              <button className="btn-secondary flex items-center gap-2" onClick={() => printReceipt(detail)}>
+              <button className="btn-secondary flex items-center gap-2" onClick={() => printReceipt(detail, settings)}>
                 <Printer size={16} /> Cetak Struk
               </button>
             </div>

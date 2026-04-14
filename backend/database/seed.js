@@ -64,6 +64,15 @@ async function seed() {
       [adminHash, kasirHash]
     );
     console.log('✓ Default users: admin/admin123, kasir/kasir123');
+
+    // Insert default store settings
+    await client.query(`
+      INSERT INTO store_settings (id, store_name, store_tagline, store_address, store_phone, footer_msg)
+      VALUES (1, 'Kasir Online', 'Point of Sale', 'Jl. Toko No. 1, Kota Anda', '0812-3456-7890',
+              'Terima kasih telah berbelanja!\nBarang yang sudah dibeli tidak dapat dikembalikan.')
+      ON CONFLICT (id) DO NOTHING
+    `);
+    console.log('✓ Default store settings ditambahkan');
     console.log('Seed data selesai!');
   } finally {
     client.release();

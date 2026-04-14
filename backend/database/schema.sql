@@ -46,6 +46,20 @@ CREATE TABLE IF NOT EXISTS transaction_items (
   subtotal       NUMERIC(15,2) NOT NULL
 );
 
+-- Pengaturan toko (hanya 1 baris)
+CREATE TABLE IF NOT EXISTS store_settings (
+  id             INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  store_name     VARCHAR(100) NOT NULL DEFAULT 'Kasir Online',
+  store_tagline  VARCHAR(200)          DEFAULT 'Point of Sale',
+  store_address  TEXT                  DEFAULT '',
+  store_phone    VARCHAR(50)           DEFAULT '',
+  store_email    VARCHAR(100)          DEFAULT '',
+  store_website  VARCHAR(200)          DEFAULT '',
+  footer_msg     TEXT                  DEFAULT 'Terima kasih telah berbelanja!',
+  show_footer_note BOOLEAN NOT NULL    DEFAULT TRUE,
+  updated_at     TIMESTAMPTZ           DEFAULT NOW()
+);
+
 -- Tabel pengguna
 CREATE TABLE IF NOT EXISTS users (
   id         SERIAL PRIMARY KEY,

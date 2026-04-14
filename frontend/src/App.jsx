@@ -10,6 +10,7 @@ const Products     = lazy(() => import('./pages/Products'))
 const POS          = lazy(() => import('./pages/POS'))
 const Transactions = lazy(() => import('./pages/Transactions'))
 const Users        = lazy(() => import('./pages/Users'))
+const Settings     = lazy(() => import('./pages/Settings'))
 
 function PageLoader() {
   return (
@@ -66,6 +67,7 @@ export default function App() {
             <Route path="categories" element={<RequireAdmin>{wrap(Categories)}</RequireAdmin>} />
             <Route path="products"   element={<RequireAdmin>{wrap(Products)}</RequireAdmin>} />
             <Route path="users"      element={<RequireAdmin>{wrap(Users)}</RequireAdmin>} />
+            <Route path="settings"   element={<RequireAdmin>{wrap(Settings)}</RequireAdmin>} />
 
             {/* All roles */}
             <Route path="pos"          element={wrap(POS)} />
