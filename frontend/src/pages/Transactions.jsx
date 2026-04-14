@@ -14,7 +14,7 @@ function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
 }
 
-const paymentLabel = { cash: 'Tunai', transfer: 'Transfer', card: 'Kartu' }
+const paymentLabel = { cash: 'Tunai', qris: 'QRIS', transfer: 'Transfer', card: 'Kartu' }
 
 function ReceiptContent({ tx, settings = {} }) {
   if (!tx) return null
@@ -180,7 +180,11 @@ export default function Transactions() {
                       {new Date(tx.created_at).toLocaleString('id-ID')}
                     </td>
                     <td className="px-4 md:px-6 py-3 text-center hidden md:table-cell">
-                      <Badge color={tx.payment_method === 'cash' ? 'green' : tx.payment_method === 'transfer' ? 'blue' : 'purple'}>
+                      <Badge color={
+                        tx.payment_method === 'cash' ? 'green' :
+                        tx.payment_method === 'qris' ? 'yellow' :
+                        tx.payment_method === 'transfer' ? 'blue' : 'purple'
+                      }>
                         {paymentLabel[tx.payment_method] || tx.payment_method}
                       </Badge>
                     </td>

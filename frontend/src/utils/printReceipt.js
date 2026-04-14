@@ -6,7 +6,7 @@
  * @param {object} [settings]   — data pengaturan toko dari /api/settings
  */
 
-const paymentLabel = { cash: 'Tunai', transfer: 'Transfer Bank', card: 'Kartu Debit/Kredit' }
+const paymentLabel = { cash: 'Tunai', qris: 'QRIS', transfer: 'Transfer Bank', card: 'Kartu Debit/Kredit' }
 
 function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', {
@@ -38,6 +38,21 @@ export function printReceipt(transaction, settings = {}) {
   const storeWebsite    = settings.store_website   || ''
   const footerMsg       = settings.footer_msg      || 'Terima kasih telah berbelanja!'
   const showFooterNote  = settings.show_footer_note !== false
+
+  // Info rekening/QRIS untuk struk transfer/qris
+  let paymentInfoHtml = ''
+  if (tx.payment_method === 'transfer' && settings.bank_name) {
+    paymentInfoHtml = `
+  <hr class="separator">
+  <div style="font-size:10px; text-align:center; margin:4px 0;">
+    <p style="font-weight:bold; margin-bottom:3px;">TRANSFER KE REKENING</p>
+    <p style="font-size:11px; font-weight:bold;">${settings.bank_name}</p>
+    <p style="font-size:15px; font-weight:bold; letter-spacing:1px;">${settings.bank_account_number || ''}</p>
+    <p>a.n. ${settings.bank_account_name || ''}</p>
+    ${settings.bank_branch ? `<p style="color:#555;font-size:9px;">${settings.bank_branch}</p>` : ''}
+  </div>`
+  }
+
   const win = window.open('', '_blank', 'width=400,height=700,scrollbars=yes')
   if (!win) {
     alert('Popup diblokir browser. Izinkan popup untuk mencetak struk.')
@@ -289,6 +304,8 @@ export function printReceipt(transaction, settings = {}) {
   </table>
 
   <hr class="separator">
+
+  ${paymentInfoHtml}
 
   <!-- ── Footer ── -->
   <div class="footer">

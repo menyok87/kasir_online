@@ -82,9 +82,9 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
 }
 
 // ── Modal Struk ───────────────────────────────────────────────────────────────
-function ReceiptModal({ isOpen, transaction, onClose }) {
+function ReceiptModal({ isOpen, transaction, settings, onClose }) {
   if (!transaction) return null
-  const paymentLabel = { cash: 'Tunai', transfer: 'Transfer', card: 'Kartu' }
+  const paymentLabel = { cash: 'Tunai', qris: 'QRIS', transfer: 'Transfer', card: 'Kartu' }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Transaksi Berhasil" size="sm">
@@ -128,7 +128,7 @@ function ReceiptModal({ isOpen, transaction, onClose }) {
       <div className="flex gap-3 mt-4">
         <button
           className="btn-secondary flex-1 flex items-center justify-center gap-2"
-          onClick={() => printReceipt(transaction, settings)}
+          onClick={() => printReceipt(transaction, settings ?? {})}
         >
           <Printer size={15} /> Cetak Struk
         </button>
@@ -217,12 +217,18 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
 // ── Panel Keranjang ───────────────────────────────────────────────────────────
 function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMethod,
   amountPaid, setAmountPaid, onIncrease, onDecrease, onRemove, onClear,
-  onCheckout, checkoutLoading, onBack }) {
+  onCheckout, checkoutLoading, onBack, settings = {} }) {
 
   const subtotal   = cart.reduce((s, i) => s + i.product.price * i.quantity, 0)
   const grandTotal = Math.max(0, subtotal - Number(discount))
   const change     = Number(amountPaid) - grandTotal
   const canCheckout = cart.length > 0 && Number(amountPaid) >= grandTotal
+  const isNonCash  = paymentMethod === 'qris' || paymentMethod === 'transfer'
+
+  // Auto-fill jumlah bayar untuk QRIS dan Transfer
+  useEffect(() => {
+    if (isNonCash) setAmountPaid(String(grandTotal))
+  }, [paymentMethod, grandTotal]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden
@@ -300,8 +306,8 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
         {/* Metode Pembayaran */}
         <div>
           <p className="text-xs text-gray-500 mb-1.5">Metode Pembayaran</p>
-          <div className="grid grid-cols-3 gap-1">
-            {[['cash', 'Tunai'], ['transfer', 'Transfer'], ['card', 'Kartu']].map(([val, label]) => (
+          <div className="grid grid-cols-4 gap-1">
+            {[['cash', 'Tunai'], ['qris', 'QRIS'], ['transfer', 'Bank'], ['card', 'Kartu']].map(([val, label]) => (
               <button
                 key={val}
                 onClick={() => setPaymentMethod(val)}
@@ -314,22 +320,71 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           </div>
         </div>
 
-        {/* Uang Bayar */}
-        <div>
-          <label className="text-xs text-gray-500 block mb-1">Uang Dibayar (Rp)</label>
-          <input
-            type="number" min="0"
-            className="input text-sm"
-            value={amountPaid}
-            onChange={e => setAmountPaid(e.target.value)}
-            placeholder="Masukkan jumlah..."
-          />
-          {Number(amountPaid) > 0 && (
-            <p className={`text-xs mt-1 font-medium ${change >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-              {change >= 0 ? `Kembalian: ${formatRupiah(change)}` : `Kurang: ${formatRupiah(Math.abs(change))}`}
-            </p>
-          )}
-        </div>
+        {/* Info QRIS */}
+        {paymentMethod === 'qris' && (
+          <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+            {settings.qris_image ? (
+              <>
+                <img
+                  src={settings.qris_image}
+                  alt="QRIS"
+                  className="w-40 h-40 object-contain mx-auto rounded-lg bg-white border border-blue-200 p-1"
+                />
+                <p className="text-xs text-blue-600 mt-2 font-medium">Scan QRIS untuk membayar</p>
+                <p className="text-sm font-bold text-blue-700 mt-0.5">{formatRupiah(grandTotal)}</p>
+              </>
+            ) : (
+              <p className="text-xs text-gray-500 py-2">
+                Gambar QRIS belum diatur.<br />
+                Upload di <span className="text-blue-600 font-medium">Pengaturan Toko</span>.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Info Transfer Bank */}
+        {paymentMethod === 'transfer' && (
+          <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+            {settings.bank_name ? (
+              <>
+                <p className="text-xs text-blue-600 font-medium mb-1.5">Transfer ke rekening:</p>
+                <p className="font-semibold text-sm text-gray-800">{settings.bank_name}</p>
+                <p className="font-mono text-lg font-bold text-blue-700 tracking-wide">{settings.bank_account_number || '-'}</p>
+                <p className="text-xs text-gray-600">a.n. {settings.bank_account_name || '-'}</p>
+                {settings.bank_branch && <p className="text-xs text-gray-400 mt-0.5">{settings.bank_branch}</p>}
+              </>
+            ) : (
+              <p className="text-xs text-gray-500 py-1">
+                Info rekening belum diatur.<br />
+                Isi di <span className="text-blue-600 font-medium">Pengaturan Toko</span>.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Uang Bayar — hanya untuk tunai & kartu */}
+        {!isNonCash ? (
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Uang Dibayar (Rp)</label>
+            <input
+              type="number" min="0"
+              className="input text-sm"
+              value={amountPaid}
+              onChange={e => setAmountPaid(e.target.value)}
+              placeholder="Masukkan jumlah..."
+            />
+            {Number(amountPaid) > 0 && (
+              <p className={`text-xs mt-1 font-medium ${change >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                {change >= 0 ? `Kembalian: ${formatRupiah(change)}` : `Kurang: ${formatRupiah(Math.abs(change))}`}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="bg-green-50 rounded-lg px-3 py-2 flex items-center justify-between text-sm border border-green-100">
+            <span className="text-gray-600">Jumlah Bayar</span>
+            <span className="font-bold text-green-700">{formatRupiah(grandTotal)}</span>
+          </div>
+        )}
 
         {/* Tombol Checkout */}
         <button
@@ -458,6 +513,7 @@ export default function POS() {
     onRemove: removeFromCart, onClear: clearCart,
     onCheckout: handleCheckout, checkoutLoading,
     onBack: () => setMobileTab('products'),
+    settings,
   }
 
   return (
@@ -491,6 +547,7 @@ export default function POS() {
       <ReceiptModal
         isOpen={!!receipt}
         transaction={receipt}
+        settings={settings}
         onClose={() => setReceipt(null)}
       />
     </>

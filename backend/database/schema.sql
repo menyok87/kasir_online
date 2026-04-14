@@ -55,9 +55,14 @@ CREATE TABLE IF NOT EXISTS store_settings (
   store_phone    VARCHAR(50)           DEFAULT '',
   store_email    VARCHAR(100)          DEFAULT '',
   store_website  VARCHAR(200)          DEFAULT '',
-  footer_msg     TEXT                  DEFAULT 'Terima kasih telah berbelanja!',
-  show_footer_note BOOLEAN NOT NULL    DEFAULT TRUE,
-  updated_at     TIMESTAMPTZ           DEFAULT NOW()
+  footer_msg           TEXT                  DEFAULT 'Terima kasih telah berbelanja!',
+  show_footer_note     BOOLEAN NOT NULL      DEFAULT TRUE,
+  qris_image           TEXT                  DEFAULT '',
+  bank_name            VARCHAR(100)          DEFAULT '',
+  bank_account_number  VARCHAR(50)           DEFAULT '',
+  bank_account_name    VARCHAR(100)          DEFAULT '',
+  bank_branch          VARCHAR(100)          DEFAULT '',
+  updated_at           TIMESTAMPTZ           DEFAULT NOW()
 );
 
 -- Tabel pengguna

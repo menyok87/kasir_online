@@ -65,6 +65,16 @@ async function seed() {
     );
     console.log('✓ Default users: admin/admin123, kasir/kasir123');
 
+    // Migrasi: tambah kolom baru ke store_settings jika belum ada (aman dijalankan berulang)
+    const newCols = [
+      "ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS qris_image TEXT DEFAULT ''",
+      "ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100) DEFAULT ''",
+      "ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(50) DEFAULT ''",
+      "ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS bank_account_name VARCHAR(100) DEFAULT ''",
+      "ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS bank_branch VARCHAR(100) DEFAULT ''",
+    ];
+    for (const sql of newCols) await client.query(sql);
+
     // Insert default store settings
     await client.query(`
       INSERT INTO store_settings (id, store_name, store_tagline, store_address, store_phone, footer_msg)

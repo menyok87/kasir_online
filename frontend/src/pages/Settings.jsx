@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
-import { Store, Phone, MapPin, Mail, Globe, FileText, Save } from 'lucide-react'
-import { getSettings, updateSettings } from '../api'
+import { Store, Phone, MapPin, Mail, Globe, FileText, Save, QrCode, Landmark, ImagePlus, X } from 'lucide-react'
+import { getSettings, updateSettings, uploadProductImage } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
 
 const defaultSettings = {
@@ -13,6 +13,11 @@ const defaultSettings = {
   store_website: '',
   footer_msg: '',
   show_footer_note: true,
+  qris_image: '',
+  bank_name: '',
+  bank_account_number: '',
+  bank_account_name: '',
+  bank_branch: '',
 }
 
 function Section({ title, icon: Icon, children }) {
@@ -42,9 +47,11 @@ function Field({ label, hint, children }) {
 }
 
 export default function Settings() {
-  const [form, setForm]       = useState(defaultSettings)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving]   = useState(false)
+  const [form, setForm]           = useState(defaultSettings)
+  const [loading, setLoading]     = useState(true)
+  const [saving, setSaving]       = useState(false)
+  const [qrisUploading, setQrisUploading] = useState(false)
+  const qrisInputRef = useRef(null)
 
   useEffect(() => {
     getSettings()
@@ -55,6 +62,21 @@ export default function Settings() {
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
   const setCheck = k => e => setForm(f => ({ ...f, [k]: e.target.checked }))
+
+  async function handleQrisUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setQrisUploading(true)
+    try {
+      const { data } = await uploadProductImage(file)
+      setForm(f => ({ ...f, qris_image: data.url }))
+      toast.success('Gambar QRIS berhasil diupload')
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setQrisUploading(false)
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -163,6 +185,94 @@ export default function Settings() {
             </Field>
           </div>
         </div>
+      </Section>
+
+      {/* QRIS */}
+      <Section title="Pembayaran QRIS" icon={QrCode}>
+        <p className="text-xs text-gray-500 -mt-2">Upload gambar QR code QRIS toko Anda. Akan ditampilkan saat pelanggan memilih metode QRIS di kasir.</p>
+        <div className="flex flex-col sm:flex-row gap-4 items-start">
+          {/* Upload area */}
+          <div>
+            {form.qris_image ? (
+              <div className="relative inline-block">
+                <img
+                  src={form.qris_image}
+                  alt="QRIS"
+                  className="w-36 h-36 object-contain border-2 border-blue-200 rounded-xl bg-white p-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, qris_image: '' }))}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow hover:bg-red-600"
+                >
+                  <X size={11} />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => qrisInputRef.current?.click()}
+                disabled={qrisUploading}
+                className="flex flex-col items-center justify-center w-36 h-36 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-400 hover:text-blue-500 disabled:opacity-50"
+              >
+                {qrisUploading ? (
+                  <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <ImagePlus size={24} />
+                    <span className="text-xs mt-1 text-center px-2">Upload QR Code</span>
+                  </>
+                )}
+              </button>
+            )}
+            <input
+              ref={qrisInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleQrisUpload}
+            />
+            {form.qris_image && (
+              <button type="button" onClick={() => qrisInputRef.current?.click()} className="mt-1.5 text-xs text-blue-600 hover:underline block text-center w-36">
+                Ganti gambar
+              </button>
+            )}
+          </div>
+          <div className="flex-1 text-sm text-gray-500 space-y-1.5 pt-1">
+            <p className="font-medium text-gray-600">Cara penggunaan:</p>
+            <p>1. Dapatkan file QR code QRIS dari bank/aplikasi pembayaran Anda</p>
+            <p>2. Upload di sini (JPG/PNG, maks 3MB)</p>
+            <p>3. Saat kasir memilih "QRIS", QR code akan muncul untuk dipindai pelanggan</p>
+          </div>
+        </div>
+      </Section>
+
+      {/* Bank Transfer */}
+      <Section title="Rekening Bank Transfer" icon={Landmark}>
+        <p className="text-xs text-gray-500 -mt-2">Informasi rekening akan ditampilkan saat pelanggan memilih metode Transfer Bank.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Nama Bank">
+            <input className="input" value={form.bank_name} onChange={set('bank_name')} placeholder="Contoh: BCA, BRI, Mandiri, BNI" />
+          </Field>
+          <Field label="Nomor Rekening">
+            <input className="input font-mono" value={form.bank_account_number} onChange={set('bank_account_number')} placeholder="1234567890" />
+          </Field>
+          <Field label="Nama Pemilik Rekening">
+            <input className="input" value={form.bank_account_name} onChange={set('bank_account_name')} placeholder="Nama sesuai rekening" />
+          </Field>
+          <Field label="Cabang" hint="(opsional)">
+            <input className="input" value={form.bank_branch} onChange={set('bank_branch')} placeholder="Contoh: KCP Sudirman" />
+          </Field>
+        </div>
+        {(form.bank_name || form.bank_account_number) && (
+          <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-100 text-sm">
+            <p className="text-xs text-blue-600 font-medium mb-1">Preview info transfer:</p>
+            <p className="font-medium">{form.bank_name || '-'}</p>
+            <p className="font-mono text-lg font-bold text-blue-700">{form.bank_account_number || '-'}</p>
+            <p className="text-gray-600">a.n. {form.bank_account_name || '-'}</p>
+            {form.bank_branch && <p className="text-xs text-gray-400">{form.bank_branch}</p>}
+          </div>
+        )}
       </Section>
 
       {/* Pengaturan Struk */}

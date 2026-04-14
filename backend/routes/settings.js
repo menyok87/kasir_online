@@ -25,6 +25,7 @@ router.put('/', requireAdmin, async (req, res, next) => {
       store_name, store_tagline, store_address,
       store_phone, store_email, store_website,
       footer_msg, show_footer_note,
+      qris_image, bank_name, bank_account_number, bank_account_name, bank_branch,
     } = req.body;
 
     if (!store_name?.trim()) {
@@ -33,28 +34,41 @@ router.put('/', requireAdmin, async (req, res, next) => {
 
     const { rows } = await pool.query(`
       INSERT INTO store_settings
-        (id, store_name, store_tagline, store_address, store_phone, store_email, store_website, footer_msg, show_footer_note, updated_at)
-      VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, NOW())
+        (id, store_name, store_tagline, store_address, store_phone, store_email, store_website,
+         footer_msg, show_footer_note,
+         qris_image, bank_name, bank_account_number, bank_account_name, bank_branch,
+         updated_at)
+      VALUES (1, $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, NOW())
       ON CONFLICT (id) DO UPDATE SET
-        store_name       = EXCLUDED.store_name,
-        store_tagline    = EXCLUDED.store_tagline,
-        store_address    = EXCLUDED.store_address,
-        store_phone      = EXCLUDED.store_phone,
-        store_email      = EXCLUDED.store_email,
-        store_website    = EXCLUDED.store_website,
-        footer_msg       = EXCLUDED.footer_msg,
-        show_footer_note = EXCLUDED.show_footer_note,
-        updated_at       = NOW()
+        store_name           = EXCLUDED.store_name,
+        store_tagline        = EXCLUDED.store_tagline,
+        store_address        = EXCLUDED.store_address,
+        store_phone          = EXCLUDED.store_phone,
+        store_email          = EXCLUDED.store_email,
+        store_website        = EXCLUDED.store_website,
+        footer_msg           = EXCLUDED.footer_msg,
+        show_footer_note     = EXCLUDED.show_footer_note,
+        qris_image           = EXCLUDED.qris_image,
+        bank_name            = EXCLUDED.bank_name,
+        bank_account_number  = EXCLUDED.bank_account_number,
+        bank_account_name    = EXCLUDED.bank_account_name,
+        bank_branch          = EXCLUDED.bank_branch,
+        updated_at           = NOW()
       RETURNING *
     `, [
       store_name.trim(),
-      store_tagline?.trim() || '',
-      store_address?.trim() || '',
-      store_phone?.trim()   || '',
-      store_email?.trim()   || '',
-      store_website?.trim() || '',
-      footer_msg?.trim()    || '',
+      store_tagline?.trim()          || '',
+      store_address?.trim()          || '',
+      store_phone?.trim()            || '',
+      store_email?.trim()            || '',
+      store_website?.trim()          || '',
+      footer_msg?.trim()             || '',
       show_footer_note !== false,
+      qris_image?.trim()             || '',
+      bank_name?.trim()              || '',
+      bank_account_number?.trim()    || '',
+      bank_account_name?.trim()      || '',
+      bank_branch?.trim()            || '',
     ]);
 
     res.json(rows[0]);
