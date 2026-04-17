@@ -1,4 +1,4 @@
-package com.kasir.online;
+package com.kasir.mnxcreations;
 
 import com.getcapacitor.BridgeActivity;
 
