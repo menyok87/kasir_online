@@ -1,28 +1,45 @@
--- Tabel kategori produk
-CREATE TABLE IF NOT EXISTS categories (
+-- Tabel pengguna (didefinisikan duluan karena tabel lain mereferensikannya)
+CREATE TABLE IF NOT EXISTS users (
   id         SERIAL PRIMARY KEY,
-  name       VARCHAR(100) NOT NULL UNIQUE,
+  username   VARCHAR(50)  NOT NULL UNIQUE,
+  password   TEXT         NOT NULL,
+  role       VARCHAR(20)  NOT NULL DEFAULT 'kasir' CHECK(role IN ('superadmin', 'admin', 'supervisor', 'kasir')),
+  name       VARCHAR(100) NOT NULL,
+  is_active  BOOLEAN      NOT NULL DEFAULT TRUE,
+  created_by INTEGER      REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ  DEFAULT NOW()
 );
 
--- Tabel produk
+-- Tabel kategori produk (per admin)
+CREATE TABLE IF NOT EXISTS categories (
+  id         SERIAL PRIMARY KEY,
+  admin_id   INTEGER      REFERENCES users(id) ON DELETE CASCADE,
+  name       VARCHAR(100) NOT NULL,
+  created_at TIMESTAMPTZ  DEFAULT NOW(),
+  UNIQUE(name, admin_id)
+);
+
+-- Tabel produk (per admin)
 CREATE TABLE IF NOT EXISTS products (
   id          SERIAL PRIMARY KEY,
-  category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+  admin_id    INTEGER        REFERENCES users(id) ON DELETE CASCADE,
+  category_id INTEGER        REFERENCES categories(id) ON DELETE SET NULL,
   name        VARCHAR(200)   NOT NULL,
-  sku         VARCHAR(50)    UNIQUE,
+  sku         VARCHAR(50),
   price       NUMERIC(15,2)  NOT NULL CHECK(price >= 0),
   stock       INTEGER        NOT NULL DEFAULT 0 CHECK(stock >= 0),
   image_url   TEXT,
   is_active   BOOLEAN        NOT NULL DEFAULT TRUE,
   created_at  TIMESTAMPTZ    DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ    DEFAULT NOW()
+  updated_at  TIMESTAMPTZ    DEFAULT NOW(),
+  UNIQUE(sku, admin_id)
 );
 
--- Tabel transaksi
+-- Tabel transaksi (per admin)
 CREATE TABLE IF NOT EXISTS transactions (
   id             SERIAL PRIMARY KEY,
-  invoice_number VARCHAR(30)   NOT NULL UNIQUE,
+  admin_id       INTEGER       REFERENCES users(id) ON DELETE CASCADE,
+  invoice_number VARCHAR(30)   NOT NULL,
   subtotal       NUMERIC(15,2) NOT NULL,
   discount       NUMERIC(15,2) NOT NULL DEFAULT 0,
   tax            NUMERIC(15,2) NOT NULL DEFAULT 0,
@@ -31,7 +48,8 @@ CREATE TABLE IF NOT EXISTS transactions (
   change_amount  NUMERIC(15,2) NOT NULL,
   payment_method VARCHAR(20)   NOT NULL DEFAULT 'cash',
   notes          TEXT,
-  created_at     TIMESTAMPTZ   DEFAULT NOW()
+  created_at     TIMESTAMPTZ   DEFAULT NOW(),
+  UNIQUE(invoice_number, admin_id)
 );
 
 -- Tabel item transaksi
@@ -46,15 +64,16 @@ CREATE TABLE IF NOT EXISTS transaction_items (
   subtotal       NUMERIC(15,2) NOT NULL
 );
 
--- Pengaturan toko (hanya 1 baris)
+-- Pengaturan toko per admin
 CREATE TABLE IF NOT EXISTS store_settings (
-  id             INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-  store_name     VARCHAR(100) NOT NULL DEFAULT 'Kasir Online',
-  store_tagline  VARCHAR(200)          DEFAULT 'Point of Sale',
-  store_address  TEXT                  DEFAULT '',
-  store_phone    VARCHAR(50)           DEFAULT '',
-  store_email    VARCHAR(100)          DEFAULT '',
-  store_website  VARCHAR(200)          DEFAULT '',
+  id                   SERIAL PRIMARY KEY,
+  admin_id             INTEGER      UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  store_name           VARCHAR(100) NOT NULL DEFAULT 'Kasir Online',
+  store_tagline        VARCHAR(200)          DEFAULT 'Point of Sale',
+  store_address        TEXT                  DEFAULT '',
+  store_phone          VARCHAR(50)           DEFAULT '',
+  store_email          VARCHAR(100)          DEFAULT '',
+  store_website        VARCHAR(200)          DEFAULT '',
   footer_msg           TEXT                  DEFAULT 'Terima kasih telah berbelanja!',
   show_footer_note     BOOLEAN NOT NULL      DEFAULT TRUE,
   qris_image           TEXT                  DEFAULT '',
@@ -65,20 +84,10 @@ CREATE TABLE IF NOT EXISTS store_settings (
   updated_at           TIMESTAMPTZ           DEFAULT NOW()
 );
 
--- Tabel pengguna
-CREATE TABLE IF NOT EXISTS users (
-  id         SERIAL PRIMARY KEY,
-  username   VARCHAR(50)  NOT NULL UNIQUE,
-  password   TEXT         NOT NULL,
-  role       VARCHAR(20)  NOT NULL DEFAULT 'kasir' CHECK(role IN ('superadmin', 'admin', 'supervisor', 'kasir')),
-  name       VARCHAR(100) NOT NULL,
-  is_active  BOOLEAN      NOT NULL DEFAULT TRUE,
-  created_by INTEGER      REFERENCES users(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ  DEFAULT NOW()
-);
-
 -- Index untuk performa
 CREATE INDEX IF NOT EXISTS idx_products_category  ON products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_admin      ON products(admin_id);
 CREATE INDEX IF NOT EXISTS idx_items_transaction   ON transaction_items(transaction_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date   ON transactions(created_at);
+CREATE INDEX IF NOT EXISTS idx_transactions_admin  ON transactions(admin_id);
 CREATE INDEX IF NOT EXISTS idx_products_active     ON products(is_active);

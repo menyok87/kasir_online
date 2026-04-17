@@ -1,16 +1,18 @@
 const express = require('express');
-const router  = express.Router();
+const router  = require('express').Router();
 const pool    = require('../database/db');
-const { requireAdmin } = require('../middleware/authMiddleware');
+const { authenticate, requireAdmin, tenantId } = require('../middleware/authMiddleware');
 
-// GET /api/settings — ambil pengaturan toko (semua role)
-router.get('/', async (req, res, next) => {
+// GET /api/settings — pengaturan toko milik tenant
+router.get('/', authenticate, async (req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM store_settings WHERE id = 1');
-    if (rows.length === 0) {
+    const tid = tenantId(req.user);
+    const { rows } = await pool.query('SELECT * FROM store_settings WHERE admin_id = $1', [tid]);
+    if (!rows.length) {
       // Buat baris default jika belum ada
       const { rows: inserted } = await pool.query(
-        'INSERT INTO store_settings (id) VALUES (1) RETURNING *'
+        `INSERT INTO store_settings (admin_id, store_name) VALUES ($1, 'Kasir Online') RETURNING *`,
+        [tid]
       );
       return res.json(inserted[0]);
     }
@@ -19,7 +21,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // PUT /api/settings — simpan pengaturan toko (admin only)
-router.put('/', requireAdmin, async (req, res, next) => {
+router.put('/', authenticate, requireAdmin, async (req, res, next) => {
   try {
     const {
       store_name, store_tagline, store_address,
@@ -28,48 +30,51 @@ router.put('/', requireAdmin, async (req, res, next) => {
       qris_image, bank_name, bank_account_number, bank_account_name, bank_branch,
     } = req.body;
 
-    if (!store_name?.trim()) {
-      return res.status(400).json({ error: 'Nama toko wajib diisi' });
-    }
+    if (!store_name?.trim()) return res.status(400).json({ error: 'Nama toko wajib diisi' });
 
-    const { rows } = await pool.query(`
-      INSERT INTO store_settings
-        (id, store_name, store_tagline, store_address, store_phone, store_email, store_website,
-         footer_msg, show_footer_note,
-         qris_image, bank_name, bank_account_number, bank_account_name, bank_branch,
-         updated_at)
-      VALUES (1, $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, NOW())
-      ON CONFLICT (id) DO UPDATE SET
-        store_name           = EXCLUDED.store_name,
-        store_tagline        = EXCLUDED.store_tagline,
-        store_address        = EXCLUDED.store_address,
-        store_phone          = EXCLUDED.store_phone,
-        store_email          = EXCLUDED.store_email,
-        store_website        = EXCLUDED.store_website,
-        footer_msg           = EXCLUDED.footer_msg,
-        show_footer_note     = EXCLUDED.show_footer_note,
-        qris_image           = EXCLUDED.qris_image,
-        bank_name            = EXCLUDED.bank_name,
-        bank_account_number  = EXCLUDED.bank_account_number,
-        bank_account_name    = EXCLUDED.bank_account_name,
-        bank_branch          = EXCLUDED.bank_branch,
-        updated_at           = NOW()
-      RETURNING *
-    `, [
-      store_name.trim(),
-      store_tagline?.trim()          || '',
-      store_address?.trim()          || '',
-      store_phone?.trim()            || '',
-      store_email?.trim()            || '',
-      store_website?.trim()          || '',
-      footer_msg?.trim()             || '',
-      show_footer_note !== false,
-      qris_image?.trim()             || '',
-      bank_name?.trim()              || '',
-      bank_account_number?.trim()    || '',
-      bank_account_name?.trim()      || '',
-      bank_branch?.trim()            || '',
-    ]);
+    const tid = tenantId(req.user);
+    const { rows: existing } = await pool.query(
+      'SELECT id FROM store_settings WHERE admin_id = $1',
+      [tid]
+    );
+
+    let rows;
+    if (existing.length > 0) {
+      const result = await pool.query(`
+        UPDATE store_settings SET
+          store_name=$1, store_tagline=$2, store_address=$3, store_phone=$4,
+          store_email=$5, store_website=$6, footer_msg=$7, show_footer_note=$8,
+          qris_image=$9, bank_name=$10, bank_account_number=$11,
+          bank_account_name=$12, bank_branch=$13, updated_at=NOW()
+        WHERE admin_id=$14 RETURNING *`,
+        [
+          store_name.trim(), store_tagline?.trim() || '', store_address?.trim() || '',
+          store_phone?.trim() || '', store_email?.trim() || '', store_website?.trim() || '',
+          footer_msg?.trim() || '', show_footer_note !== false,
+          qris_image?.trim() || '', bank_name?.trim() || '',
+          bank_account_number?.trim() || '', bank_account_name?.trim() || '',
+          bank_branch?.trim() || '', tid,
+        ]
+      );
+      rows = result.rows;
+    } else {
+      const result = await pool.query(`
+        INSERT INTO store_settings
+          (admin_id, store_name, store_tagline, store_address, store_phone, store_email,
+           store_website, footer_msg, show_footer_note, qris_image, bank_name,
+           bank_account_number, bank_account_name, bank_branch)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+        [
+          tid, store_name.trim(), store_tagline?.trim() || '', store_address?.trim() || '',
+          store_phone?.trim() || '', store_email?.trim() || '', store_website?.trim() || '',
+          footer_msg?.trim() || '', show_footer_note !== false,
+          qris_image?.trim() || '', bank_name?.trim() || '',
+          bank_account_number?.trim() || '', bank_account_name?.trim() || '',
+          bank_branch?.trim() || '',
+        ]
+      );
+      rows = result.rows;
+    }
 
     res.json(rows[0]);
   } catch (err) { next(err); }

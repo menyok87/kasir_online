@@ -1,24 +1,25 @@
 const express = require('express');
-const router = express.Router();
-const pool = require('../database/db');
-const { requireAdmin } = require('../middleware/authMiddleware');
+const router  = express.Router();
+const pool    = require('../database/db');
+const { authenticate, requireAdmin, tenantId } = require('../middleware/authMiddleware');
 
-async function generateInvoiceNumber(client) {
+async function generateInvoiceNumber(client, adminId) {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const { rows } = await client.query(
-    "SELECT COUNT(*)::int as cnt FROM transactions WHERE invoice_number LIKE $1",
-    [`INV-${date}-%`]
+    "SELECT COUNT(*)::int as cnt FROM transactions WHERE invoice_number LIKE $1 AND admin_id = $2",
+    [`INV-${date}-%`, adminId]
   );
   const seq = String(rows[0].cnt + 1).padStart(4, '0');
   return `INV-${date}-${seq}`;
 }
 
-// GET /api/transactions - Daftar transaksi
-router.get('/', async (req, res, next) => {
+// GET /api/transactions — hanya transaksi milik tenant
+router.get('/', authenticate, async (req, res, next) => {
   try {
     const { from, to, limit = 50, offset = 0 } = req.query;
-    const params = [];
-    let where = '';
+    const tid    = tenantId(req.user);
+    const params = [tid];
+    let where = 'AND admin_id = $1';
 
     if (from) { params.push(from); where += ` AND created_at::date >= $${params.length}`; }
     if (to)   { params.push(to);   where += ` AND created_at::date <= $${params.length}`; }
@@ -27,17 +28,17 @@ router.get('/', async (req, res, next) => {
     params.push(Number(offset));
 
     const { rows } = await pool.query(
-      `SELECT * FROM transactions WHERE 1=1${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      `SELECT * FROM transactions WHERE 1=1 ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
 
-    const countParams = [];
-    let countWhere = '';
+    const countParams = [tid];
+    let countWhere = 'AND admin_id = $1';
     if (from) { countParams.push(from); countWhere += ` AND created_at::date >= $${countParams.length}`; }
     if (to)   { countParams.push(to);   countWhere += ` AND created_at::date <= $${countParams.length}`; }
 
     const { rows: countRows } = await pool.query(
-      `SELECT COUNT(*)::int as total FROM transactions WHERE 1=1${countWhere}`,
+      `SELECT COUNT(*)::int as total FROM transactions WHERE 1=1 ${countWhere}`,
       countParams
     );
 
@@ -45,11 +46,15 @@ router.get('/', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/transactions/:id - Detail transaksi beserta item
-router.get('/:id', async (req, res, next) => {
+// GET /api/transactions/:id
+router.get('/:id', authenticate, async (req, res, next) => {
   try {
-    const { rows: txRows } = await pool.query('SELECT * FROM transactions WHERE id = $1', [req.params.id]);
-    if (txRows.length === 0) return res.status(404).json({ error: 'Transaksi tidak ditemukan' });
+    const tid = tenantId(req.user);
+    const { rows: txRows } = await pool.query(
+      'SELECT * FROM transactions WHERE id = $1 AND admin_id = $2',
+      [req.params.id, tid]
+    );
+    if (!txRows.length) return res.status(404).json({ error: 'Transaksi tidak ditemukan' });
 
     const { rows: items } = await pool.query(
       'SELECT * FROM transaction_items WHERE transaction_id = $1',
@@ -59,28 +64,29 @@ router.get('/:id', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/transactions - Buat transaksi baru (atomic)
-router.post('/', async (req, res, next) => {
+// POST /api/transactions — buat transaksi (atomic)
+router.post('/', authenticate, async (req, res, next) => {
   const client = await pool.connect();
   try {
     const { items, payment_method = 'cash', amount_paid, discount = 0, tax = 0, notes = '' } = req.body;
-
     if (!items || items.length === 0) {
       return res.status(400).json({ error: 'Keranjang belanja kosong' });
     }
 
+    const tid = tenantId(req.user);
+    if (!tid) return res.status(400).json({ error: 'Tidak dapat menentukan tenant. Pastikan akun terhubung ke admin.' });
+
     await client.query('BEGIN');
 
-    // Validasi produk & hitung total
     let subtotal = 0;
     const enrichedItems = [];
 
     for (const item of items) {
       const { rows: productRows } = await client.query(
-        'SELECT * FROM products WHERE id = $1 AND is_active = TRUE',
-        [item.product_id]
+        'SELECT * FROM products WHERE id = $1 AND is_active = TRUE AND admin_id = $2',
+        [item.product_id, tid]
       );
-      if (productRows.length === 0) {
+      if (!productRows.length) {
         throw Object.assign(new Error(`Produk ID ${item.product_id} tidak ditemukan`), { status: 404 });
       }
       const product = productRows[0];
@@ -99,31 +105,26 @@ router.post('/', async (req, res, next) => {
     if (Number(amount_paid) < grandTotal) {
       throw Object.assign(new Error('Pembayaran kurang dari total belanja'), { status: 400 });
     }
-    const changeAmount = Number(amount_paid) - grandTotal;
-    const invoiceNumber = await generateInvoiceNumber(client);
+    const changeAmount  = Number(amount_paid) - grandTotal;
+    const invoiceNumber = await generateInvoiceNumber(client, tid);
 
-    // Insert transaksi
     const { rows: txRows } = await client.query(
       `INSERT INTO transactions
-         (invoice_number, subtotal, discount, tax, grand_total, amount_paid, change_amount, payment_method, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-       RETURNING *`,
-      [invoiceNumber, subtotal, Number(discount), Number(tax), grandTotal, Number(amount_paid), changeAmount, payment_method, notes]
+         (admin_id, invoice_number, subtotal, discount, tax, grand_total, amount_paid, change_amount, payment_method, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      [tid, invoiceNumber, subtotal, Number(discount), Number(tax), grandTotal, Number(amount_paid), changeAmount, payment_method, notes]
     );
     const transactionId = txRows[0].id;
 
-    // Insert items & kurangi stok
     const savedItems = [];
     for (const { product, quantity, subtotal: lineSubtotal } of enrichedItems) {
       const { rows: itemRows } = await client.query(
         `INSERT INTO transaction_items
            (transaction_id, product_id, product_name, product_sku, price, quantity, subtotal)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)
-         RETURNING *`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
         [transactionId, product.id, product.name, product.sku, product.price, quantity, lineSubtotal]
       );
       savedItems.push(itemRows[0]);
-
       await client.query(
         'UPDATE products SET stock = stock - $1, updated_at = NOW() WHERE id = $2',
         [quantity, product.id]
@@ -140,24 +141,24 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// DELETE /api/transactions/:id - Batalkan transaksi & kembalikan stok (admin only)
-router.delete('/:id', requireAdmin, async (req, res, next) => {
+// DELETE /api/transactions/:id — batalkan & kembalikan stok
+router.delete('/:id', authenticate, requireAdmin, async (req, res, next) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    const tid = tenantId(req.user);
 
     const { rows: txRows } = await client.query(
-      'SELECT * FROM transactions WHERE id = $1',
-      [req.params.id]
+      'SELECT * FROM transactions WHERE id = $1 AND admin_id = $2',
+      [req.params.id, tid]
     );
-    if (txRows.length === 0) throw Object.assign(new Error('Transaksi tidak ditemukan'), { status: 404 });
+    if (!txRows.length) throw Object.assign(new Error('Transaksi tidak ditemukan'), { status: 404 });
 
     const { rows: items } = await client.query(
       'SELECT * FROM transaction_items WHERE transaction_id = $1',
       [req.params.id]
     );
 
-    // Kembalikan stok
     for (const item of items) {
       if (item.product_id) {
         await client.query(
