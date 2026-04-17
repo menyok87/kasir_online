@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -13,8 +14,17 @@ export default {
           500: '#3b82f6',
           600: '#2563eb',
           700: '#1d4ed8',
+        },
+        gray: {
+          950: '#0a0f1e',
         }
-      }
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.2s ease-out',
+      },
+      keyframes: {
+        fadeIn: { from: { opacity: 0, transform: 'translateY(4px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
+      },
     },
   },
   plugins: [],

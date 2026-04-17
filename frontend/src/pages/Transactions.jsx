@@ -131,19 +131,19 @@ export default function Transactions() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 md:mb-6">
         <div>
-          <h2 className="text-lg md:text-xl font-semibold text-gray-800">Riwayat Transaksi</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{total} transaksi ditemukan</p>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-100">Riwayat Transaksi</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{total} transaksi ditemukan</p>
         </div>
       </div>
 
       {/* Filter tanggal — stack di mobile */}
       <div className="flex flex-col sm:flex-row gap-2 mb-4 sm:items-end">
         <div className="flex-1 sm:flex-none">
-          <label className="block text-xs text-gray-500 mb-1">Dari Tanggal</label>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Dari Tanggal</label>
           <input type="date" className="input text-sm w-full sm:w-40" value={from} onChange={e => setFrom(e.target.value)} />
         </div>
         <div className="flex-1 sm:flex-none">
-          <label className="block text-xs text-gray-500 mb-1">Sampai Tanggal</label>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Sampai Tanggal</label>
           <input type="date" className="input text-sm w-full sm:w-40" value={to} onChange={e => setTo(e.target.value)} />
         </div>
         {(from || to) && (
@@ -157,26 +157,26 @@ export default function Transactions() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[380px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 font-medium">No. Faktur</th>
-                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 font-medium hidden sm:table-cell">Waktu</th>
-                  <th className="text-center px-4 md:px-6 py-3 text-gray-600 font-medium hidden md:table-cell">Pembayaran</th>
-                  <th className="text-right px-4 md:px-6 py-3 text-gray-600 font-medium">Total</th>
+                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium">No. Faktur</th>
+                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium hidden sm:table-cell">Waktu</th>
+                  <th className="text-center px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium hidden md:table-cell">Pembayaran</th>
+                  <th className="text-right px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium">Total</th>
                   <th className="px-4 md:px-6 py-3 w-24"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {transactions.map(tx => (
-                  <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={tx.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                     <td className="px-4 md:px-6 py-3">
-                      <p className="font-mono font-medium text-gray-800 text-xs md:text-sm">{tx.invoice_number}</p>
+                      <p className="font-mono font-medium text-gray-800 dark:text-gray-100 text-xs md:text-sm">{tx.invoice_number}</p>
                       {/* Waktu tampil di sini pada mobile */}
-                      <p className="text-xs text-gray-400 sm:hidden mt-0.5">
+                      <p className="text-xs text-gray-400 dark:text-gray-500 sm:hidden mt-0.5">
                         {new Date(tx.created_at).toLocaleString('id-ID', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })}
                       </p>
                     </td>
-                    <td className="px-4 md:px-6 py-3 text-gray-500 text-xs md:text-sm hidden sm:table-cell whitespace-nowrap">
+                    <td className="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 text-xs md:text-sm hidden sm:table-cell whitespace-nowrap">
                       {new Date(tx.created_at).toLocaleString('id-ID')}
                     </td>
                     <td className="px-4 md:px-6 py-3 text-center hidden md:table-cell">
@@ -188,15 +188,15 @@ export default function Transactions() {
                         {paymentLabel[tx.payment_method] || tx.payment_method}
                       </Badge>
                     </td>
-                    <td className="px-4 md:px-6 py-3 text-right font-semibold text-gray-800 whitespace-nowrap text-xs md:text-sm">
+                    <td className="px-4 md:px-6 py-3 text-right font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap text-xs md:text-sm">
                       {formatRupiah(tx.grand_total)}
                     </td>
                     <td className="px-4 md:px-6 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        <button className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600" onClick={() => openDetail(tx.id)} title="Detail"><Eye size={14}/></button>
-                        <button className="p-1.5 rounded-lg hover:bg-green-50 text-green-600" onClick={() => openAndPrint(tx.id)} title="Cetak"><Printer size={14}/></button>
+                        <button className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600" onClick={() => openDetail(tx.id)} title="Detail"><Eye size={14}/></button>
+                        <button className="p-1.5 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/30 text-green-600" onClick={() => openAndPrint(tx.id)} title="Cetak"><Printer size={14}/></button>
                         {isAdmin && (
-                          <button className="p-1.5 rounded-lg hover:bg-red-50 text-red-600" onClick={() => setDeleteTarget(tx)} title="Batalkan"><Trash2 size={14}/></button>
+                          <button className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600" onClick={() => setDeleteTarget(tx)} title="Batalkan"><Trash2 size={14}/></button>
                         )}
                       </div>
                     </td>
@@ -215,7 +215,7 @@ export default function Transactions() {
         ) : (
           <>
             <ReceiptContent tx={detail} settings={settings} />
-            <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
+            <div className="flex justify-end mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
               <button className="btn-secondary flex items-center gap-2" onClick={() => printReceipt(detail, settings)}>
                 <Printer size={16} /> Cetak Struk
               </button>

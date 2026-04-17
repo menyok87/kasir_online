@@ -138,52 +138,52 @@ export default function Sidebar({ onClose }) {
   const navItems = allMenus.filter(m => can?.[m.feature])
 
   return (
-    <aside className="w-64 bg-gray-900 text-white flex flex-col h-screen">
-      {/* Logo + tombol tutup (mobile) */}
-      <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-700">
-        <div className="bg-blue-600 p-2 rounded-lg flex-shrink-0">
+    <aside className="w-64 bg-gray-950 dark:bg-gray-900 text-white flex flex-col h-screen border-r border-gray-800">
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-800">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-700 p-2 rounded-xl flex-shrink-0 shadow-lg shadow-blue-500/20">
           <Store size={18} className="text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="font-bold text-sm leading-tight">Kasir Online</h1>
-          <p className="text-xs text-gray-400">Point of Sale</p>
+          <h1 className="font-bold text-sm leading-tight text-white">Kasir Online</h1>
+          <p className="text-xs text-gray-500">Point of Sale</p>
         </div>
         <button
           onClick={onClose}
-          className="lg:hidden p-1 rounded-lg hover:bg-gray-700 text-gray-400 flex-shrink-0"
+          className="lg:hidden p-1.5 rounded-lg hover:bg-gray-800 text-gray-500 flex-shrink-0 transition-colors"
         >
           <X size={18} />
         </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                  : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
               }`
             }
           >
-            <Icon size={18} className="flex-shrink-0" />
+            <Icon size={17} className="flex-shrink-0" />
             {label}
           </NavLink>
         ))}
       </nav>
 
-      {/* User info + logout */}
-      <div className="px-3 py-3 border-t border-gray-700">
-        <div className="flex items-center gap-2 px-2 py-2 rounded-lg mb-1">
-          <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-            <User size={13} />
+      {/* User info + actions */}
+      <div className="px-3 py-3 border-t border-gray-800">
+        <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl mb-1 bg-gray-900/50">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold shadow">
+            {user?.name?.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-white truncate">{user?.name}</p>
+            <p className="text-xs font-semibold text-gray-200 truncate">{user?.name}</p>
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full text-white ${roleBadgeColor[user?.role] || 'bg-gray-600'}`}>
               {roleLabel[user?.role] || user?.role}
             </span>
@@ -191,16 +191,16 @@ export default function Sidebar({ onClose }) {
         </div>
         <button
           onClick={() => setChangePassOpen(true)}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-gray-500 hover:bg-gray-800 hover:text-gray-200 transition-all"
         >
-          <KeyRound size={15} />
+          <KeyRound size={14} />
           Ganti Password
         </button>
         <button
           onClick={logout}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-gray-500 hover:bg-red-900/30 hover:text-red-400 transition-all"
         >
-          <LogOut size={15} />
+          <LogOut size={14} />
           Keluar
         </button>
       </div>

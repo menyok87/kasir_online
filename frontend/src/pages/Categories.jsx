@@ -22,7 +22,7 @@ function CategoryForm({ initial, onSubmit, onClose }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Kategori</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Nama Kategori</label>
         <input
           className="input"
           value={name}
@@ -94,8 +94,8 @@ export default function Categories() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h2 className="text-lg md:text-xl font-semibold text-gray-800">Kategori Produk</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{categories.length} kategori terdaftar</p>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-100">Kategori Produk</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{categories.length} kategori terdaftar</p>
         </div>
         <button className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto" onClick={() => setModalOpen(true)}>
           <Plus size={16} /> Tambah Kategori

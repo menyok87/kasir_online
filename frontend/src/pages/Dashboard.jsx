@@ -11,10 +11,10 @@ function formatRupiah(n) {
 
 function StatCard({ icon: Icon, label, value, sub, color = 'blue' }) {
   const colors = {
-    blue:   'bg-blue-50 text-blue-600',
-    green:  'bg-green-50 text-green-600',
-    purple: 'bg-purple-50 text-purple-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
+    blue:   'bg-blue-50 dark:bg-blue-900/20 text-blue-600',
+    green:  'bg-green-50 dark:bg-green-900/20 text-green-600',
+    purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600',
+    yellow: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600',
   }
   return (
     <div className="card flex items-start gap-3 p-4 md:p-6">
@@ -22,9 +22,9 @@ function StatCard({ icon: Icon, label, value, sub, color = 'blue' }) {
         <Icon size={20} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs md:text-sm text-gray-500">{label}</p>
-        <p className="text-xl md:text-2xl font-bold text-gray-800 mt-0.5 truncate">{value}</p>
-        {sub && <p className="text-xs text-gray-400 mt-0.5 hidden sm:block">{sub}</p>}
+        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">{label}</p>
+        <p className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 mt-0.5 truncate">{value}</p>
+        {sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 hidden sm:block">{sub}</p>}
       </div>
     </div>
   )
@@ -33,10 +33,10 @@ function StatCard({ icon: Icon, label, value, sub, color = 'blue' }) {
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 text-xs md:text-sm">
-      <p className="text-gray-500 mb-1">{label}</p>
-      <p className="font-bold text-gray-800">{formatRupiah(payload[0].value)}</p>
-      <p className="text-gray-400">{payload[1]?.value || 0} transaksi</p>
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 px-3 py-2 text-xs md:text-sm">
+      <p className="text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+      <p className="font-bold text-gray-800 dark:text-gray-100">{formatRupiah(payload[0].value)}</p>
+      <p className="text-gray-400 dark:text-gray-500">{payload[1]?.value || 0} transaksi</p>
     </div>
   )
 }
@@ -85,11 +85,11 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
         {/* Chart */}
         <div className="card p-4 md:p-6 xl:col-span-2">
-          <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-3 md:mb-4">
+          <h3 className="text-sm md:text-base font-semibold text-gray-800 dark:text-gray-100 mb-3 md:mb-4">
             Pendapatan 7 Hari Terakhir
           </h3>
           {chartData.every(d => d.revenue === 0) ? (
-            <div className="flex items-center justify-center h-44 text-gray-400 text-sm">
+            <div className="flex items-center justify-center h-44 text-gray-400 dark:text-gray-500 text-sm">
               Belum ada transaksi
             </div>
           ) : (
@@ -108,23 +108,23 @@ export default function Dashboard() {
 
         {/* Top Products */}
         <div className="card p-4 md:p-6">
-          <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-3 md:mb-4">
+          <h3 className="text-sm md:text-base font-semibold text-gray-800 dark:text-gray-100 mb-3 md:mb-4">
             Produk Terlaris Hari Ini
           </h3>
           {!summary?.top_products?.length ? (
-            <p className="text-sm text-gray-400 text-center py-6">Belum ada transaksi hari ini</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">Belum ada transaksi hari ini</p>
           ) : (
             <div className="space-y-3">
               {summary.top_products.map((p, i) => (
                 <div key={i} className="flex items-center gap-2 md:gap-3">
-                  <span className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                  <span className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs md:text-sm font-medium text-gray-800 truncate">{p.product_name}</p>
-                    <p className="text-xs text-gray-400">{p.total_qty} terjual</p>
+                    <p className="text-xs md:text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{p.product_name}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{p.total_qty} terjual</p>
                   </div>
-                  <span className="text-xs md:text-sm font-semibold text-gray-700 flex-shrink-0">
+                  <span className="text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">
                     {formatRupiah(p.total_revenue)}
                   </span>
                 </div>

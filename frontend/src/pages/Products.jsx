@@ -79,13 +79,13 @@ function ProductForm({ initial, categories, onSubmit, onClose }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Upload Gambar */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Gambar Produk</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Gambar Produk</label>
         {imagePreview ? (
           <div className="relative inline-block">
             <img
               src={getImageUrl(imagePreview)}
               alt="preview"
-              className="w-28 h-28 object-cover rounded-xl border border-gray-200 shadow-sm"
+              className="w-28 h-28 object-cover rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
             />
             <button
               type="button"
@@ -99,7 +99,7 @@ function ProductForm({ initial, categories, onSubmit, onClose }) {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center w-28 h-28 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-400 hover:text-blue-500"
+            className="flex flex-col items-center justify-center w-28 h-28 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-gray-400 dark:text-gray-500 hover:text-blue-500"
           >
             <ImagePlus size={24} />
             <span className="text-xs mt-1">Pilih Foto</span>
@@ -121,31 +121,31 @@ function ProductForm({ initial, categories, onSubmit, onClose }) {
             Ganti gambar
           </button>
         )}
-        <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP — maks 3 MB</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">JPG, PNG, WebP — maks 3 MB</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nama Produk <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Nama Produk <span className="text-red-500">*</span></label>
           <input className="input" value={form.name} onChange={set('name')} required placeholder="Nama produk" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Kategori</label>
           <select className="input" value={form.category_id} onChange={set('category_id')}>
             <option value="">-- Pilih --</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">SKU</label>
           <input className="input" value={form.sku} onChange={set('sku')} placeholder="Kode produk" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Harga (Rp) <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Harga (Rp) <span className="text-red-500">*</span></label>
           <input className="input" type="number" min="0" value={form.price} onChange={set('price')} required placeholder="0" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Stok <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Stok <span className="text-red-500">*</span></label>
           <input className="input" type="number" min="0" value={form.stock} onChange={set('stock')} required placeholder="0" />
         </div>
       </div>
@@ -208,8 +208,8 @@ export default function Products() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h2 className="text-lg md:text-xl font-semibold text-gray-800">Manajemen Produk</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{products.length} produk ditemukan</p>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-100">Manajemen Produk</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{products.length} produk ditemukan</p>
         </div>
         <button className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto" onClick={() => setModalOpen(true)}>
           <Plus size={16} /> Tambah Produk
@@ -238,36 +238,36 @@ export default function Products() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[480px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 font-medium">Produk</th>
-                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 font-medium hidden md:table-cell">Kategori</th>
-                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 font-medium hidden lg:table-cell">SKU</th>
-                  <th className="text-right px-4 md:px-6 py-3 text-gray-600 font-medium">Harga</th>
-                  <th className="text-center px-4 md:px-6 py-3 text-gray-600 font-medium">Stok</th>
+                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium">Produk</th>
+                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium hidden md:table-cell">Kategori</th>
+                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium hidden lg:table-cell">SKU</th>
+                  <th className="text-right px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium">Harga</th>
+                  <th className="text-center px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium">Stok</th>
                   <th className="px-4 md:px-6 py-3 w-20"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {products.map(p => (
-                  <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                     <td className="px-4 md:px-6 py-3">
                       <div className="flex items-center gap-2 md:gap-3">
                         {p.image_url ? (
-                          <img src={getImageUrl(p.image_url)} alt={p.name} className="w-9 h-9 md:w-10 md:h-10 rounded-lg object-cover bg-gray-100 flex-shrink-0" onError={e => e.target.style.display='none'} />
+                          <img src={getImageUrl(p.image_url)} alt={p.name} className="w-9 h-9 md:w-10 md:h-10 rounded-lg object-cover bg-gray-100 dark:bg-gray-800 flex-shrink-0" onError={e => e.target.style.display='none'} />
                         ) : (
-                          <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">IMG</div>
+                          <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs flex-shrink-0">IMG</div>
                         )}
                         <div className="min-w-0">
-                          <p className="font-medium text-gray-800 truncate max-w-[140px] md:max-w-none">{p.name}</p>
+                          <p className="font-medium text-gray-800 dark:text-gray-100 truncate max-w-[140px] md:max-w-none">{p.name}</p>
                           {/* Kategori tampil di sini pada mobile */}
-                          <p className="text-xs text-gray-400 md:hidden">{p.category_name || 'Tanpa Kategori'}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 md:hidden">{p.category_name || 'Tanpa Kategori'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 md:px-6 py-3 text-gray-500 hidden md:table-cell">{p.category_name || '-'}</td>
-                    <td className="px-4 md:px-6 py-3 text-gray-500 font-mono text-xs hidden lg:table-cell">{p.sku || '-'}</td>
-                    <td className="px-4 md:px-6 py-3 text-right font-medium text-gray-800 whitespace-nowrap">{formatRupiah(p.price)}</td>
+                    <td className="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 hidden md:table-cell">{p.category_name || '-'}</td>
+                    <td className="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs hidden lg:table-cell">{p.sku || '-'}</td>
+                    <td className="px-4 md:px-6 py-3 text-right font-medium text-gray-800 dark:text-gray-100 whitespace-nowrap">{formatRupiah(p.price)}</td>
                     <td className="px-4 md:px-6 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         {p.stock <= 5 && p.stock > 0 && <AlertTriangle size={12} className="text-yellow-500" />}
@@ -276,8 +276,8 @@ export default function Products() {
                     </td>
                     <td className="px-4 md:px-6 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        <button className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600" onClick={() => setEditTarget(p)}><Pencil size={14}/></button>
-                        <button className="p-1.5 rounded-lg hover:bg-red-50 text-red-600" onClick={() => setDeleteTarget(p)}><Trash2 size={14}/></button>
+                        <button className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600" onClick={() => setEditTarget(p)}><Pencil size={14}/></button>
+                        <button className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600" onClick={() => setDeleteTarget(p)}><Trash2 size={14}/></button>
                       </div>
                     </td>
                   </tr>
