@@ -72,7 +72,8 @@ async function seed() {
     // Drop old global unique on sku, replace with (sku, admin_id)
     await client.query(`ALTER TABLE products DROP CONSTRAINT IF EXISTS products_sku_key`).catch(() => {});
     await client.query(`DROP INDEX IF EXISTS products_sku_admin_idx`).catch(() => {});
-    await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS products_sku_admin_idx ON products(sku, admin_id) WHERE sku IS NOT NULL`).catch(() => {});
+    // Non-partial index — PostgreSQL allows multiple NULLs in UNIQUE index (NULL != NULL)
+    await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS products_sku_admin_idx ON products(sku, admin_id)`).catch(() => {});
     if (superAdminId) {
       await client.query(`UPDATE products SET admin_id = $1 WHERE admin_id IS NULL`, [superAdminId]).catch(() => {});
     }
