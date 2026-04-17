@@ -90,6 +90,19 @@ async function seed() {
     // ── Migrasi store_settings ────────────────────────────────────────────────
     await client.query(`ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS admin_id INTEGER REFERENCES users(id) ON DELETE CASCADE`).catch(() => {});
     await client.query(`ALTER TABLE store_settings DROP CONSTRAINT IF EXISTS store_settings_id_check`).catch(() => {});
+    // Fix id column: old schema had DEFAULT 1 (not a sequence) — convert to SERIAL
+    await client.query(`
+      DO $$
+      BEGIN
+        IF (SELECT column_default FROM information_schema.columns
+            WHERE table_name='store_settings' AND column_name='id') = '1' THEN
+          CREATE SEQUENCE IF NOT EXISTS store_settings_id_seq;
+          PERFORM setval('store_settings_id_seq', COALESCE((SELECT MAX(id) FROM store_settings), 1));
+          ALTER TABLE store_settings ALTER COLUMN id DROP DEFAULT;
+          ALTER TABLE store_settings ALTER COLUMN id SET DEFAULT nextval('store_settings_id_seq');
+        END IF;
+      END $$
+    `).catch(() => {});
     // Assign old global row to superadmin
     if (superAdminId) {
       await client.query(`UPDATE store_settings SET admin_id = $1 WHERE admin_id IS NULL`, [superAdminId]).catch(() => {});

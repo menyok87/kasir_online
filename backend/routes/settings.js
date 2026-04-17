@@ -3,20 +3,20 @@ const router  = require('express').Router();
 const pool    = require('../database/db');
 const { authenticate, requireAdmin, tenantId } = require('../middleware/authMiddleware');
 
+const DEFAULT_SETTINGS = {
+  store_name: 'Kasir Online', store_tagline: 'Point of Sale',
+  store_address: '', store_phone: '', store_email: '', store_website: '',
+  footer_msg: 'Terima kasih telah berbelanja!', show_footer_note: true,
+  qris_image: '', bank_name: '', bank_account_number: '', bank_account_name: '', bank_branch: '',
+};
+
 // GET /api/settings — pengaturan toko milik tenant
 router.get('/', authenticate, async (req, res, next) => {
   try {
     const tid = tenantId(req.user);
     const { rows } = await pool.query('SELECT * FROM store_settings WHERE admin_id = $1', [tid]);
-    if (!rows.length) {
-      // Buat baris default jika belum ada
-      const { rows: inserted } = await pool.query(
-        `INSERT INTO store_settings (admin_id, store_name) VALUES ($1, 'Kasir Online') RETURNING *`,
-        [tid]
-      );
-      return res.json(inserted[0]);
-    }
-    res.json(rows[0]);
+    // Return defaults jika belum ada row — row dibuat saat PUT pertama kali
+    res.json(rows.length ? rows[0] : DEFAULT_SETTINGS);
   } catch (err) { next(err); }
 });
 
