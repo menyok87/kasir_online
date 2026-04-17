@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
-import { Search, Plus, Minus, Trash2, ShoppingCart, Printer, CheckCircle, Tag, ArrowLeft, X } from 'lucide-react'
+import { Search, Plus, Minus, Trash2, ShoppingCart, Printer, CheckCircle, Tag, ArrowLeft, X, FileDown } from 'lucide-react'
 import { getProducts, getCategories, createTransaction, getSettings } from '../api'
 import { getImageUrl } from '../utils/getImageUrl'
 import Modal from '../components/ui/Modal'
 import Badge from '../components/ui/Badge'
 import { FullPageSpinner } from '../components/ui/Spinner'
-import { printReceipt } from '../utils/printReceipt'
+import { printReceipt, downloadPDF } from '../utils/printReceipt'
 
 function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -159,17 +159,23 @@ function ReceiptModal({ isOpen, transaction, settings, onClose }) {
         </div>
       </div>
 
-      <div className="flex gap-3 mt-4">
+      <div className="flex gap-2 mt-4">
         <button
-          className="btn-secondary flex-1 flex items-center justify-center gap-2"
+          className="btn-secondary flex-1 flex items-center justify-center gap-1.5 text-xs"
           onClick={() => printReceipt(transaction, settings ?? {})}
         >
-          <Printer size={15} /> Cetak Struk
+          <Printer size={14} /> Struk
         </button>
-        <button className="btn-primary flex-1" onClick={onClose}>
-          Transaksi Baru
+        <button
+          className="btn-secondary flex-1 flex items-center justify-center gap-1.5 text-xs"
+          onClick={() => downloadPDF(transaction, settings ?? {})}
+        >
+          <FileDown size={14} /> PDF
         </button>
       </div>
+      <button className="btn-primary w-full mt-2" onClick={onClose}>
+        Transaksi Baru
+      </button>
     </Modal>
   )
 }

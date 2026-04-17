@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
-import { Eye, Trash2, Printer } from 'lucide-react'
+import { Eye, Trash2, Printer, FileDown } from 'lucide-react'
 import { getTransactions, getTransaction, deleteTransaction, getSettings } from '../api'
 import { useAuth } from '../contexts/AuthContext'
 import Modal from '../components/ui/Modal'
@@ -8,7 +8,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog'
 import EmptyState from '../components/ui/EmptyState'
 import Badge from '../components/ui/Badge'
 import { FullPageSpinner } from '../components/ui/Spinner'
-import { printReceipt } from '../utils/printReceipt'
+import { printReceipt, downloadPDF } from '../utils/printReceipt'
 
 function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -215,9 +215,12 @@ export default function Transactions() {
         ) : (
           <>
             <ReceiptContent tx={detail} settings={settings} />
-            <div className="flex justify-end mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-              <button className="btn-secondary flex items-center gap-2" onClick={() => printReceipt(detail, settings)}>
-                <Printer size={16} /> Cetak Struk
+            <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <button className="btn-secondary flex-1 flex items-center justify-center gap-2" onClick={() => printReceipt(detail, settings)}>
+                <Printer size={15} /> Cetak Struk
+              </button>
+              <button className="btn-secondary flex-1 flex items-center justify-center gap-2" onClick={() => downloadPDF(detail, settings)}>
+                <FileDown size={15} /> Download PDF
               </button>
             </div>
           </>
