@@ -1,29 +1,39 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Store, Eye, EyeOff } from 'lucide-react'
+import { Store, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../api'
-import toast from 'react-hot-toast'
 
 export default function Login() {
   const [form, setForm]       = useState({ username: '', password: '' })
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState('')
   const { login }             = useAuth()
   const navigate              = useNavigate()
 
-  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
+  const set = k => e => {
+    setError('')
+    setForm(f => ({ ...f, [k]: e.target.value }))
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
+    setError('')
     setLoading(true)
     try {
       const { data } = await api.post('/auth/login', form)
       login(data.token, data.user)
-      // Admin → dashboard, kasir → POS
       navigate(data.user.role === 'admin' ? '/dashboard' : '/pos', { replace: true })
     } catch (err) {
-      toast.error(err.message)
+      const msg = err.message || 'Terjadi kesalahan'
+      if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('password') || msg.toLowerCase().includes('salah') || msg.toLowerCase().includes('tidak ditemukan') || msg.toLowerCase().includes('credentials')) {
+        setError('Username atau password salah. Periksa kembali dan coba lagi.')
+      } else if (msg.toLowerCase().includes('nonaktif') || msg.toLowerCase().includes('inactive') || msg.toLowerCase().includes('disabled')) {
+        setError('Akun Anda dinonaktifkan. Hubungi administrator.')
+      } else {
+        setError(msg)
+      }
     } finally {
       setLoading(false)
     }
@@ -42,10 +52,18 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Pesan error */}
+          {error && (
+            <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl px-3.5 py-3 text-sm">
+              <AlertCircle size={16} className="flex-shrink-0 mt-0.5 text-red-500" />
+              <span>{error}</span>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
             <input
-              className="input"
+              className={`input transition-colors ${error ? 'border-red-300 focus:border-red-400 focus:ring-red-100' : ''}`}
               placeholder="Masukkan username"
               value={form.username}
               onChange={set('username')}
@@ -58,7 +76,7 @@ export default function Login() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <div className="relative">
               <input
-                className="input pr-10"
+                className={`input pr-10 transition-colors ${error ? 'border-red-300 focus:border-red-400 focus:ring-red-100' : ''}`}
                 type={showPass ? 'text' : 'password'}
                 placeholder="Masukkan password"
                 value={form.password}
@@ -77,7 +95,10 @@ export default function Login() {
           </div>
 
           <button type="submit" className="btn-primary w-full mt-2" disabled={loading}>
-            {loading ? 'Memproses...' : 'Masuk'}
+            {loading
+              ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Memproses...</span>
+              : 'Masuk'
+            }
           </button>
         </form>
 
