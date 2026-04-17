@@ -1,9 +1,13 @@
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Tags, Package,
-  ShoppingCart, Receipt, Store, X, LogOut, User, Users, Settings
+  ShoppingCart, Receipt, Store, X, LogOut, User, Users, Settings, KeyRound, Eye, EyeOff
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useAuth } from '../../contexts/AuthContext'
+import { changePassword } from '../../api'
+import Modal from '../ui/Modal'
 
 const allMenus = [
   { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard',       feature: 'dashboard' },
@@ -29,8 +33,108 @@ const roleBadgeColor = {
   kasir:      'bg-green-600',
 }
 
+function ChangePasswordModal({ isOpen, onClose }) {
+  const [form, setForm]       = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew]         = useState(false)
+  const [loading, setLoading]         = useState(false)
+
+  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (form.newPassword !== form.confirmPassword) {
+      return toast.error('Password baru dan konfirmasi tidak cocok')
+    }
+    if (form.newPassword.length < 6) {
+      return toast.error('Password baru minimal 6 karakter')
+    }
+    setLoading(true)
+    try {
+      await changePassword({ currentPassword: form.currentPassword, newPassword: form.newPassword })
+      toast.success('Password berhasil diubah')
+      setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      onClose()
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function handleClose() {
+    setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    onClose()
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} title="Ganti Password" size="sm">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Password Lama</label>
+          <div className="relative">
+            <input
+              className="input pr-10"
+              type={showCurrent ? 'text' : 'password'}
+              value={form.currentPassword}
+              onChange={set('currentPassword')}
+              required
+              placeholder="Masukkan password lama"
+              autoComplete="current-password"
+            />
+            <button type="button" onClick={() => setShowCurrent(s => !s)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showCurrent ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
+          <div className="relative">
+            <input
+              className="input pr-10"
+              type={showNew ? 'text' : 'password'}
+              value={form.newPassword}
+              onChange={set('newPassword')}
+              required
+              placeholder="Minimal 6 karakter"
+              autoComplete="new-password"
+            />
+            <button type="button" onClick={() => setShowNew(s => !s)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showNew ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
+          <input
+            className="input"
+            type="password"
+            value={form.confirmPassword}
+            onChange={set('confirmPassword')}
+            required
+            placeholder="Ulangi password baru"
+            autoComplete="new-password"
+          />
+        </div>
+
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" className="btn-secondary" onClick={handleClose}>Batal</button>
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'Menyimpan...' : 'Simpan'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
 export default function Sidebar({ onClose }) {
   const { user, logout, can } = useAuth()
+  const [changePassOpen, setChangePassOpen] = useState(false)
   const navItems = allMenus.filter(m => can?.[m.feature])
 
   return (
@@ -86,6 +190,13 @@ export default function Sidebar({ onClose }) {
           </div>
         </div>
         <button
+          onClick={() => setChangePassOpen(true)}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+        >
+          <KeyRound size={15} />
+          Ganti Password
+        </button>
+        <button
           onClick={logout}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
         >
@@ -93,6 +204,8 @@ export default function Sidebar({ onClose }) {
           Keluar
         </button>
       </div>
+
+      <ChangePasswordModal isOpen={changePassOpen} onClose={() => setChangePassOpen(false)} />
     </aside>
   )
 }

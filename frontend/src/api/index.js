@@ -47,6 +47,9 @@ export const uploadProductImage = (file) => {
 };
 export const deleteProductImage = (filename) => api.delete('/uploads', { data: { filename } });
 
+// Auth
+export const changePassword = (data) => api.put('/auth/change-password', data);
+
 // Transactions
 export const getTransactions  = (params)  => api.get('/transactions', { params });
 export const getTransaction   = (id)      => api.get(`/transactions/${id}`);

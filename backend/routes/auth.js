@@ -42,4 +42,28 @@ router.get('/me', authenticate, (req, res) => {
   res.json({ user: req.user });
 });
 
+// PUT /api/auth/change-password
+router.put('/change-password', authenticate, async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Password lama dan baru wajib diisi' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password baru minimal 6 karakter' });
+    }
+
+    const { rows } = await pool.query('SELECT password FROM users WHERE id = $1', [req.user.id]);
+    if (!rows.length) return res.status(404).json({ error: 'User tidak ditemukan' });
+
+    const valid = await bcrypt.compare(currentPassword, rows[0].password);
+    if (!valid) return res.status(400).json({ error: 'Password lama salah' });
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hash, req.user.id]);
+
+    res.json({ message: 'Password berhasil diubah' });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;
