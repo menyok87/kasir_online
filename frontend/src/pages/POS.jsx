@@ -51,33 +51,57 @@ function ProductCard({ product, onAdd }) {
 // ── Item Keranjang ────────────────────────────────────────────────────────────
 function CartItem({ item, onIncrease, onDecrease, onRemove }) {
   return (
-    <div className="flex items-center gap-2 py-3 border-b border-gray-100">
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 leading-tight">{item.product.name}</p>
-        <p className="text-xs text-blue-600 font-medium mt-0.5">{formatRupiah(item.product.price)}</p>
+    <div className="flex items-center gap-2.5 py-2.5 border-b border-gray-100 group">
+      {/* Thumbnail */}
+      <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100">
+        {item.product.image_url ? (
+          <img
+            src={getImageUrl(item.product.image_url)}
+            alt={item.product.name}
+            className="w-full h-full object-cover"
+            onError={e => { e.target.style.display = 'none' }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Tag size={14} className="text-blue-300" />
+          </div>
+        )}
       </div>
+
+      {/* Nama & harga */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-800 leading-tight truncate">{item.product.name}</p>
+        <p className="text-xs text-blue-500 mt-0.5">{formatRupiah(item.product.price)}</p>
+      </div>
+
+      {/* Qty controls */}
       <div className="flex items-center gap-1 flex-shrink-0">
         <button
           onClick={() => onDecrease(item.product.id)}
-          className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+          className="w-6 h-6 rounded-full bg-gray-100 hover:bg-red-100 hover:text-red-500 flex items-center justify-center transition-colors"
         >
-          <Minus size={13} />
+          <Minus size={10} />
         </button>
-        <span className="w-7 text-center text-sm font-bold">{item.quantity}</span>
+        <span className="w-6 text-center text-sm font-bold text-gray-700">{item.quantity}</span>
         <button
           onClick={() => onIncrease(item.product.id)}
           disabled={item.quantity >= item.product.stock}
-          className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center disabled:opacity-40"
+          className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 flex items-center justify-center transition-colors disabled:opacity-40"
         >
-          <Plus size={13} />
+          <Plus size={10} />
         </button>
       </div>
-      <span className="text-sm font-semibold text-gray-700 w-16 text-right flex-shrink-0">
-        {formatRupiah(item.product.price * item.quantity)}
-      </span>
-      <button onClick={() => onRemove(item.product.id)} className="p-1 text-red-400 hover:text-red-600">
-        <Trash2 size={14} />
-      </button>
+
+      {/* Subtotal + hapus */}
+      <div className="text-right flex-shrink-0 min-w-[56px]">
+        <p className="text-sm font-bold text-gray-700">{formatRupiah(item.product.price * item.quantity)}</p>
+        <button
+          onClick={() => onRemove(item.product.id)}
+          className="text-xs text-red-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+        >
+          hapus
+        </button>
+      </div>
     </div>
   )
 }
@@ -202,13 +226,19 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
       {cartCount > 0 && (
         <button
           onClick={onShowCart}
-          className="lg:hidden mt-3 w-full btn-primary py-3 flex items-center justify-center gap-2 relative"
+          className="lg:hidden mt-3 w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-between px-4
+            bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200 active:scale-95 transition-all"
         >
-          <ShoppingCart size={18} />
-          <span>Lihat Keranjang</span>
-          <span className="ml-1 bg-white text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full">
-            {cartCount}
-          </span>
+          <div className="flex items-center gap-2">
+            <ShoppingCart size={18} />
+            <span>Lihat Keranjang</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+              {cartCount} item
+            </span>
+            <span className="text-white/80">›</span>
+          </div>
         </button>
       )}
     </div>
@@ -235,31 +265,38 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
     <div className="flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden
       w-full lg:w-80 lg:flex-shrink-0 h-full">
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+      {/* Header — gradient biru */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
-          {/* Tombol kembali — mobile only */}
-          <button onClick={onBack} className="lg:hidden p-1 -ml-1 rounded-lg hover:bg-gray-100 text-gray-500">
+          <button onClick={onBack} className="lg:hidden p-1 -ml-1 rounded-lg hover:bg-blue-500 text-white/80 transition-colors">
             <ArrowLeft size={18} />
           </button>
-          <ShoppingCart size={18} className="text-blue-600" />
-          <span className="font-semibold text-gray-800 text-sm">Keranjang</span>
+          <ShoppingCart size={17} className="text-white" />
+          <span className="font-semibold text-white text-sm">Keranjang</span>
           {cart.length > 0 && (
-            <Badge color="blue">{cart.reduce((s, i) => s + i.quantity, 0)}</Badge>
+            <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+              {cart.reduce((s, i) => s + i.quantity, 0)} item
+            </span>
           )}
         </div>
         {cart.length > 0 && (
-          <button onClick={onClear} className="text-xs text-red-500 hover:text-red-700">Kosongkan</button>
+          <button onClick={onClear} className="text-xs text-white/60 hover:text-white transition-colors">
+            Kosongkan
+          </button>
         )}
       </div>
 
       {/* Item list */}
-      <div className="flex-1 overflow-y-auto px-4">
+      <div className="flex-1 overflow-y-auto px-3">
         {cart.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 py-8">
-            <ShoppingCart size={36} className="mb-2 text-gray-300" />
-            <p className="text-sm">Keranjang kosong</p>
-            <p className="text-xs mt-1">Klik produk untuk menambahkan</p>
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 py-8 gap-3">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
+              <ShoppingCart size={28} className="text-gray-300" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-400">Keranjang kosong</p>
+              <p className="text-xs text-gray-300 mt-0.5">Ketuk produk untuk menambahkan</p>
+            </div>
           </div>
         ) : (
           cart.map(item => (
@@ -274,48 +311,60 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
         )}
       </div>
 
-      {/* Summary & Checkout */}
-      <div className="border-t border-gray-200 p-3 space-y-3">
+      {/* Footer */}
+      <div className="border-t border-gray-100 p-3 space-y-2.5 flex-shrink-0">
         {/* Diskon */}
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-gray-500 w-20 flex-shrink-0">Diskon (Rp)</label>
+        <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
+          <Tag size={12} className="text-gray-400 flex-shrink-0" />
+          <span className="text-xs text-gray-400 flex-shrink-0">Diskon</span>
           <input
             type="number" min="0"
-            className="input text-sm py-1.5"
+            className="flex-1 bg-transparent text-sm text-right font-medium text-gray-700 focus:outline-none min-w-0"
             value={discount}
             onChange={e => setDiscount(e.target.value)}
             placeholder="0"
           />
+          <span className="text-xs text-gray-400 flex-shrink-0">Rp</span>
         </div>
 
-        {/* Subtotal & Total */}
-        <div className="bg-gray-50 rounded-lg p-3 space-y-1.5 text-sm">
-          <div className="flex justify-between text-gray-500">
-            <span>Subtotal</span><span>{formatRupiah(subtotal)}</span>
-          </div>
+        {/* Total card */}
+        <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+          {subtotal !== grandTotal && (
+            <div className="flex justify-between text-xs text-gray-400 mb-1">
+              <span>Subtotal</span><span>{formatRupiah(subtotal)}</span>
+            </div>
+          )}
           {Number(discount) > 0 && (
-            <div className="flex justify-between text-green-600">
+            <div className="flex justify-between text-xs text-green-600 mb-1">
               <span>Diskon</span><span>- {formatRupiah(Number(discount))}</span>
             </div>
           )}
-          <div className="flex justify-between font-bold text-base border-t border-gray-200 pt-1.5">
-            <span>Total</span>
-            <span className="text-blue-700">{formatRupiah(grandTotal)}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-semibold text-blue-700">Total</span>
+            <span className="text-xl font-bold text-blue-700">{formatRupiah(grandTotal)}</span>
           </div>
         </div>
 
         {/* Metode Pembayaran */}
         <div>
-          <p className="text-xs text-gray-500 mb-1.5">Metode Pembayaran</p>
-          <div className="grid grid-cols-4 gap-1">
-            {[['cash', 'Tunai'], ['qris', 'QRIS'], ['transfer', 'Bank'], ['card', 'Kartu']].map(([val, label]) => (
+          <p className="text-xs text-gray-400 mb-1.5 font-medium">Metode Pembayaran</p>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { val: 'cash',     label: 'Tunai',  emoji: '💵' },
+              { val: 'qris',     label: 'QRIS',   emoji: '📷' },
+              { val: 'transfer', label: 'Bank',   emoji: '🏦' },
+              { val: 'card',     label: 'Kartu',  emoji: '💳' },
+            ].map(({ val, label, emoji }) => (
               <button
                 key={val}
                 onClick={() => setPaymentMethod(val)}
-                className={`py-2 rounded-lg text-xs font-medium transition-colors
-                  ${paymentMethod === val ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                className={`py-2 rounded-xl text-xs font-medium transition-all flex flex-col items-center gap-0.5
+                  ${paymentMethod === val
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
               >
-                {label}
+                <span className="text-sm leading-none">{emoji}</span>
+                <span>{label}</span>
               </button>
             ))}
           </div>
@@ -363,26 +412,30 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           </div>
         )}
 
-        {/* Uang Bayar — hanya untuk tunai & kartu */}
+        {/* Uang Bayar */}
         {!isNonCash ? (
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Uang Dibayar (Rp)</label>
-            <input
-              type="number" min="0"
-              className="input text-sm"
-              value={amountPaid}
-              onChange={e => setAmountPaid(e.target.value)}
-              placeholder="Masukkan jumlah..."
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rp</span>
+              <input
+                type="number" min="0"
+                className="input pl-9 text-sm font-mono"
+                value={amountPaid}
+                onChange={e => setAmountPaid(e.target.value)}
+                placeholder="Uang dibayar..."
+              />
+            </div>
             {Number(amountPaid) > 0 && (
-              <p className={`text-xs mt-1 font-medium ${change >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                {change >= 0 ? `Kembalian: ${formatRupiah(change)}` : `Kurang: ${formatRupiah(Math.abs(change))}`}
-              </p>
+              <div className={`mt-1.5 px-3 py-1.5 rounded-lg text-xs font-medium flex justify-between
+                ${change >= 0 ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                <span>{change >= 0 ? 'Kembalian' : 'Kurang'}</span>
+                <span className="font-bold">{formatRupiah(Math.abs(change))}</span>
+              </div>
             )}
           </div>
         ) : (
-          <div className="bg-green-50 rounded-lg px-3 py-2 flex items-center justify-between text-sm border border-green-100">
-            <span className="text-gray-600">Jumlah Bayar</span>
+          <div className="bg-green-50 rounded-xl px-3 py-2.5 flex items-center justify-between border border-green-100">
+            <span className="text-sm text-gray-600">Jumlah Bayar</span>
             <span className="font-bold text-green-700">{formatRupiah(grandTotal)}</span>
           </div>
         )}
@@ -391,9 +444,19 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
         <button
           onClick={onCheckout}
           disabled={!canCheckout || checkoutLoading}
-          className="btn-primary w-full py-3 text-sm md:text-base font-semibold"
+          className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2
+            ${canCheckout && !checkoutLoading
+              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800 active:scale-95'
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
         >
-          {checkoutLoading ? 'Memproses...' : `Bayar ${formatRupiah(grandTotal)}`}
+          {checkoutLoading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              Memproses...
+            </>
+          ) : (
+            `${canCheckout ? '✓' : '🛒'} Bayar ${formatRupiah(grandTotal)}`
+          )}
         </button>
       </div>
     </div>
