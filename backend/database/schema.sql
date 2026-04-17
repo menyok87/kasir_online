@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS products (
   name        VARCHAR(200)   NOT NULL,
   sku         VARCHAR(50),
   price       NUMERIC(15,2)  NOT NULL CHECK(price >= 0),
+  cost_price  NUMERIC(15,2)  NOT NULL DEFAULT 0 CHECK(cost_price >= 0),
   stock       INTEGER        NOT NULL DEFAULT 0 CHECK(stock >= 0),
   image_url   TEXT,
   is_active   BOOLEAN        NOT NULL DEFAULT TRUE,
@@ -60,6 +61,7 @@ CREATE TABLE IF NOT EXISTS transaction_items (
   product_name   VARCHAR(200)  NOT NULL,
   product_sku    VARCHAR(50),
   price          NUMERIC(15,2) NOT NULL,
+  cost_price     NUMERIC(15,2) NOT NULL DEFAULT 0,
   quantity       INTEGER       NOT NULL CHECK(quantity > 0),
   subtotal       NUMERIC(15,2) NOT NULL
 );

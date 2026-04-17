@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
-import { Eye, Trash2, Printer, FileDown } from 'lucide-react'
-import { getTransactions, getTransaction, deleteTransaction, getSettings } from '../api'
+import { Eye, Trash2, Printer, FileDown, TrendingUp, DollarSign, ShoppingBag, ReceiptText } from 'lucide-react'
+import { getTransactions, getTransaction, getTransactionSummary, deleteTransaction, getSettings } from '../api'
 import { useAuth } from '../contexts/AuthContext'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
@@ -67,6 +67,30 @@ function ReceiptContent({ tx, settings = {} }) {
   )
 }
 
+const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
+
+function SummaryCard({ icon: Icon, label, value, sub, color }) {
+  const colors = {
+    blue:   { bg: 'bg-blue-50 dark:bg-blue-900/20',   icon: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600',  text: 'text-blue-700 dark:text-blue-400' },
+    green:  { bg: 'bg-green-50 dark:bg-green-900/20', icon: 'bg-green-100 dark:bg-green-900/40 text-green-600', text: 'text-green-700 dark:text-green-400' },
+    purple: { bg: 'bg-purple-50 dark:bg-purple-900/20', icon: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600', text: 'text-purple-700 dark:text-purple-400' },
+    orange: { bg: 'bg-orange-50 dark:bg-orange-900/20', icon: 'bg-orange-100 dark:bg-orange-900/40 text-orange-600', text: 'text-orange-700 dark:text-orange-400' },
+  }
+  const c = colors[color] || colors.blue
+  return (
+    <div className={`card p-4 flex items-center gap-4 ${c.bg} border-0`}>
+      <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${c.icon}`}>
+        <Icon size={20} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{label}</p>
+        <p className={`text-lg font-bold leading-tight mt-0.5 ${c.text}`}>{value}</p>
+        {sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  )
+}
+
 export default function Transactions() {
   const { isAdmin } = useAuth()
   const [transactions, setTransactions] = useState([])
@@ -78,6 +102,7 @@ export default function Transactions() {
   const [detail, setDetail]             = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [summary, setSummary]           = useState(null)
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true)
@@ -94,6 +119,7 @@ export default function Transactions() {
 
   useEffect(() => { fetchTransactions() }, [fetchTransactions])
   useEffect(() => { getSettings().then(r => setSettings(r.data)).catch(() => {}) }, [])
+  useEffect(() => { getTransactionSummary().then(r => setSummary(r.data)).catch(() => {}) }, [])
 
   async function openDetail(id) {
     setDetailLoading(true)
@@ -129,12 +155,38 @@ export default function Transactions() {
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 md:mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <div>
           <h2 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-100">Riwayat Transaksi</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{total} transaksi ditemukan</p>
         </div>
       </div>
+
+      {/* Summary cards — bulan ini */}
+      {summary && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          <SummaryCard
+            icon={DollarSign}
+            label={`Pendapatan ${MONTH_NAMES[new Date().getMonth()]} ${new Date().getFullYear()}`}
+            value={formatRupiah(summary.pendapatan)}
+            sub={`${summary.jumlah_transaksi} transaksi`}
+            color="blue"
+          />
+          <SummaryCard
+            icon={TrendingUp}
+            label={`Laba Bersih ${MONTH_NAMES[new Date().getMonth()]}`}
+            value={formatRupiah(summary.laba_bersih)}
+            sub={summary.laba_bersih > 0 ? `Margin ${Math.round((summary.laba_bersih / (summary.pendapatan || 1)) * 100)}%` : 'Atur harga modal di produk'}
+            color="green"
+          />
+          <SummaryCard
+            icon={ShoppingBag}
+            label={`Produk Terjual ${MONTH_NAMES[new Date().getMonth()]}`}
+            value={`${summary.produk_terjual.toLocaleString('id-ID')} pcs`}
+            color="purple"
+          />
+        </div>
+      )}
 
       {/* Filter tanggal — stack di mobile */}
       <div className="flex flex-col sm:flex-row gap-2 mb-4 sm:items-end">

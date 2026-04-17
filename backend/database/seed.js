@@ -69,6 +69,7 @@ async function seed() {
 
     // ── Migrasi products ───────────────────────────────────────────────────────
     await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS admin_id INTEGER REFERENCES users(id) ON DELETE CASCADE`).catch(() => {});
+    await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_price NUMERIC(15,2) NOT NULL DEFAULT 0`).catch(() => {});
     // Drop old global unique on sku, replace with (sku, admin_id)
     await client.query(`ALTER TABLE products DROP CONSTRAINT IF EXISTS products_sku_key`).catch(() => {});
     await client.query(`DROP INDEX IF EXISTS products_sku_admin_idx`).catch(() => {});
@@ -77,6 +78,9 @@ async function seed() {
     if (superAdminId) {
       await client.query(`UPDATE products SET admin_id = $1 WHERE admin_id IS NULL`, [superAdminId]).catch(() => {});
     }
+
+    // ── Migrasi transaction_items ─────────────────────────────────────────────
+    await client.query(`ALTER TABLE transaction_items ADD COLUMN IF NOT EXISTS cost_price NUMERIC(15,2) NOT NULL DEFAULT 0`).catch(() => {});
 
     // ── Migrasi transactions ───────────────────────────────────────────────────
     await client.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS admin_id INTEGER REFERENCES users(id) ON DELETE CASCADE`).catch(() => {});

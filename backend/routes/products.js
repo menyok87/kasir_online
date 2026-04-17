@@ -47,15 +47,15 @@ router.get('/:id', authenticate, async (req, res, next) => {
 // POST /api/products
 router.post('/', authenticate, requireAdmin, async (req, res, next) => {
   try {
-    const { name, category_id, price, stock, sku, image_url } = req.body;
+    const { name, category_id, price, cost_price = 0, stock, sku, image_url } = req.body;
     if (!name?.trim()) return res.status(400).json({ error: 'Nama produk wajib diisi' });
     if (price === undefined || price < 0) return res.status(400).json({ error: 'Harga tidak valid' });
 
     const tid = tenantId(req.user);
     const { rows: inserted } = await pool.query(
-      `INSERT INTO products (name, category_id, price, stock, sku, image_url, admin_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [name.trim(), category_id || null, Number(price), Number(stock) || 0, sku || null, image_url || null, tid]
+      `INSERT INTO products (name, category_id, price, cost_price, stock, sku, image_url, admin_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [name.trim(), category_id || null, Number(price), Number(cost_price) || 0, Number(stock) || 0, sku || null, image_url || null, tid]
     );
 
     const { rows } = await pool.query(`${PRODUCT_SELECT} WHERE p.id = $1`, [inserted[0].id]);
@@ -69,16 +69,16 @@ router.post('/', authenticate, requireAdmin, async (req, res, next) => {
 // PUT /api/products/:id
 router.put('/:id', authenticate, requireAdmin, async (req, res, next) => {
   try {
-    const { name, category_id, price, stock, sku, image_url } = req.body;
+    const { name, category_id, price, cost_price = 0, stock, sku, image_url } = req.body;
     if (!name?.trim()) return res.status(400).json({ error: 'Nama produk wajib diisi' });
     if (price === undefined || price < 0) return res.status(400).json({ error: 'Harga tidak valid' });
 
     const tid = tenantId(req.user);
     const { rows: updated } = await pool.query(
       `UPDATE products
-       SET name=$1, category_id=$2, price=$3, stock=$4, sku=$5, image_url=$6, updated_at=NOW()
-       WHERE id=$7 AND is_active=TRUE AND admin_id=$8 RETURNING id`,
-      [name.trim(), category_id || null, Number(price), Number(stock) || 0, sku || null, image_url || null, req.params.id, tid]
+       SET name=$1, category_id=$2, price=$3, cost_price=$4, stock=$5, sku=$6, image_url=$7, updated_at=NOW()
+       WHERE id=$8 AND is_active=TRUE AND admin_id=$9 RETURNING id`,
+      [name.trim(), category_id || null, Number(price), Number(cost_price) || 0, Number(stock) || 0, sku || null, image_url || null, req.params.id, tid]
     );
     if (!updated.length) return res.status(404).json({ error: 'Produk tidak ditemukan' });
 

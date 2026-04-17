@@ -18,6 +18,7 @@ function ProductForm({ initial, categories, onSubmit, onClose }) {
     name:        initial?.name        || '',
     category_id: initial?.category_id || '',
     price:       initial?.price       || '',
+    cost_price:  initial?.cost_price  || '',
     stock:       initial?.stock       ?? '',
     sku:         initial?.sku         || '',
     image_url:   initial?.image_url   || '',
@@ -66,7 +67,7 @@ function ProductForm({ initial, categories, onSubmit, onClose }) {
         await deleteProductImage(initial.image_url.replace('/uploads/', '')).catch(() => {})
       }
 
-      await onSubmit({ ...form, image_url, price: Number(form.price), stock: Number(form.stock), category_id: form.category_id || null })
+      await onSubmit({ ...form, image_url, price: Number(form.price), cost_price: Number(form.cost_price) || 0, stock: Number(form.stock), category_id: form.category_id || null })
     } catch (err) {
       setUploading(false)
       throw err
@@ -141,8 +142,15 @@ function ProductForm({ initial, categories, onSubmit, onClose }) {
           <input className="input" value={form.sku} onChange={set('sku')} placeholder="Kode produk" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Harga (Rp) <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Harga Jual (Rp) <span className="text-red-500">*</span></label>
           <input className="input" type="number" min="0" value={form.price} onChange={set('price')} required placeholder="0" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+            Harga Modal (Rp)
+            <span className="text-gray-400 dark:text-gray-500 font-normal ml-1 text-xs">(untuk hitung laba)</span>
+          </label>
+          <input className="input" type="number" min="0" value={form.cost_price} onChange={set('cost_price')} placeholder="0 (opsional)" />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Stok <span className="text-red-500">*</span></label>

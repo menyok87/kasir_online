@@ -46,6 +46,27 @@ router.get('/', authenticate, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/transactions/summary — ringkasan bulan ini
+router.get('/summary', authenticate, async (req, res, next) => {
+  try {
+    const tid = tenantId(req.user);
+    const { rows } = await pool.query(
+      `SELECT
+         COALESCE(SUM(t.grand_total), 0)::numeric                                               AS pendapatan,
+         COALESCE(SUM(t.grand_total) - SUM(ti.quantity * COALESCE(ti.cost_price, 0)), 0)::numeric AS laba_bersih,
+         COALESCE(SUM(ti.quantity), 0)::int                                                      AS produk_terjual,
+         COUNT(DISTINCT t.id)::int                                                               AS jumlah_transaksi
+       FROM transactions t
+       JOIN transaction_items ti ON ti.transaction_id = t.id
+       WHERE t.admin_id = $1
+         AND EXTRACT(YEAR  FROM t.created_at) = EXTRACT(YEAR  FROM NOW())
+         AND EXTRACT(MONTH FROM t.created_at) = EXTRACT(MONTH FROM NOW())`,
+      [tid]
+    );
+    res.json(rows[0]);
+  } catch (err) { next(err); }
+});
+
 // GET /api/transactions/:id
 router.get('/:id', authenticate, async (req, res, next) => {
   try {
@@ -120,9 +141,9 @@ router.post('/', authenticate, async (req, res, next) => {
     for (const { product, quantity, subtotal: lineSubtotal } of enrichedItems) {
       const { rows: itemRows } = await client.query(
         `INSERT INTO transaction_items
-           (transaction_id, product_id, product_name, product_sku, price, quantity, subtotal)
-         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-        [transactionId, product.id, product.name, product.sku, product.price, quantity, lineSubtotal]
+           (transaction_id, product_id, product_name, product_sku, price, cost_price, quantity, subtotal)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+        [transactionId, product.id, product.name, product.sku, product.price, product.cost_price || 0, quantity, lineSubtotal]
       );
       savedItems.push(itemRows[0]);
       await client.query(

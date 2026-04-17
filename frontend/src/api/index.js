@@ -51,10 +51,11 @@ export const deleteProductImage = (filename) => api.delete('/uploads', { data: {
 export const changePassword = (data) => api.put('/auth/change-password', data);
 
 // Transactions
-export const getTransactions  = (params)  => api.get('/transactions', { params });
-export const getTransaction   = (id)      => api.get(`/transactions/${id}`);
-export const createTransaction= (data)    => api.post('/transactions', data);
-export const deleteTransaction= (id)      => api.delete(`/transactions/${id}`);
+export const getTransactions        = (params) => api.get('/transactions', { params });
+export const getTransaction         = (id)     => api.get(`/transactions/${id}`);
+export const getTransactionSummary  = ()       => api.get('/transactions/summary');
+export const createTransaction      = (data)   => api.post('/transactions', data);
+export const deleteTransaction      = (id)     => api.delete(`/transactions/${id}`);
 
 // Dashboard
 export const getDashboardSummary = ()     => api.get('/dashboard/summary');
