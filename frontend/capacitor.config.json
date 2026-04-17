@@ -1,0 +1,9 @@
+{
+  "appId": "com.kasir.online",
+  "appName": "Kasir Online",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false
+  }
+}

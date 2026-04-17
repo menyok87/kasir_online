@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { Search, Plus, Minus, Trash2, ShoppingCart, Printer, CheckCircle, Tag, ArrowLeft } from 'lucide-react'
 import { getProducts, getCategories, createTransaction, getSettings } from '../api'
+import { getImageUrl } from '../utils/getImageUrl'
 import Modal from '../components/ui/Modal'
 import Badge from '../components/ui/Badge'
 import { FullPageSpinner } from '../components/ui/Spinner'
@@ -26,7 +27,7 @@ function ProductCard({ product, onAdd }) {
     >
       {product.image_url ? (
         <img
-          src={product.image_url}
+          src={getImageUrl(product.image_url)}
           alt={product.name}
           className="w-full h-20 md:h-28 object-cover rounded-lg mb-2 bg-gray-100"
           onError={e => { e.target.style.display = 'none' }}
@@ -326,7 +327,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
             {settings.qris_image ? (
               <>
                 <img
-                  src={settings.qris_image}
+                  src={getImageUrl(settings.qris_image)}
                   alt="QRIS"
                   className="w-40 h-40 object-contain mx-auto rounded-lg bg-white border border-blue-200 p-1"
                 />

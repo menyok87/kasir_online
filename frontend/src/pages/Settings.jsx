@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import { Store, Phone, MapPin, Mail, Globe, FileText, Save, QrCode, Landmark, ImagePlus, X } from 'lucide-react'
 import { getSettings, updateSettings, uploadProductImage } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
+import { getImageUrl } from '../utils/getImageUrl'
 
 const defaultSettings = {
   store_name: '',
@@ -196,7 +197,7 @@ export default function Settings() {
             {form.qris_image ? (
               <div className="relative inline-block">
                 <img
-                  src={form.qris_image}
+                  src={getImageUrl(form.qris_image)}
                   alt="QRIS"
                   className="w-36 h-36 object-contain border-2 border-blue-200 rounded-xl bg-white p-1"
                 />

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { Plus, Pencil, Trash2, Search, AlertTriangle, ImagePlus, X } from 'lucide-react'
 import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadProductImage, deleteProductImage } from '../api'
+import { getImageUrl } from '../utils/getImageUrl'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import EmptyState from '../components/ui/EmptyState'
@@ -82,7 +83,7 @@ function ProductForm({ initial, categories, onSubmit, onClose }) {
         {imagePreview ? (
           <div className="relative inline-block">
             <img
-              src={imagePreview}
+              src={getImageUrl(imagePreview)}
               alt="preview"
               className="w-28 h-28 object-cover rounded-xl border border-gray-200 shadow-sm"
             />
@@ -253,7 +254,7 @@ export default function Products() {
                     <td className="px-4 md:px-6 py-3">
                       <div className="flex items-center gap-2 md:gap-3">
                         {p.image_url ? (
-                          <img src={p.image_url} alt={p.name} className="w-9 h-9 md:w-10 md:h-10 rounded-lg object-cover bg-gray-100 flex-shrink-0" onError={e => e.target.style.display='none'} />
+                          <img src={getImageUrl(p.image_url)} alt={p.name} className="w-9 h-9 md:w-10 md:h-10 rounded-lg object-cover bg-gray-100 flex-shrink-0" onError={e => e.target.style.display='none'} />
                         ) : (
                           <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">IMG</div>
                         )}
