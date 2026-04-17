@@ -251,7 +251,7 @@ export default function Products() {
                   <th className="text-left px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium">Produk</th>
                   <th className="text-left px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium hidden md:table-cell">Kategori</th>
                   <th className="text-left px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium hidden lg:table-cell">SKU</th>
-                  <th className="text-right px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium">Harga</th>
+                  <th className="text-right px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium">Harga Jual / Modal</th>
                   <th className="text-center px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium">Stok</th>
                   <th className="px-4 md:px-6 py-3 w-20"></th>
                 </tr>
@@ -275,7 +275,19 @@ export default function Products() {
                     </td>
                     <td className="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 hidden md:table-cell">{p.category_name || '-'}</td>
                     <td className="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs hidden lg:table-cell">{p.sku || '-'}</td>
-                    <td className="px-4 md:px-6 py-3 text-right font-medium text-gray-800 dark:text-gray-100 whitespace-nowrap">{formatRupiah(p.price)}</td>
+                    <td className="px-4 md:px-6 py-3 text-right whitespace-nowrap">
+                      <p className="font-semibold text-gray-800 dark:text-gray-100">{formatRupiah(p.price)}</p>
+                      {p.cost_price > 0 ? (
+                        <div className="text-xs mt-0.5 space-x-1.5">
+                          <span className="text-gray-400 dark:text-gray-500">Modal: {formatRupiah(p.cost_price)}</span>
+                          <span className={`font-bold ${p.price >= p.cost_price ? 'text-green-500' : 'text-red-500'}`}>
+                            {p.price >= p.cost_price ? '+' : ''}{Math.round(((p.price - p.cost_price) / p.price) * 100)}%
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-300 dark:text-gray-600 mt-0.5">Modal belum diisi</p>
+                      )}
+                    </td>
                     <td className="px-4 md:px-6 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         {p.stock <= 5 && p.stock > 0 && <AlertTriangle size={12} className="text-yellow-500" />}
