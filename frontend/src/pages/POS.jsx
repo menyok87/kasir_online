@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
-import { Search, Plus, Minus, Trash2, ShoppingCart, Printer, CheckCircle, Tag, ArrowLeft } from 'lucide-react'
+import { Search, Plus, Minus, Trash2, ShoppingCart, Printer, CheckCircle, Tag, ArrowLeft, X } from 'lucide-react'
 import { getProducts, getCategories, createTransaction, getSettings } from '../api'
 import { getImageUrl } from '../utils/getImageUrl'
 import Modal from '../components/ui/Modal'
@@ -10,6 +10,18 @@ import { printReceipt } from '../utils/printReceipt'
 
 function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
+}
+
+function getQuickAmounts(total) {
+  const all = [total, 5000, 10000, 20000, 50000, 100000, 200000, 500000]
+  const seen = new Set()
+  const result = []
+  for (const n of all) {
+    const v = n < total ? Math.ceil(total / n) * n : n
+    if (v >= total && !seen.has(v)) { seen.add(v); result.push(v) }
+    if (result.length === 4) break
+  }
+  return result
 }
 
 // ── Kartu Produk ─────────────────────────────────────────────────────────────
@@ -51,9 +63,9 @@ function ProductCard({ product, onAdd }) {
 // ── Item Keranjang ────────────────────────────────────────────────────────────
 function CartItem({ item, onIncrease, onDecrease, onRemove }) {
   return (
-    <div className="flex items-center gap-2.5 py-2.5 border-b border-gray-100 dark:border-gray-800 group">
+    <div className="flex items-center gap-2.5 py-3 border-b border-gray-100 dark:border-gray-800">
       {/* Thumbnail */}
-      <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/30">
+      <div className="w-11 h-11 rounded-xl flex-shrink-0 overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/30">
         {item.product.image_url ? (
           <img
             src={getImageUrl(item.product.image_url)}
@@ -68,38 +80,35 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
         )}
       </div>
 
-      {/* Nama & harga */}
+      {/* Nama, harga satuan, subtotal */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 dark:text-gray-100 leading-tight truncate">{item.product.name}</p>
-        <p className="text-xs text-blue-500 mt-0.5">{formatRupiah(item.product.price)}</p>
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-tight truncate">{item.product.name}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500">{formatRupiah(item.product.price)} / pcs</p>
+        <p className="text-xs font-bold text-blue-600 mt-0.5">{formatRupiah(item.product.price * item.quantity)}</p>
       </div>
 
-      {/* Qty controls */}
+      {/* Qty + hapus */}
       <div className="flex items-center gap-1 flex-shrink-0">
         <button
           onClick={() => onDecrease(item.product.id)}
-          className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 flex items-center justify-center transition-colors"
+          className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 flex items-center justify-center transition-colors text-gray-600 dark:text-gray-300"
         >
-          <Minus size={10} />
+          <Minus size={11} />
         </button>
-        <span className="w-6 text-center text-sm font-bold text-gray-700 dark:text-gray-200">{item.quantity}</span>
+        <span className="w-7 text-center text-sm font-bold text-gray-800 dark:text-gray-100">{item.quantity}</span>
         <button
           onClick={() => onIncrease(item.product.id)}
           disabled={item.quantity >= item.product.stock}
-          className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 flex items-center justify-center transition-colors disabled:opacity-40"
+          className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 flex items-center justify-center transition-colors disabled:opacity-40"
         >
-          <Plus size={10} />
+          <Plus size={11} />
         </button>
-      </div>
-
-      {/* Subtotal + hapus */}
-      <div className="text-right flex-shrink-0 min-w-[56px]">
-        <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{formatRupiah(item.product.price * item.quantity)}</p>
         <button
           onClick={() => onRemove(item.product.id)}
-          className="text-xs text-red-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+          className="w-7 h-7 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-400 hover:text-red-600 flex items-center justify-center transition-colors ml-0.5"
+          title="Hapus"
         >
-          hapus
+          <Trash2 size={13} />
         </button>
       </div>
     </div>
@@ -166,7 +175,7 @@ function ReceiptModal({ isOpen, transaction, settings, onClose }) {
 }
 
 // ── Panel Produk ──────────────────────────────────────────────────────────────
-function ProductPanel({ products, categories, search, setSearch, activeCatId, setActiveCatId, onAdd, cartCount, onShowCart }) {
+function ProductPanel({ products, categories, search, setSearch, activeCatId, setActiveCatId, onAdd, cartCount, cartTotal, onShowCart }) {
   const filtered = products.filter(p => {
     const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase())
     const matchCat    = !activeCatId || p.category_id === activeCatId
@@ -229,16 +238,16 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
           className="lg:hidden mt-3 w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-between px-4
             bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200 active:scale-95 transition-all"
         >
-          <div className="flex items-center gap-2">
-            <ShoppingCart size={18} />
+          <div className="flex items-center gap-2.5">
+            <div className="relative">
+              <ShoppingCart size={20} />
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-white text-blue-600 text-[10px] font-bold rounded-full flex items-center justify-center">
+                {cartCount}
+              </span>
+            </div>
             <span>Lihat Keranjang</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-              {cartCount} item
-            </span>
-            <span className="text-white/80">›</span>
-          </div>
+          <span className="font-bold text-white text-base">{formatRupiah(cartTotal)}</span>
         </button>
       )}
     </div>
@@ -250,22 +259,23 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
   amountPaid, setAmountPaid, onIncrease, onDecrease, onRemove, onClear,
   onCheckout, checkoutLoading, onBack, settings = {} }) {
 
-  const subtotal   = cart.reduce((s, i) => s + i.product.price * i.quantity, 0)
-  const grandTotal = Math.max(0, subtotal - Number(discount))
-  const change     = Number(amountPaid) - grandTotal
+  const subtotal    = cart.reduce((s, i) => s + i.product.price * i.quantity, 0)
+  const grandTotal  = Math.max(0, subtotal - Number(discount))
+  const change      = Number(amountPaid) - grandTotal
   const canCheckout = cart.length > 0 && Number(amountPaid) >= grandTotal
-  const isNonCash  = paymentMethod === 'qris' || paymentMethod === 'transfer'
+  const isNonCash   = paymentMethod === 'qris' || paymentMethod === 'transfer'
 
-  // Auto-fill jumlah bayar untuk QRIS dan Transfer
   useEffect(() => {
     if (isNonCash) setAmountPaid(String(grandTotal))
   }, [paymentMethod, grandTotal]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const quickAmounts = grandTotal > 0 ? getQuickAmounts(grandTotal) : []
 
   return (
     <div className="flex flex-col bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden
       w-full lg:w-80 lg:flex-shrink-0 h-full">
 
-      {/* Header — gradient biru */}
+      {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           <button onClick={onBack} className="lg:hidden p-1 -ml-1 rounded-lg hover:bg-blue-500 text-white/80 transition-colors">
@@ -274,14 +284,17 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           <ShoppingCart size={17} className="text-white" />
           <span className="font-semibold text-white text-sm">Keranjang</span>
           {cart.length > 0 && (
-            <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+            <span className="bg-white/25 text-white text-xs font-bold px-2 py-0.5 rounded-full">
               {cart.reduce((s, i) => s + i.quantity, 0)} item
             </span>
           )}
         </div>
         {cart.length > 0 && (
-          <button onClick={onClear} className="text-xs text-white/60 hover:text-white transition-colors">
-            Kosongkan
+          <button
+            onClick={onClear}
+            className="flex items-center gap-1 text-xs text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg"
+          >
+            <X size={12} /> Kosongkan
           </button>
         )}
       </div>
@@ -289,7 +302,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
       {/* Item list */}
       <div className="flex-1 overflow-y-auto px-3">
         {cart.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 py-8 gap-3">
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 py-10 gap-3">
             <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <ShoppingCart size={28} className="text-gray-300 dark:text-gray-600" />
             </div>
@@ -313,22 +326,9 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
 
       {/* Footer */}
       <div className="border-t border-gray-100 dark:border-gray-800 p-3 space-y-2.5 flex-shrink-0">
-        {/* Diskon */}
-        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/60 rounded-xl px-3 py-2 border border-gray-100 dark:border-gray-800">
-          <Tag size={12} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-          <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">Diskon</span>
-          <input
-            type="number" min="0"
-            className="flex-1 bg-transparent text-sm text-right font-medium text-gray-700 dark:text-gray-200 focus:outline-none min-w-0"
-            value={discount}
-            onChange={e => setDiscount(e.target.value)}
-            placeholder="0"
-          />
-          <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">Rp</span>
-        </div>
 
         {/* Total card */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-100 dark:border-blue-900/30">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl px-3.5 py-3 border border-blue-100 dark:border-blue-900/30">
           {subtotal !== grandTotal && (
             <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-1">
               <span>Subtotal</span><span>{formatRupiah(subtotal)}</span>
@@ -340,30 +340,44 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
             </div>
           )}
           <div className="flex justify-between items-center">
-            <span className="text-sm font-semibold text-blue-700">Total</span>
-            <span className="text-xl font-bold text-blue-700">{formatRupiah(grandTotal)}</span>
+            <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">Total</span>
+            <span className="text-2xl font-bold text-blue-700 dark:text-blue-400">{formatRupiah(grandTotal)}</span>
           </div>
+        </div>
+
+        {/* Diskon */}
+        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/60 rounded-xl px-3 py-2.5 border border-gray-100 dark:border-gray-700">
+          <Tag size={13} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+          <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 font-medium">Diskon</span>
+          <input
+            type="number" min="0"
+            className="flex-1 bg-transparent text-sm text-right font-semibold text-gray-700 dark:text-gray-200 focus:outline-none min-w-0"
+            value={discount}
+            onChange={e => setDiscount(e.target.value)}
+            placeholder="0"
+          />
+          <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">Rp</span>
         </div>
 
         {/* Metode Pembayaran */}
         <div>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-1.5 font-medium">Metode Pembayaran</p>
-          <div className="grid grid-cols-4 gap-1.5">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 font-semibold tracking-wide uppercase">Pembayaran</p>
+          <div className="grid grid-cols-2 gap-2">
             {[
-              { val: 'cash',     label: 'Tunai',  emoji: '💵' },
-              { val: 'qris',     label: 'QRIS',   emoji: '📷' },
-              { val: 'transfer', label: 'Bank',   emoji: '🏦' },
-              { val: 'card',     label: 'Kartu',  emoji: '💳' },
+              { val: 'cash',     label: 'Tunai',    emoji: '💵' },
+              { val: 'qris',     label: 'QRIS',     emoji: '📷' },
+              { val: 'transfer', label: 'Transfer',  emoji: '🏦' },
+              { val: 'card',     label: 'Kartu',    emoji: '💳' },
             ].map(({ val, label, emoji }) => (
               <button
                 key={val}
                 onClick={() => setPaymentMethod(val)}
-                className={`py-2 rounded-xl text-xs font-medium transition-all flex flex-col items-center gap-0.5
+                className={`py-2.5 px-3 rounded-xl text-xs font-semibold transition-all flex items-center gap-2
                   ${paymentMethod === val
-                    ? 'bg-blue-600 text-white shadow-sm'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/30 scale-[1.02]'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
               >
-                <span className="text-sm leading-none">{emoji}</span>
+                <span className="text-base leading-none">{emoji}</span>
                 <span>{label}</span>
               </button>
             ))}
@@ -412,21 +426,39 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           </div>
         )}
 
-        {/* Uang Bayar */}
+        {/* Uang Bayar (cash/card) */}
         {!isNonCash ? (
           <div>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-xs">Rp</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-xs font-medium">Rp</span>
               <input
                 type="number" min="0"
                 className="input pl-9 text-sm font-mono"
                 value={amountPaid}
                 onChange={e => setAmountPaid(e.target.value)}
-                placeholder="Uang dibayar..."
+                placeholder="Masukkan jumlah bayar..."
               />
             </div>
+            {/* Quick amount presets */}
+            {quickAmounts.length > 0 && (
+              <div className="flex gap-1.5 mt-2">
+                {quickAmounts.map((n, i) => (
+                  <button
+                    key={n}
+                    onClick={() => setAmountPaid(String(n))}
+                    className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-colors truncate
+                      ${Number(amountPaid) === n
+                        ? (i === 0 ? 'bg-green-500 text-white' : 'bg-blue-500 text-white')
+                        : (i === 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 hover:bg-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600')
+                      }`}
+                  >
+                    {i === 0 ? 'Pas' : formatRupiah(n)}
+                  </button>
+                ))}
+              </div>
+            )}
             {Number(amountPaid) > 0 && (
-              <div className={`mt-1.5 px-3 py-1.5 rounded-lg text-xs font-medium flex justify-between
+              <div className={`mt-2 px-3 py-2 rounded-xl text-xs font-semibold flex justify-between
                 ${change >= 0 ? 'bg-green-50 dark:bg-green-900/20 text-green-700 border border-green-100 dark:border-green-900/30' : 'bg-red-50 dark:bg-red-900/20 text-red-600 border border-red-100 dark:border-red-900/30'}`}>
                 <span>{change >= 0 ? 'Kembalian' : 'Kurang'}</span>
                 <span className="font-bold">{formatRupiah(Math.abs(change))}</span>
@@ -435,7 +467,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           </div>
         ) : (
           <div className="bg-green-50 dark:bg-green-900/20 rounded-xl px-3 py-2.5 flex items-center justify-between border border-green-100 dark:border-green-900/30">
-            <span className="text-sm text-gray-600 dark:text-gray-300">Jumlah Bayar</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Jumlah Bayar</span>
             <span className="font-bold text-green-700">{formatRupiah(grandTotal)}</span>
           </div>
         )}
@@ -446,7 +478,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           disabled={!canCheckout || checkoutLoading}
           className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2
             ${canCheckout && !checkoutLoading
-              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800 active:scale-95'
+              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800 active:scale-[0.98]'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'}`}
         >
           {checkoutLoading ? (
@@ -454,8 +486,16 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
               <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               Memproses...
             </>
+          ) : canCheckout ? (
+            <>
+              <CheckCircle size={16} />
+              Bayar {formatRupiah(grandTotal)}
+            </>
           ) : (
-            `${canCheckout ? '✓' : '🛒'} Bayar ${formatRupiah(grandTotal)}`
+            <>
+              <ShoppingCart size={16} />
+              {cart.length === 0 ? 'Keranjang kosong' : 'Lengkapi pembayaran'}
+            </>
           )}
         </button>
       </div>
@@ -477,7 +517,6 @@ export default function POS() {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [receipt, setReceipt]         = useState(null)
   const [settings, setSettings]       = useState({})
-  // Mobile: 'products' | 'cart'
   const [mobileTab, setMobileTab]     = useState('products')
 
   const fetchData = useCallback(async () => {
@@ -588,7 +627,7 @@ export default function POS() {
           products={products} categories={categories}
           search={search} setSearch={setSearch}
           activeCatId={activeCatId} setActiveCatId={setActiveCatId}
-          onAdd={addToCart} cartCount={cartCount} onShowCart={() => {}}
+          onAdd={addToCart} cartCount={cartCount} cartTotal={grandTotal} onShowCart={() => {}}
         />
         <CartPanel {...cartProps} />
       </div>
@@ -600,7 +639,7 @@ export default function POS() {
             products={products} categories={categories}
             search={search} setSearch={setSearch}
             activeCatId={activeCatId} setActiveCatId={setActiveCatId}
-            onAdd={addToCart} cartCount={cartCount}
+            onAdd={addToCart} cartCount={cartCount} cartTotal={grandTotal}
             onShowCart={() => setMobileTab('cart')}
           />
         ) : (
