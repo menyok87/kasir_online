@@ -116,30 +116,30 @@ export default function Categories() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[360px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 font-medium">Nama Kategori</th>
-                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 font-medium hidden sm:table-cell">Dibuat</th>
+                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium">Nama Kategori</th>
+                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 dark:text-gray-400 font-medium hidden sm:table-cell">Dibuat</th>
                   <th className="px-4 md:px-6 py-3 w-20"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {categories.map(cat => (
-                  <tr key={cat.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 md:px-6 py-3 font-medium text-gray-800">{cat.name}</td>
-                    <td className="px-4 md:px-6 py-3 text-gray-500 hidden sm:table-cell">
+                  <tr key={cat.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                    <td className="px-4 md:px-6 py-3 font-medium text-gray-800 dark:text-gray-100">{cat.name}</td>
+                    <td className="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 hidden sm:table-cell">
                       {new Date(cat.created_at).toLocaleDateString('id-ID')}
                     </td>
                     <td className="px-4 md:px-6 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600"
+                          className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600"
                           onClick={() => setEditTarget(cat)}
                         >
                           <Pencil size={15} />
                         </button>
                         <button
-                          className="p-1.5 rounded-lg hover:bg-red-50 text-red-600"
+                          className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600"
                           onClick={() => setDeleteTarget(cat)}
                         >
                           <Trash2 size={15} />

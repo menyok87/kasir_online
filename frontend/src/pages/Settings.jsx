@@ -24,11 +24,11 @@ const defaultSettings = {
 function Section({ title, icon: Icon, children }) {
   return (
     <div className="card mb-4">
-      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-        <div className="p-1.5 bg-blue-50 rounded-lg">
+      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <Icon size={16} className="text-blue-600" />
         </div>
-        <h3 className="font-semibold text-gray-700">{title}</h3>
+        <h3 className="font-semibold text-gray-700 dark:text-gray-200">{title}</h3>
       </div>
       <div className="space-y-4">{children}</div>
     </div>
@@ -38,9 +38,9 @@ function Section({ title, icon: Icon, children }) {
 function Field({ label, hint, children }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
         {label}
-        {hint && <span className="ml-1 text-xs text-gray-400 font-normal">{hint}</span>}
+        {hint && <span className="ml-1 text-xs text-gray-400 dark:text-gray-500 font-normal">{hint}</span>}
       </label>
       {children}
     </div>
@@ -99,8 +99,8 @@ export default function Settings() {
     <form onSubmit={handleSubmit}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h2 className="text-lg md:text-xl font-semibold text-gray-800">Pengaturan Toko</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Konfigurasi informasi toko dan tampilan struk</p>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-100">Pengaturan Toko</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Konfigurasi informasi toko dan tampilan struk</p>
         </div>
         <button type="submit" className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto" disabled={saving}>
           <Save size={16} />
@@ -190,7 +190,7 @@ export default function Settings() {
 
       {/* QRIS */}
       <Section title="Pembayaran QRIS" icon={QrCode}>
-        <p className="text-xs text-gray-500 -mt-2">Upload gambar QR code QRIS toko Anda. Akan ditampilkan saat pelanggan memilih metode QRIS di kasir.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">Upload gambar QR code QRIS toko Anda. Akan ditampilkan saat pelanggan memilih metode QRIS di kasir.</p>
         <div className="flex flex-col sm:flex-row gap-4 items-start">
           {/* Upload area */}
           <div>
@@ -214,7 +214,7 @@ export default function Settings() {
                 type="button"
                 onClick={() => qrisInputRef.current?.click()}
                 disabled={qrisUploading}
-                className="flex flex-col items-center justify-center w-36 h-36 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-400 hover:text-blue-500 disabled:opacity-50"
+                className="flex flex-col items-center justify-center w-36 h-36 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-gray-400 dark:text-gray-500 hover:text-blue-500 disabled:opacity-50"
               >
                 {qrisUploading ? (
                   <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
@@ -239,8 +239,8 @@ export default function Settings() {
               </button>
             )}
           </div>
-          <div className="flex-1 text-sm text-gray-500 space-y-1.5 pt-1">
-            <p className="font-medium text-gray-600">Cara penggunaan:</p>
+          <div className="flex-1 text-sm text-gray-500 dark:text-gray-400 space-y-1.5 pt-1">
+            <p className="font-medium text-gray-600 dark:text-gray-300">Cara penggunaan:</p>
             <p>1. Dapatkan file QR code QRIS dari bank/aplikasi pembayaran Anda</p>
             <p>2. Upload di sini (JPG/PNG, maks 3MB)</p>
             <p>3. Saat kasir memilih "QRIS", QR code akan muncul untuk dipindai pelanggan</p>
@@ -250,7 +250,7 @@ export default function Settings() {
 
       {/* Bank Transfer */}
       <Section title="Rekening Bank Transfer" icon={Landmark}>
-        <p className="text-xs text-gray-500 -mt-2">Informasi rekening akan ditampilkan saat pelanggan memilih metode Transfer Bank.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">Informasi rekening akan ditampilkan saat pelanggan memilih metode Transfer Bank.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Nama Bank">
             <input className="input" value={form.bank_name} onChange={set('bank_name')} placeholder="Contoh: BCA, BRI, Mandiri, BNI" />
@@ -266,12 +266,12 @@ export default function Settings() {
           </Field>
         </div>
         {(form.bank_name || form.bank_account_number) && (
-          <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-100 text-sm">
+          <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-900/30 text-sm">
             <p className="text-xs text-blue-600 font-medium mb-1">Preview info transfer:</p>
             <p className="font-medium">{form.bank_name || '-'}</p>
             <p className="font-mono text-lg font-bold text-blue-700">{form.bank_account_number || '-'}</p>
-            <p className="text-gray-600">a.n. {form.bank_account_name || '-'}</p>
-            {form.bank_branch && <p className="text-xs text-gray-400">{form.bank_branch}</p>}
+            <p className="text-gray-600 dark:text-gray-400">a.n. {form.bank_account_name || '-'}</p>
+            {form.bank_branch && <p className="text-xs text-gray-400 dark:text-gray-500">{form.bank_branch}</p>}
           </div>
         )}
       </Section>
@@ -286,7 +286,7 @@ export default function Settings() {
             onChange={set('footer_msg')}
             placeholder="Terima kasih telah berbelanja!&#10;Barang yang sudah dibeli tidak dapat dikembalikan."
           />
-          <p className="text-xs text-gray-400 mt-1">Gunakan Enter untuk baris baru.</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Gunakan Enter untuk baris baru.</p>
         </Field>
         <div className="flex items-center gap-3">
           <input
@@ -296,28 +296,28 @@ export default function Settings() {
             checked={form.show_footer_note}
             onChange={setCheck('show_footer_note')}
           />
-          <label htmlFor="show_note" className="text-sm text-gray-700 cursor-pointer select-none">
+          <label htmlFor="show_note" className="text-sm text-gray-700 dark:text-gray-200 cursor-pointer select-none">
             Tampilkan catatan "Simpan struk ini sebagai bukti pembelian"
           </label>
         </div>
       </Section>
 
       {/* Preview Struk */}
-      <div className="card bg-gray-50">
-        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200">
-          <FileText size={16} className="text-gray-500" />
-          <h3 className="font-semibold text-gray-600 text-sm">Preview Header Struk</h3>
+      <div className="card bg-gray-50 dark:bg-gray-800/60">
+        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+          <FileText size={16} className="text-gray-500 dark:text-gray-400" />
+          <h3 className="font-semibold text-gray-600 dark:text-gray-300 text-sm">Preview Header Struk</h3>
         </div>
-        <div className="font-mono text-xs text-center space-y-0.5 text-gray-700">
+        <div className="font-mono text-xs text-center space-y-0.5 text-gray-700 dark:text-gray-200">
           <p className="font-bold text-sm tracking-wider uppercase">{form.store_name || 'NAMA TOKO'}</p>
-          {form.store_tagline && <p className="text-gray-500">{form.store_tagline}</p>}
+          {form.store_tagline && <p className="text-gray-500 dark:text-gray-400">{form.store_tagline}</p>}
           {form.store_address && <p>{form.store_address}</p>}
           {form.store_phone   && <p>Telp: {form.store_phone}</p>}
           {form.store_email   && <p>{form.store_email}</p>}
           {form.store_website && <p>{form.store_website}</p>}
-          <p className="mt-1 border-t border-dashed border-gray-400 pt-1">——— *** ———</p>
+          <p className="mt-1 border-t border-dashed border-gray-400 dark:border-gray-600 pt-1">——— *** ———</p>
           {form.footer_msg && (
-            <div className="mt-2 text-gray-500">
+            <div className="mt-2 text-gray-500 dark:text-gray-400">
               {form.footer_msg.split('\n').map((l, i) => <p key={i}>{l}</p>)}
             </div>
           )}

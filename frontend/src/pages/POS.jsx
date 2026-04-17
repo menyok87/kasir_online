@@ -19,25 +19,25 @@ function ProductCard({ product, onAdd }) {
     <button
       onClick={() => !outOfStock && onAdd(product)}
       disabled={outOfStock}
-      className={`bg-white rounded-xl border p-2.5 text-left transition-all w-full
+      className={`bg-white dark:bg-gray-800 rounded-xl border p-2.5 text-left transition-all w-full
         ${outOfStock
-          ? 'opacity-50 cursor-not-allowed border-gray-200'
-          : 'border-gray-200 hover:border-blue-400 hover:shadow-md active:scale-95'
+          ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-700'
+          : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 hover:shadow-md active:scale-95'
         }`}
     >
       {product.image_url ? (
         <img
           src={getImageUrl(product.image_url)}
           alt={product.name}
-          className="w-full h-20 md:h-28 object-cover rounded-lg mb-2 bg-gray-100"
+          className="w-full h-20 md:h-28 object-cover rounded-lg mb-2 bg-gray-100 dark:bg-gray-800"
           onError={e => { e.target.style.display = 'none' }}
         />
       ) : (
-        <div className="w-full h-20 md:h-28 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center mb-2">
+        <div className="w-full h-20 md:h-28 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/30 flex items-center justify-center mb-2">
           <Tag size={22} className="text-blue-300" />
         </div>
       )}
-      <p className="text-xs font-medium text-gray-800 leading-tight line-clamp-2 mb-1">{product.name}</p>
+      <p className="text-xs font-medium text-gray-800 dark:text-gray-100 leading-tight line-clamp-2 mb-1">{product.name}</p>
       <p className="text-xs md:text-sm font-bold text-blue-600">{formatRupiah(product.price)}</p>
       <div className="mt-1">
         <Badge color={product.stock === 0 ? 'red' : product.stock <= 5 ? 'yellow' : 'green'}>
@@ -51,9 +51,9 @@ function ProductCard({ product, onAdd }) {
 // ── Item Keranjang ────────────────────────────────────────────────────────────
 function CartItem({ item, onIncrease, onDecrease, onRemove }) {
   return (
-    <div className="flex items-center gap-2.5 py-2.5 border-b border-gray-100 group">
+    <div className="flex items-center gap-2.5 py-2.5 border-b border-gray-100 dark:border-gray-800 group">
       {/* Thumbnail */}
-      <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100">
+      <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/30">
         {item.product.image_url ? (
           <img
             src={getImageUrl(item.product.image_url)}
@@ -70,7 +70,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
 
       {/* Nama & harga */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 leading-tight truncate">{item.product.name}</p>
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-100 leading-tight truncate">{item.product.name}</p>
         <p className="text-xs text-blue-500 mt-0.5">{formatRupiah(item.product.price)}</p>
       </div>
 
@@ -78,15 +78,15 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
       <div className="flex items-center gap-1 flex-shrink-0">
         <button
           onClick={() => onDecrease(item.product.id)}
-          className="w-6 h-6 rounded-full bg-gray-100 hover:bg-red-100 hover:text-red-500 flex items-center justify-center transition-colors"
+          className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 flex items-center justify-center transition-colors"
         >
           <Minus size={10} />
         </button>
-        <span className="w-6 text-center text-sm font-bold text-gray-700">{item.quantity}</span>
+        <span className="w-6 text-center text-sm font-bold text-gray-700 dark:text-gray-200">{item.quantity}</span>
         <button
           onClick={() => onIncrease(item.product.id)}
           disabled={item.quantity >= item.product.stock}
-          className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 flex items-center justify-center transition-colors disabled:opacity-40"
+          className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 flex items-center justify-center transition-colors disabled:opacity-40"
         >
           <Plus size={10} />
         </button>
@@ -94,7 +94,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
 
       {/* Subtotal + hapus */}
       <div className="text-right flex-shrink-0 min-w-[56px]">
-        <p className="text-sm font-bold text-gray-700">{formatRupiah(item.product.price * item.quantity)}</p>
+        <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{formatRupiah(item.product.price * item.quantity)}</p>
         <button
           onClick={() => onRemove(item.product.id)}
           className="text-xs text-red-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
@@ -115,21 +115,21 @@ function ReceiptModal({ isOpen, transaction, settings, onClose }) {
     <Modal isOpen={isOpen} onClose={onClose} title="Transaksi Berhasil" size="sm">
       <div className="text-center mb-4">
         <CheckCircle size={40} className="text-green-500 mx-auto mb-2" />
-        <p className="font-semibold text-gray-800">{transaction.invoice_number}</p>
-        <p className="text-sm text-gray-500">Pembayaran berhasil diproses</p>
+        <p className="font-semibold text-gray-800 dark:text-gray-100">{transaction.invoice_number}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Pembayaran berhasil diproses</p>
       </div>
 
-      <div className="border border-dashed border-gray-300 rounded-xl p-4 text-sm space-y-2 bg-gray-50">
+      <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-4 text-sm space-y-2 bg-gray-50 dark:bg-gray-800/60">
         <div className="space-y-1">
           {transaction.items?.map((item, i) => (
             <div key={i} className="flex justify-between text-xs">
-              <span className="text-gray-700">{item.product_name} <span className="text-gray-400">×{item.quantity}</span></span>
+              <span className="text-gray-700 dark:text-gray-200">{item.product_name} <span className="text-gray-400 dark:text-gray-500">×{item.quantity}</span></span>
               <span className="font-medium">{formatRupiah(item.subtotal)}</span>
             </div>
           ))}
         </div>
-        <div className="border-t border-dashed border-gray-300 pt-2 space-y-1">
-          <div className="flex justify-between text-xs text-gray-500">
+        <div className="border-t border-dashed border-gray-300 dark:border-gray-600 pt-2 space-y-1">
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
             <span>Subtotal</span><span>{formatRupiah(transaction.subtotal)}</span>
           </div>
           {transaction.discount > 0 && (
@@ -140,7 +140,7 @@ function ReceiptModal({ isOpen, transaction, settings, onClose }) {
           <div className="flex justify-between font-bold">
             <span>Total</span><span className="text-blue-700">{formatRupiah(transaction.grand_total)}</span>
           </div>
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
             <span>Bayar ({paymentLabel[transaction.payment_method]})</span>
             <span>{formatRupiah(transaction.amount_paid)}</span>
           </div>
@@ -191,7 +191,7 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
         <button
           onClick={() => setActiveCatId(null)}
           className={`px-3 py-1.5 rounded-full text-xs font-medium flex-shrink-0 transition-colors
-            ${!activeCatId ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            ${!activeCatId ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
         >
           Semua
         </button>
@@ -200,7 +200,7 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
             key={cat.id}
             onClick={() => setActiveCatId(activeCatId === cat.id ? null : cat.id)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium flex-shrink-0 transition-colors
-              ${activeCatId === cat.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              ${activeCatId === cat.id ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
           >
             {cat.name}
           </button>
@@ -210,7 +210,7 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
       {/* Product Grid */}
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
+          <div className="flex items-center justify-center h-32 text-gray-400 dark:text-gray-500 text-sm">
             Tidak ada produk ditemukan
           </div>
         ) : (
@@ -262,7 +262,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
   }, [paymentMethod, grandTotal]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden
+    <div className="flex flex-col bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden
       w-full lg:w-80 lg:flex-shrink-0 h-full">
 
       {/* Header — gradient biru */}
@@ -290,12 +290,12 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
       <div className="flex-1 overflow-y-auto px-3">
         {cart.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 py-8 gap-3">
-            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
-              <ShoppingCart size={28} className="text-gray-300" />
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <ShoppingCart size={28} className="text-gray-300 dark:text-gray-600" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-gray-400">Keranjang kosong</p>
-              <p className="text-xs text-gray-300 mt-0.5">Ketuk produk untuk menambahkan</p>
+              <p className="text-sm font-medium text-gray-400 dark:text-gray-500">Keranjang kosong</p>
+              <p className="text-xs text-gray-300 dark:text-gray-600 mt-0.5">Ketuk produk untuk menambahkan</p>
             </div>
           </div>
         ) : (
@@ -312,25 +312,25 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-100 p-3 space-y-2.5 flex-shrink-0">
+      <div className="border-t border-gray-100 dark:border-gray-800 p-3 space-y-2.5 flex-shrink-0">
         {/* Diskon */}
-        <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
-          <Tag size={12} className="text-gray-400 flex-shrink-0" />
-          <span className="text-xs text-gray-400 flex-shrink-0">Diskon</span>
+        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/60 rounded-xl px-3 py-2 border border-gray-100 dark:border-gray-800">
+          <Tag size={12} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+          <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">Diskon</span>
           <input
             type="number" min="0"
-            className="flex-1 bg-transparent text-sm text-right font-medium text-gray-700 focus:outline-none min-w-0"
+            className="flex-1 bg-transparent text-sm text-right font-medium text-gray-700 dark:text-gray-200 focus:outline-none min-w-0"
             value={discount}
             onChange={e => setDiscount(e.target.value)}
             placeholder="0"
           />
-          <span className="text-xs text-gray-400 flex-shrink-0">Rp</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">Rp</span>
         </div>
 
         {/* Total card */}
-        <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-100 dark:border-blue-900/30">
           {subtotal !== grandTotal && (
-            <div className="flex justify-between text-xs text-gray-400 mb-1">
+            <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-1">
               <span>Subtotal</span><span>{formatRupiah(subtotal)}</span>
             </div>
           )}
@@ -347,7 +347,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
 
         {/* Metode Pembayaran */}
         <div>
-          <p className="text-xs text-gray-400 mb-1.5 font-medium">Metode Pembayaran</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-1.5 font-medium">Metode Pembayaran</p>
           <div className="grid grid-cols-4 gap-1.5">
             {[
               { val: 'cash',     label: 'Tunai',  emoji: '💵' },
@@ -361,7 +361,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
                 className={`py-2 rounded-xl text-xs font-medium transition-all flex flex-col items-center gap-0.5
                   ${paymentMethod === val
                     ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
               >
                 <span className="text-sm leading-none">{emoji}</span>
                 <span>{label}</span>
@@ -372,7 +372,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
 
         {/* Info QRIS */}
         {paymentMethod === 'qris' && (
-          <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center border border-blue-100 dark:border-blue-900/30">
             {settings.qris_image ? (
               <>
                 <img
@@ -384,7 +384,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
                 <p className="text-sm font-bold text-blue-700 mt-0.5">{formatRupiah(grandTotal)}</p>
               </>
             ) : (
-              <p className="text-xs text-gray-500 py-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 py-2">
                 Gambar QRIS belum diatur.<br />
                 Upload di <span className="text-blue-600 font-medium">Pengaturan Toko</span>.
               </p>
@@ -394,17 +394,17 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
 
         {/* Info Transfer Bank */}
         {paymentMethod === 'transfer' && (
-          <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-100 dark:border-blue-900/30">
             {settings.bank_name ? (
               <>
                 <p className="text-xs text-blue-600 font-medium mb-1.5">Transfer ke rekening:</p>
-                <p className="font-semibold text-sm text-gray-800">{settings.bank_name}</p>
+                <p className="font-semibold text-sm text-gray-800 dark:text-gray-100">{settings.bank_name}</p>
                 <p className="font-mono text-lg font-bold text-blue-700 tracking-wide">{settings.bank_account_number || '-'}</p>
-                <p className="text-xs text-gray-600">a.n. {settings.bank_account_name || '-'}</p>
-                {settings.bank_branch && <p className="text-xs text-gray-400 mt-0.5">{settings.bank_branch}</p>}
+                <p className="text-xs text-gray-600 dark:text-gray-400">a.n. {settings.bank_account_name || '-'}</p>
+                {settings.bank_branch && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{settings.bank_branch}</p>}
               </>
             ) : (
-              <p className="text-xs text-gray-500 py-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 py-1">
                 Info rekening belum diatur.<br />
                 Isi di <span className="text-blue-600 font-medium">Pengaturan Toko</span>.
               </p>
@@ -416,7 +416,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
         {!isNonCash ? (
           <div>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rp</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-xs">Rp</span>
               <input
                 type="number" min="0"
                 className="input pl-9 text-sm font-mono"
@@ -427,15 +427,15 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
             </div>
             {Number(amountPaid) > 0 && (
               <div className={`mt-1.5 px-3 py-1.5 rounded-lg text-xs font-medium flex justify-between
-                ${change >= 0 ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                ${change >= 0 ? 'bg-green-50 dark:bg-green-900/20 text-green-700 border border-green-100 dark:border-green-900/30' : 'bg-red-50 dark:bg-red-900/20 text-red-600 border border-red-100 dark:border-red-900/30'}`}>
                 <span>{change >= 0 ? 'Kembalian' : 'Kurang'}</span>
                 <span className="font-bold">{formatRupiah(Math.abs(change))}</span>
               </div>
             )}
           </div>
         ) : (
-          <div className="bg-green-50 rounded-xl px-3 py-2.5 flex items-center justify-between border border-green-100">
-            <span className="text-sm text-gray-600">Jumlah Bayar</span>
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-xl px-3 py-2.5 flex items-center justify-between border border-green-100 dark:border-green-900/30">
+            <span className="text-sm text-gray-600 dark:text-gray-300">Jumlah Bayar</span>
             <span className="font-bold text-green-700">{formatRupiah(grandTotal)}</span>
           </div>
         )}
@@ -447,7 +447,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2
             ${canCheckout && !checkoutLoading
               ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800 active:scale-95'
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'}`}
         >
           {checkoutLoading ? (
             <>
