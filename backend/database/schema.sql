@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS users (
   role       VARCHAR(20)  NOT NULL DEFAULT 'kasir' CHECK(role IN ('superadmin', 'admin', 'supervisor', 'kasir')),
   name       VARCHAR(100) NOT NULL,
   is_active  BOOLEAN      NOT NULL DEFAULT TRUE,
+  created_by INTEGER      REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ  DEFAULT NOW()
 );
 

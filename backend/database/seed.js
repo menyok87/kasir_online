@@ -57,6 +57,8 @@ async function seed() {
     await client.query(`ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(20)`).catch(() => {});
     await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`).catch(() => {});
     await client.query(`ALTER TABLE users ADD CONSTRAINT users_role_check CHECK(role IN ('superadmin','admin','supervisor','kasir'))`).catch(() => {});
+    // Migrasi: tambah kolom created_by jika belum ada
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id) ON DELETE SET NULL`).catch(() => {});
 
     // Insert default users
     const superHash      = await bcrypt.hash('super123', 10);

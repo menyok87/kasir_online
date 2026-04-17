@@ -44,13 +44,13 @@ export function AuthProvider({ children }) {
 
   // Akses per fitur
   const can = {
-    dashboard:  isManager,
-    pos:        role === 'superadmin' || role === 'admin' || role === 'kasir',
-    products:   isAdmin,
-    categories: isAdmin,
+    dashboard:    isManager,
+    pos:          role === 'superadmin' || role === 'admin' || role === 'kasir',
+    products:     isManager,   // supervisor bisa kelola stok/produk
+    categories:   isAdmin,     // hanya admin+ yang kelola kategori
     transactions: true,
-    users:      isSuperAdmin,
-    settings:   isAdmin,
+    users:        isSuperAdmin || role === 'admin', // admin kelola kasir miliknya
+    settings:     isAdmin,
   }
 
   return (

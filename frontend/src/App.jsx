@@ -84,12 +84,14 @@ export default function App() {
             <Route path="dashboard"  element={<RequireCan feature="dashboard">{wrap(Dashboard)}</RequireCan>} />
 
             {/* superadmin + admin */}
-            <Route path="categories" element={<RequireAdmin>{wrap(Categories)}</RequireAdmin>} />
-            <Route path="products"   element={<RequireAdmin>{wrap(Products)}</RequireAdmin>} />
-            <Route path="settings"   element={<RequireAdmin>{wrap(Settings)}</RequireAdmin>} />
+            <Route path="categories" element={<RequireCan feature="categories">{wrap(Categories)}</RequireCan>} />
+            <Route path="settings"   element={<RequireCan feature="settings">{wrap(Settings)}</RequireCan>} />
 
-            {/* superadmin only */}
-            <Route path="users" element={<RequireSuperAdmin>{wrap(Users)}</RequireSuperAdmin>} />
+            {/* superadmin + admin + supervisor */}
+            <Route path="products"   element={<RequireCan feature="products">{wrap(Products)}</RequireCan>} />
+
+            {/* superadmin + admin */}
+            <Route path="users" element={<RequireCan feature="users">{wrap(Users)}</RequireCan>} />
 
             {/* All roles */}
             <Route path="pos"          element={wrap(POS)} />

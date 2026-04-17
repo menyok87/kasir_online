@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
-import { Plus, Pencil, ShieldCheck, ShieldOff, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, ShieldCheck, ShieldOff, Eye, EyeOff, User } from 'lucide-react'
 import { getUsers, createUser, updateUser, toggleUser } from '../api'
 import { useAuth } from '../contexts/AuthContext'
 import Modal from '../components/ui/Modal'
@@ -10,7 +10,19 @@ import { FullPageSpinner } from '../components/ui/Spinner'
 const roleLabel = { superadmin: 'Super Admin', admin: 'Admin', supervisor: 'Supervisor', kasir: 'Kasir' }
 const roleColor = { superadmin: 'purple', admin: 'blue', supervisor: 'yellow', kasir: 'green' }
 
-function UserForm({ initial, onSubmit, onClose }) {
+function getRoleOptions(myRole) {
+  if (myRole === 'superadmin') {
+    return [
+      { value: 'kasir',      label: 'Kasir — hanya POS & transaksi' },
+      { value: 'supervisor', label: 'Supervisor — dashboard & laporan' },
+      { value: 'admin',      label: 'Admin — produk, kategori, pengaturan' },
+      { value: 'superadmin', label: 'Super Admin — akses penuh' },
+    ]
+  }
+  return [{ value: 'kasir', label: 'Kasir — hanya POS & transaksi' }]
+}
+
+function UserForm({ initial, onSubmit, onClose, myRole }) {
   const [form, setForm]       = useState({
     username: initial?.username || '',
     name:     initial?.name     || '',
@@ -19,7 +31,8 @@ function UserForm({ initial, onSubmit, onClose }) {
   })
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading]   = useState(false)
-  const isEdit = !!initial
+  const isEdit   = !!initial
+  const roleOpts = getRoleOptions(myRole)
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
 
   async function handleSubmit(e) {
@@ -39,7 +52,7 @@ function UserForm({ initial, onSubmit, onClose }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {!isEdit && (
+      {!isEdit ? (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Username <span className="text-red-500">*</span>
@@ -53,8 +66,7 @@ function UserForm({ initial, onSubmit, onClose }) {
             autoComplete="off"
           />
         </div>
-      )}
-      {isEdit && (
+      ) : (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
           <input className="input bg-gray-50 text-gray-500" value={initial.username} disabled />
@@ -76,17 +88,22 @@ function UserForm({ initial, onSubmit, onClose }) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-        <select className="input" value={form.role} onChange={set('role')}>
-          <option value="kasir">Kasir — hanya POS & transaksi</option>
-          <option value="supervisor">Supervisor — dashboard & laporan</option>
-          <option value="admin">Admin — produk, kategori, pengaturan</option>
-          <option value="superadmin">Super Admin — akses penuh</option>
-        </select>
+        {roleOpts.length === 1 ? (
+          <input className="input bg-gray-50 text-gray-500" value={roleOpts[0].label} disabled />
+        ) : (
+          <select className="input" value={form.role} onChange={set('role')}>
+            {roleOpts.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Password {isEdit ? <span className="text-gray-400 font-normal">(kosongkan jika tidak diubah)</span> : <span className="text-red-500">*</span>}
+          Password {isEdit
+            ? <span className="text-gray-400 font-normal">(kosongkan jika tidak diubah)</span>
+            : <span className="text-red-500">*</span>}
         </label>
         <div className="relative">
           <input
@@ -119,10 +136,10 @@ function UserForm({ initial, onSubmit, onClose }) {
 }
 
 export default function Users() {
-  const { user: me } = useAuth()
-  const [users, setUsers]       = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [modalOpen, setModalOpen] = useState(false)
+  const { user: me, isSuperAdmin } = useAuth()
+  const [users, setUsers]           = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [modalOpen, setModalOpen]   = useState(false)
   const [editTarget, setEditTarget] = useState(null)
 
   const fetchUsers = useCallback(async () => {
@@ -164,18 +181,24 @@ export default function Users() {
 
   if (loading) return <FullPageSpinner />
 
+  const pageTitle = isSuperAdmin ? 'Manajemen User' : 'Manajemen Kasir'
+  const addLabel  = isSuperAdmin ? 'Tambah User' : 'Tambah Kasir'
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h2 className="text-lg md:text-xl font-semibold text-gray-800">Manajemen User</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{users.length} user terdaftar</p>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800">{pageTitle}</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {users.length} user terdaftar
+            {!isSuperAdmin && <span className="text-blue-500"> (kasir Anda)</span>}
+          </p>
         </div>
         <button
           className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
           onClick={() => setModalOpen(true)}
         >
-          <Plus size={16} /> Tambah User
+          <Plus size={16} /> {addLabel}
         </button>
       </div>
 
@@ -187,11 +210,22 @@ export default function Users() {
                 <th className="text-left px-4 md:px-6 py-3 text-gray-600 font-medium">Nama</th>
                 <th className="text-left px-4 md:px-6 py-3 text-gray-600 font-medium hidden sm:table-cell">Username</th>
                 <th className="text-center px-4 md:px-6 py-3 text-gray-600 font-medium">Role</th>
+                {isSuperAdmin && (
+                  <th className="text-left px-4 md:px-6 py-3 text-gray-600 font-medium hidden lg:table-cell">Dibuat oleh</th>
+                )}
                 <th className="text-center px-4 md:px-6 py-3 text-gray-600 font-medium">Status</th>
                 <th className="px-4 md:px-6 py-3 w-20"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan={isSuperAdmin ? 6 : 5} className="text-center py-10 text-gray-400">
+                    <User size={32} className="mx-auto mb-2 opacity-30" />
+                    <p>Belum ada kasir yang ditambahkan</p>
+                  </td>
+                </tr>
+              )}
               {users.map(u => (
                 <tr key={u.id} className={`hover:bg-gray-50 transition-colors ${!u.is_active ? 'opacity-50' : ''}`}>
                   <td className="px-4 md:px-6 py-3">
@@ -212,6 +246,11 @@ export default function Users() {
                   <td className="px-4 md:px-6 py-3 text-center">
                     <Badge color={roleColor[u.role]}>{roleLabel[u.role]}</Badge>
                   </td>
+                  {isSuperAdmin && (
+                    <td className="px-4 md:px-6 py-3 text-xs text-gray-500 hidden lg:table-cell">
+                      {u.created_by_name || <span className="italic text-gray-300">—</span>}
+                    </td>
+                  )}
                   <td className="px-4 md:px-6 py-3 text-center">
                     <Badge color={u.is_active ? 'green' : 'red'}>
                       {u.is_active ? 'Aktif' : 'Nonaktif'}
@@ -228,9 +267,7 @@ export default function Users() {
                       </button>
                       <button
                         className={`p-1.5 rounded-lg transition-colors ${
-                          u.is_active
-                            ? 'hover:bg-red-50 text-red-500'
-                            : 'hover:bg-green-50 text-green-500'
+                          u.is_active ? 'hover:bg-red-50 text-red-500' : 'hover:bg-green-50 text-green-500'
                         } ${u.id === me?.id ? 'opacity-30 cursor-not-allowed' : ''}`}
                         onClick={() => handleToggle(u)}
                         title={u.is_active ? 'Nonaktifkan' : 'Aktifkan'}
@@ -247,13 +284,18 @@ export default function Users() {
         </div>
       </div>
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Tambah User" size="md">
-        <UserForm onSubmit={handleCreate} onClose={() => setModalOpen(false)} />
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={addLabel} size="md">
+        <UserForm myRole={me?.role} onSubmit={handleCreate} onClose={() => setModalOpen(false)} />
       </Modal>
 
       <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title="Edit User" size="md">
         {editTarget && (
-          <UserForm initial={editTarget} onSubmit={handleUpdate} onClose={() => setEditTarget(null)} />
+          <UserForm
+            initial={editTarget}
+            myRole={me?.role}
+            onSubmit={handleUpdate}
+            onClose={() => setEditTarget(null)}
+          />
         )}
       </Modal>
     </div>
