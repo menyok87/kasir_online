@@ -7,8 +7,8 @@ import Modal from '../components/ui/Modal'
 import Badge from '../components/ui/Badge'
 import { FullPageSpinner } from '../components/ui/Spinner'
 
-const roleLabel = { admin: 'Admin', kasir: 'Kasir' }
-const roleColor = { admin: 'blue', kasir: 'green' }
+const roleLabel = { superadmin: 'Super Admin', admin: 'Admin', supervisor: 'Supervisor', kasir: 'Kasir' }
+const roleColor = { superadmin: 'purple', admin: 'blue', supervisor: 'yellow', kasir: 'green' }
 
 function UserForm({ initial, onSubmit, onClose }) {
   const [form, setForm]       = useState({
@@ -77,8 +77,10 @@ function UserForm({ initial, onSubmit, onClose }) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
         <select className="input" value={form.role} onChange={set('role')}>
-          <option value="kasir">Kasir</option>
-          <option value="admin">Admin</option>
+          <option value="kasir">Kasir — hanya POS & transaksi</option>
+          <option value="supervisor">Supervisor — dashboard & laporan</option>
+          <option value="admin">Admin — produk, kategori, pengaturan</option>
+          <option value="superadmin">Super Admin — akses penuh</option>
         </select>
       </div>
 

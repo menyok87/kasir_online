@@ -37,10 +37,24 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
-  const isAdmin = user?.role === 'admin'
+  const role         = user?.role
+  const isSuperAdmin = role === 'superadmin'
+  const isAdmin      = role === 'superadmin' || role === 'admin'
+  const isManager    = role === 'superadmin' || role === 'admin' || role === 'supervisor'
+
+  // Akses per fitur
+  const can = {
+    dashboard:  isManager,
+    pos:        role === 'superadmin' || role === 'admin' || role === 'kasir',
+    products:   isAdmin,
+    categories: isAdmin,
+    transactions: true,
+    users:      isSuperAdmin,
+    settings:   isAdmin,
+  }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, isAdmin }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, isAdmin, isSuperAdmin, isManager, can }}>
       {children}
     </AuthContext.Provider>
   )

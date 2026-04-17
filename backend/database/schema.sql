@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS users (
   id         SERIAL PRIMARY KEY,
   username   VARCHAR(50)  NOT NULL UNIQUE,
   password   TEXT         NOT NULL,
-  role       VARCHAR(10)  NOT NULL DEFAULT 'kasir' CHECK(role IN ('admin', 'kasir')),
+  role       VARCHAR(20)  NOT NULL DEFAULT 'kasir' CHECK(role IN ('superadmin', 'admin', 'supervisor', 'kasir')),
   name       VARCHAR(100) NOT NULL,
   is_active  BOOLEAN      NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ  DEFAULT NOW()

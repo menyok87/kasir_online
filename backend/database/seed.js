@@ -53,17 +53,26 @@ async function seed() {
     }
     console.log(`✓ ${count} produk ditambahkan`);
 
+    // Migrasi role: perbesar kolom & update CHECK constraint
+    await client.query(`ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(20)`).catch(() => {});
+    await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`).catch(() => {});
+    await client.query(`ALTER TABLE users ADD CONSTRAINT users_role_check CHECK(role IN ('superadmin','admin','supervisor','kasir'))`).catch(() => {});
+
     // Insert default users
-    const adminHash = await bcrypt.hash('admin123', 10);
-    const kasirHash = await bcrypt.hash('kasir123', 10);
+    const superHash      = await bcrypt.hash('super123', 10);
+    const adminHash      = await bcrypt.hash('admin123', 10);
+    const supervisorHash = await bcrypt.hash('supervisor123', 10);
+    const kasirHash      = await bcrypt.hash('kasir123', 10);
     await client.query(
       `INSERT INTO users (username, password, role, name) VALUES
-         ('admin', $1, 'admin', 'Administrator'),
-         ('kasir', $2, 'kasir',  'Kasir')
+         ('superadmin', $1, 'superadmin', 'Super Administrator'),
+         ('admin',      $2, 'admin',      'Administrator'),
+         ('supervisor', $3, 'supervisor', 'Supervisor'),
+         ('kasir',      $4, 'kasir',      'Kasir')
        ON CONFLICT (username) DO NOTHING`,
-      [adminHash, kasirHash]
+      [superHash, adminHash, supervisorHash, kasirHash]
     );
-    console.log('✓ Default users: admin/admin123, kasir/kasir123');
+    console.log('✓ Default users: superadmin/super123, admin/admin123, supervisor/supervisor123, kasir/kasir123');
 
     // Migrasi: tambah kolom baru ke store_settings jika belum ada (aman dijalankan berulang)
     const newCols = [

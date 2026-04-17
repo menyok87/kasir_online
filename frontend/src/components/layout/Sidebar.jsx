@@ -5,24 +5,33 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
-const adminNav = [
-  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/pos',          icon: ShoppingCart,    label: 'Kasir (POS)' },
-  { to: '/products',     icon: Package,         label: 'Produk' },
-  { to: '/categories',   icon: Tags,            label: 'Kategori' },
-  { to: '/transactions', icon: Receipt,         label: 'Transaksi' },
-  { to: '/users',        icon: Users,           label: 'Manajemen User' },
-  { to: '/settings',    icon: Settings,        label: 'Pengaturan' },
+const allMenus = [
+  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard',       feature: 'dashboard' },
+  { to: '/pos',          icon: ShoppingCart,    label: 'Kasir (POS)',     feature: 'pos' },
+  { to: '/products',     icon: Package,         label: 'Produk',          feature: 'products' },
+  { to: '/categories',   icon: Tags,            label: 'Kategori',        feature: 'categories' },
+  { to: '/transactions', icon: Receipt,         label: 'Transaksi',       feature: 'transactions' },
+  { to: '/users',        icon: Users,           label: 'Manajemen User',  feature: 'users' },
+  { to: '/settings',     icon: Settings,        label: 'Pengaturan',      feature: 'settings' },
 ]
 
-const kasirNav = [
-  { to: '/pos',          icon: ShoppingCart, label: 'Kasir (POS)' },
-  { to: '/transactions', icon: Receipt,      label: 'Transaksi' },
-]
+const roleLabel = {
+  superadmin: 'Super Admin',
+  admin:      'Admin',
+  supervisor: 'Supervisor',
+  kasir:      'Kasir',
+}
+
+const roleBadgeColor = {
+  superadmin: 'bg-purple-600',
+  admin:      'bg-blue-600',
+  supervisor: 'bg-teal-600',
+  kasir:      'bg-green-600',
+}
 
 export default function Sidebar({ onClose }) {
-  const { user, logout, isAdmin } = useAuth()
-  const navItems = isAdmin ? adminNav : kasirNav
+  const { user, logout, can } = useAuth()
+  const navItems = allMenus.filter(m => can?.[m.feature])
 
   return (
     <aside className="w-64 bg-gray-900 text-white flex flex-col h-screen">
@@ -71,7 +80,9 @@ export default function Sidebar({ onClose }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-white truncate">{user?.name}</p>
-            <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full text-white ${roleBadgeColor[user?.role] || 'bg-gray-600'}`}>
+              {roleLabel[user?.role] || user?.role}
+            </span>
           </div>
         </div>
         <button

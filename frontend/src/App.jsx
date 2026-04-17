@@ -30,15 +30,33 @@ function RequireAuth({ children }) {
 }
 
 function RequireAdmin({ children }) {
-  const { isAdmin } = useAuth()
-  if (!isAdmin) return <Navigate to="/pos" replace />
+  const { user, loading, isAdmin } = useAuth()
+  if (loading) return <PageLoader />
+  if (!isAdmin) return <Navigate to={user ? '/pos' : '/login'} replace />
+  return children
+}
+
+function RequireSuperAdmin({ children }) {
+  const { user, loading, isSuperAdmin } = useAuth()
+  if (loading) return <PageLoader />
+  if (!isSuperAdmin) return <Navigate to={user ? '/dashboard' : '/login'} replace />
+  return children
+}
+
+function RequireCan({ feature, children }) {
+  const { user, loading, can } = useAuth()
+  if (loading) return <PageLoader />
+  if (!can?.[feature]) return <Navigate to={user?.can?.pos ? '/pos' : '/transactions'} replace />
   return children
 }
 
 function PublicOnly({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <PageLoader />
-  if (user) return <Navigate to={user.role === 'admin' ? '/dashboard' : '/pos'} replace />
+  if (user) {
+    const home = (user.role === 'kasir' || user.role === 'supervisor') ? '/transactions' : '/dashboard'
+    return <Navigate to={user.role === 'kasir' ? '/pos' : home} replace />
+  }
   return children
 }
 
@@ -62,12 +80,16 @@ export default function App() {
           <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>
             <Route index element={<Navigate to="/dashboard" replace />} />
 
-            {/* Admin only */}
-            <Route path="dashboard"  element={<RequireAdmin>{wrap(Dashboard)}</RequireAdmin>} />
+            {/* superadmin + admin + supervisor */}
+            <Route path="dashboard"  element={<RequireCan feature="dashboard">{wrap(Dashboard)}</RequireCan>} />
+
+            {/* superadmin + admin */}
             <Route path="categories" element={<RequireAdmin>{wrap(Categories)}</RequireAdmin>} />
             <Route path="products"   element={<RequireAdmin>{wrap(Products)}</RequireAdmin>} />
-            <Route path="users"      element={<RequireAdmin>{wrap(Users)}</RequireAdmin>} />
             <Route path="settings"   element={<RequireAdmin>{wrap(Settings)}</RequireAdmin>} />
+
+            {/* superadmin only */}
+            <Route path="users" element={<RequireSuperAdmin>{wrap(Users)}</RequireSuperAdmin>} />
 
             {/* All roles */}
             <Route path="pos"          element={wrap(POS)} />

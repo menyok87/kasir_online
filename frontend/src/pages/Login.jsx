@@ -105,8 +105,10 @@ export default function Login() {
         {/* Info akun default */}
         <div className="mt-6 p-3 bg-gray-50 rounded-xl text-xs text-gray-500 space-y-1">
           <p className="font-medium text-gray-600 mb-1.5">Akun default:</p>
-          <div className="flex justify-between"><span>Admin</span><span className="font-mono">admin / admin123</span></div>
-          <div className="flex justify-between"><span>Kasir</span><span className="font-mono">kasir / kasir123</span></div>
+          <div className="flex justify-between"><span className="text-purple-600 font-medium">Super Admin</span><span className="font-mono">superadmin / super123</span></div>
+          <div className="flex justify-between"><span className="text-blue-600 font-medium">Admin</span><span className="font-mono">admin / admin123</span></div>
+          <div className="flex justify-between"><span className="text-teal-600 font-medium">Supervisor</span><span className="font-mono">supervisor / supervisor123</span></div>
+          <div className="flex justify-between"><span className="text-green-600 font-medium">Kasir</span><span className="font-mono">kasir / kasir123</span></div>
         </div>
       </div>
     </div>

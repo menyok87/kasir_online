@@ -2,10 +2,10 @@ const express = require('express');
 const router  = express.Router();
 const bcrypt  = require('bcryptjs');
 const pool    = require('../database/db');
-const { requireAdmin } = require('../middleware/authMiddleware');
+const { requireSuperAdmin } = require('../middleware/authMiddleware');
 
-// Semua endpoint users → admin only
-router.use(requireAdmin);
+// Semua endpoint users → superadmin only
+router.use(requireSuperAdmin);
 
 // GET /api/users — daftar semua user
 router.get('/', async (req, res, next) => {
@@ -24,7 +24,7 @@ router.post('/', async (req, res, next) => {
     if (!username?.trim()) return res.status(400).json({ error: 'Username wajib diisi' });
     if (!name?.trim())     return res.status(400).json({ error: 'Nama wajib diisi' });
     if (!password || password.length < 6) return res.status(400).json({ error: 'Password minimal 6 karakter' });
-    if (!['admin', 'kasir'].includes(role)) return res.status(400).json({ error: 'Role tidak valid' });
+    if (!['superadmin', 'admin', 'supervisor', 'kasir'].includes(role)) return res.status(400).json({ error: 'Role tidak valid' });
 
     const hash = await bcrypt.hash(password, 10);
     const { rows } = await pool.query(
@@ -45,10 +45,10 @@ router.put('/:id', async (req, res, next) => {
   try {
     const { name, role, password } = req.body;
     if (!name?.trim()) return res.status(400).json({ error: 'Nama wajib diisi' });
-    if (!['admin', 'kasir'].includes(role)) return res.status(400).json({ error: 'Role tidak valid' });
+    if (!['superadmin', 'admin', 'supervisor', 'kasir'].includes(role)) return res.status(400).json({ error: 'Role tidak valid' });
 
-    // Cegah admin cabut role diri sendiri
-    if (Number(req.params.id) === req.user.id && role !== 'admin') {
+    // Cegah superadmin cabut role diri sendiri
+    if (Number(req.params.id) === req.user.id && role !== 'superadmin') {
       return res.status(400).json({ error: 'Tidak bisa mengubah role akun sendiri' });
     }
 
