@@ -37,6 +37,68 @@ router.post('/login', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// POST /api/auth/register — daftar akun admin baru
+router.post('/register', async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    const { username, password, name, store_name } = req.body;
+    if (!username?.trim())   return res.status(400).json({ error: 'Username wajib diisi' });
+    if (!name?.trim())       return res.status(400).json({ error: 'Nama lengkap wajib diisi' });
+    if (!password)           return res.status(400).json({ error: 'Password wajib diisi' });
+    if (password.length < 6) return res.status(400).json({ error: 'Password minimal 6 karakter' });
+
+    const uname = username.trim().toLowerCase().replace(/\s+/g, '_');
+
+    // Cek username sudah ada
+    const { rows: exist } = await client.query(
+      'SELECT id FROM users WHERE username = $1', [uname]
+    );
+    if (exist.length) return res.status(409).json({ error: 'Username sudah digunakan' });
+
+    await client.query('BEGIN');
+
+    const hash = await bcrypt.hash(password, 10);
+    const { rows: userRows } = await client.query(
+      `INSERT INTO users (username, password, role, name) VALUES ($1,$2,'admin',$3) RETURNING id, username, role, name`,
+      [uname, hash, name.trim()]
+    );
+    const user = userRows[0];
+
+    // Store settings default
+    await client.query(
+      `INSERT INTO store_settings (admin_id, store_name, store_tagline, footer_msg)
+       VALUES ($1,$2,'Point of Sale','Terima kasih telah berbelanja!')`,
+      [user.id, (store_name?.trim() || name.trim() + ' Store')]
+    );
+
+    // Default accounts
+    const defaultAccounts = [
+      ['1-1001','Kas Tunai','kas','Uang tunai di tangan'],
+      ['1-1002','Bank','bank','Rekening bank utama'],
+      ['1-2001','Piutang Dagang','piutang','Tagihan kepada pelanggan'],
+      ['2-1001','Hutang Dagang','hutang','Kewajiban kepada pemasok'],
+      ['3-1001','Modal Usaha','modal','Modal awal pemilik usaha'],
+      ['4-1001','Pendapatan Penjualan','pendapatan','Penerimaan dari penjualan'],
+      ['5-1001','Beban Operasional','beban','Biaya operasional usaha'],
+    ];
+    for (const [code, accName, type, desc] of defaultAccounts) {
+      await client.query(
+        `INSERT INTO accounts (admin_id,code,name,type,description) VALUES ($1,$2,$3,$4,$5)`,
+        [user.id, code, accName, type, desc]
+      ).catch(() => {});
+    }
+
+    await client.query('COMMIT');
+
+    const payload = { id: user.id, username: user.username, role: user.role, name: user.name };
+    const token   = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+    res.status(201).json({ token, user: payload });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    next(err);
+  } finally { client.release(); }
+});
+
 // GET /api/auth/me — cek token & kembalikan data user
 router.get('/me', authenticate, (req, res) => {
   res.json({ user: req.user });
