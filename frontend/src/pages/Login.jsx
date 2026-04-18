@@ -134,13 +134,6 @@ function LoginForm({ login, navigate }) {
         }
       </button>
 
-      <div className="mt-4 p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-2xl text-xs text-gray-500 dark:text-gray-400 space-y-1.5 border border-gray-100 dark:border-gray-700">
-        <p className="font-semibold text-gray-600 dark:text-gray-300 mb-2">Akun default:</p>
-        <div className="flex justify-between"><span className="text-purple-600 dark:text-purple-400 font-medium">Super Admin</span><span className="font-mono">superadmin / super123</span></div>
-        <div className="flex justify-between"><span className="text-blue-600 dark:text-blue-400 font-medium">Admin</span><span className="font-mono">admin / admin123</span></div>
-        <div className="flex justify-between"><span className="text-teal-600 dark:text-teal-400 font-medium">Supervisor</span><span className="font-mono">supervisor / supervisor123</span></div>
-        <div className="flex justify-between"><span className="text-green-600 dark:text-green-400 font-medium">Kasir</span><span className="font-mono">kasir / kasir123</span></div>
-      </div>
     </form>
   )
 }
