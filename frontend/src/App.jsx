@@ -10,6 +10,7 @@ const Categories   = lazy(() => import('./pages/Categories'))
 const Products     = lazy(() => import('./pages/Products'))
 const POS          = lazy(() => import('./pages/POS'))
 const Transactions = lazy(() => import('./pages/Transactions'))
+const Accounts     = lazy(() => import('./pages/Accounts'))
 const Users        = lazy(() => import('./pages/Users'))
 const Settings     = lazy(() => import('./pages/Settings'))
 
@@ -93,7 +94,8 @@ export default function App() {
             <Route path="products"   element={<RequireCan feature="products">{wrap(Products)}</RequireCan>} />
 
             {/* superadmin + admin */}
-            <Route path="users" element={<RequireCan feature="users">{wrap(Users)}</RequireCan>} />
+            <Route path="accounts" element={<RequireCan feature="accounts">{wrap(Accounts)}</RequireCan>} />
+            <Route path="users"    element={<RequireCan feature="users">{wrap(Users)}</RequireCan>} />
 
             {/* All roles */}
             <Route path="pos"          element={wrap(POS)} />

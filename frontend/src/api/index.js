@@ -61,4 +61,10 @@ export const deleteTransaction      = (id)     => api.delete(`/transactions/${id
 export const getDashboardSummary = ()     => api.get('/dashboard/summary');
 export const getDashboardChart   = (days) => api.get('/dashboard/chart', { params: { days } });
 
+// Accounts (Chart of Accounts)
+export const getAccounts    = ()        => api.get('/accounts');
+export const createAccount  = (data)    => api.post('/accounts', data);
+export const updateAccount  = (id,data) => api.put(`/accounts/${id}`, data);
+export const deleteAccount  = (id)      => api.delete(`/accounts/${id}`);
+
 export default api;

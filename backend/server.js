@@ -34,6 +34,7 @@ app.use('/api/dashboard',    authenticate, requireManager, require('./routes/das
 app.use('/api/uploads',      authenticate, requireAdmin,  require('./routes/uploads'));
 app.use('/api/users',        authenticate,               require('./routes/users'));
 app.use('/api/settings',     authenticate, requireAdmin,  require('./routes/settings'));
+app.use('/api/accounts',     authenticate, requireAdmin,  require('./routes/accounts'));
 
 // ── Static Frontend (production) ────────────────────────────
 // Nginx memproksi semua request ke Express, jadi Express

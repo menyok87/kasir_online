@@ -162,6 +162,47 @@ async function seed() {
       console.log(`✓ ${count} produk ditambahkan (superadmin)`);
     }
 
+    // ── Migrasi & seed accounts ───────────────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS accounts (
+        id          SERIAL PRIMARY KEY,
+        admin_id    INTEGER        REFERENCES users(id) ON DELETE CASCADE,
+        code        VARCHAR(20)    NOT NULL,
+        name        VARCHAR(100)   NOT NULL,
+        type        VARCHAR(20)    NOT NULL CHECK(type IN ('kas','bank','piutang','hutang','modal','pendapatan','beban')),
+        balance     NUMERIC(15,2)  NOT NULL DEFAULT 0,
+        description TEXT           DEFAULT '',
+        is_active   BOOLEAN        NOT NULL DEFAULT TRUE,
+        created_at  TIMESTAMPTZ    DEFAULT NOW(),
+        UNIQUE(code, admin_id)
+      )
+    `).catch(() => {});
+
+    const defaultAccounts = [
+      { code: '1-1001', name: 'Kas Tunai',             type: 'kas',        description: 'Uang tunai di tangan' },
+      { code: '1-1002', name: 'Bank BCA',               type: 'bank',       description: 'Rekening bank BCA' },
+      { code: '1-1003', name: 'Bank BRI',               type: 'bank',       description: 'Rekening bank BRI' },
+      { code: '1-2001', name: 'Piutang Dagang',         type: 'piutang',    description: 'Tagihan kepada pelanggan' },
+      { code: '2-1001', name: 'Hutang Dagang',          type: 'hutang',     description: 'Kewajiban kepada pemasok' },
+      { code: '3-1001', name: 'Modal Usaha',            type: 'modal',      description: 'Modal awal pemilik usaha' },
+      { code: '4-1001', name: 'Pendapatan Penjualan',   type: 'pendapatan', description: 'Penerimaan dari penjualan produk' },
+      { code: '5-1001', name: 'Beban Pembelian Barang', type: 'beban',      description: 'Biaya pembelian barang dagangan' },
+      { code: '5-1002', name: 'Beban Gaji Karyawan',   type: 'beban',      description: 'Pembayaran gaji dan upah' },
+      { code: '5-1003', name: 'Beban Sewa Tempat',      type: 'beban',      description: 'Biaya sewa toko/gudang' },
+      { code: '5-1004', name: 'Beban Operasional',      type: 'beban',      description: 'Biaya listrik, air, internet, dll' },
+    ];
+
+    for (const uid of [superAdminId, adminId].filter(Boolean)) {
+      for (const acc of defaultAccounts) {
+        await client.query(
+          `INSERT INTO accounts (admin_id, code, name, type, description)
+           VALUES ($1, $2, $3, $4, $5) ON CONFLICT (code, admin_id) DO NOTHING`,
+          [uid, acc.code, acc.name, acc.type, acc.description]
+        ).catch(() => {});
+      }
+    }
+    console.log('✓ Daftar akun default selesai');
+
     console.log('Seed & migrasi selesai!');
   } finally {
     client.release();

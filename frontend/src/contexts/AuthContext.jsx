@@ -49,8 +49,9 @@ export function AuthProvider({ children }) {
     products:     isManager,   // supervisor bisa kelola stok/produk
     categories:   isAdmin,     // hanya admin+ yang kelola kategori
     transactions: true,
-    users:        isSuperAdmin || role === 'admin', // admin kelola kasir miliknya
+    users:        isSuperAdmin || role === 'admin',
     settings:     isAdmin,
+    accounts:     isAdmin,
   }
 
   return (

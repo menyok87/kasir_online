@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Tags, Package,
-  ShoppingCart, Receipt, Store, X, LogOut, User, Users, Settings, KeyRound, Eye, EyeOff
+  ShoppingCart, Receipt, Store, X, LogOut, User, Users, Settings, KeyRound, Eye, EyeOff, BookOpen
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../contexts/AuthContext'
@@ -15,6 +15,7 @@ const allMenus = [
   { to: '/products',     icon: Package,         label: 'Produk',          feature: 'products' },
   { to: '/categories',   icon: Tags,            label: 'Kategori',        feature: 'categories' },
   { to: '/transactions', icon: Receipt,         label: 'Transaksi',       feature: 'transactions' },
+  { to: '/accounts',     icon: BookOpen,        label: 'Daftar Akun',     feature: 'accounts' },
   { to: '/users',        icon: Users,           label: 'Manajemen User',  feature: 'users' },
   { to: '/settings',     icon: Settings,        label: 'Pengaturan',      feature: 'settings' },
 ]

@@ -86,6 +86,20 @@ CREATE TABLE IF NOT EXISTS store_settings (
   updated_at           TIMESTAMPTZ           DEFAULT NOW()
 );
 
+-- Daftar Akun (Chart of Accounts)
+CREATE TABLE IF NOT EXISTS accounts (
+  id          SERIAL PRIMARY KEY,
+  admin_id    INTEGER        REFERENCES users(id) ON DELETE CASCADE,
+  code        VARCHAR(20)    NOT NULL,
+  name        VARCHAR(100)   NOT NULL,
+  type        VARCHAR(20)    NOT NULL CHECK(type IN ('kas','bank','piutang','hutang','modal','pendapatan','beban')),
+  balance     NUMERIC(15,2)  NOT NULL DEFAULT 0,
+  description TEXT           DEFAULT '',
+  is_active   BOOLEAN        NOT NULL DEFAULT TRUE,
+  created_at  TIMESTAMPTZ    DEFAULT NOW(),
+  UNIQUE(code, admin_id)
+);
+
 -- Index untuk performa
 CREATE INDEX IF NOT EXISTS idx_products_category  ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_products_admin      ON products(admin_id);
