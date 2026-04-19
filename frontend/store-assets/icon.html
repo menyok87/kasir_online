@@ -6,83 +6,82 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { width: 512px; height: 512px; overflow: hidden; background: transparent; }
   .icon {
-    width: 512px;
-    height: 512px;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #4f46e5 100%);
-    border-radius: 96px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
+    width: 512px; height: 512px;
+    background: linear-gradient(145deg, #1d4ed8 0%, #2563eb 50%, #4f46e5 100%);
+    border-radius: 108px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
   }
+  /* Subtle glow circle top-right */
   .icon::before {
     content: '';
-    position: absolute;
-    top: -60px;
-    right: -60px;
-    width: 260px;
-    height: 260px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 50%;
+    position: absolute; top: -80px; right: -80px;
+    width: 280px; height: 280px;
+    background: rgba(255,255,255,0.08); border-radius: 50%;
   }
+  /* Subtle circle bottom-left */
   .icon::after {
     content: '';
-    position: absolute;
-    bottom: -80px;
-    left: -40px;
-    width: 220px;
-    height: 220px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 50%;
+    position: absolute; bottom: -60px; left: -40px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.05); border-radius: 50%;
   }
-  svg.store-icon {
-    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.3));
-    z-index: 1;
+  .inner {
+    display: flex; flex-direction: column; align-items: center;
+    z-index: 1; gap: 18px;
   }
-  .app-name {
-    color: white;
-    font-family: 'Arial', sans-serif;
+  /* White rounded square behind the icon */
+  .icon-bg {
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 44px;
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .wordmark {
+    text-align: center;
+    line-height: 1;
+  }
+  .word-kasir {
+    color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 62px;
     font-weight: 800;
-    font-size: 52px;
-    letter-spacing: -1px;
-    margin-top: 18px;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    z-index: 1;
+    letter-spacing: -2px;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    display: block;
   }
-  .tagline {
-    color: rgba(255,255,255,0.7);
-    font-family: 'Arial', sans-serif;
-    font-size: 20px;
-    font-weight: 400;
-    letter-spacing: 3px;
+  .word-online {
+    color: rgba(255,255,255,0.65);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 6px;
     text-transform: uppercase;
-    margin-top: 4px;
-    z-index: 1;
+    display: block;
+    margin-top: 2px;
   }
 </style>
 </head>
 <body>
 <div class="icon">
-  <svg class="store-icon" width="180" height="180" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Store building -->
-    <rect x="2" y="11" width="20" height="11" rx="1" fill="white" fill-opacity="0.95"/>
-    <!-- Roof / awning -->
-    <path d="M1 7h22l-1.5 4H2.5L1 7z" fill="white" fill-opacity="0.95"/>
-    <!-- Door -->
-    <rect x="9.5" y="14" width="5" height="8" rx="0.5" fill="#2563eb"/>
-    <!-- Windows -->
-    <rect x="3" y="13" width="4" height="3" rx="0.3" fill="#60a5fa"/>
-    <rect x="17" y="13" width="4" height="3" rx="0.3" fill="#60a5fa"/>
-    <!-- Sign board -->
-    <rect x="4" y="3" width="16" height="4" rx="0.5" fill="white" fill-opacity="0.6"/>
-    <!-- Cashier symbol on sign -->
-    <rect x="6" y="4.5" width="3" height="1" rx="0.2" fill="white"/>
-    <rect x="10.5" y="4.5" width="7" height="1" rx="0.2" fill="white"/>
-  </svg>
-  <div class="app-name">Kasir</div>
-  <div class="tagline">Online POS</div>
+  <div class="inner">
+    <div class="icon-bg">
+      <!-- Store icon from lucide — exact paths -->
+      <svg width="110" height="110" viewBox="0 0 24 24" fill="none"
+           stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l1-5h16l1 5"/>
+        <path d="M3 9a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2"/>
+        <path d="M5 11v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8"/>
+        <path d="M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/>
+      </svg>
+    </div>
+    <div class="wordmark">
+      <span class="word-kasir">Kasir</span>
+      <span class="word-online">Online</span>
+    </div>
+  </div>
 </div>
 </body>
 </html>
