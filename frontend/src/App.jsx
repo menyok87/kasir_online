@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import Layout from './components/layout/Layout'
 import Login from './pages/Login'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 
 const Dashboard    = lazy(() => import('./pages/Dashboard'))
 const Categories   = lazy(() => import('./pages/Categories'))
@@ -77,7 +78,8 @@ export default function App() {
       <AuthProvider>
         <Routes>
           {/* Public */}
-          <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
+          <Route path="/login"          element={<PublicOnly><Login /></PublicOnly>} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
           {/* Protected */}
           <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>

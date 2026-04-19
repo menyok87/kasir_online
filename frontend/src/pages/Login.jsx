@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Store, Eye, EyeOff, AlertCircle, Moon, Sun, UserPlus, LogIn } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -59,6 +59,16 @@ export default function Login() {
             ? <LoginForm login={login} navigate={navigate} />
             : <RegisterForm login={login} navigate={navigate} onSwitchToLogin={() => setTab('login')} />
           }
+        </div>
+
+        {/* Privacy Policy link */}
+        <div className="px-8 pb-6 text-center">
+          <Link
+            to="/privacy-policy"
+            className="text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          >
+            Kebijakan Privasi
+          </Link>
         </div>
       </div>
     </div>
