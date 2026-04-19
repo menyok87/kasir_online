@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1080px; height: 1920px; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
+
+  .frame {
+    width: 1080px;
+    height: 1920px;
+    background: linear-gradient(160deg, #7c2d12 0%, #ea580c 40%, #f97316 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 60px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .frame::before {
+    content: '';
+    position: absolute; top: -150px; left: -150px;
+    width: 500px; height: 500px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+
+  .screen-label { color: rgba(255,255,255,0.9); font-size: 36px; font-weight: 700; text-align: center; margin-bottom: 12px; }
+  .screen-desc { color: rgba(255,255,255,0.6); font-size: 24px; text-align: center; margin-bottom: 60px; }
+
+  .phone-frame {
+    width: 520px;
+    height: 1080px;
+    background: #0f172a;
+    border-radius: 70px;
+    border: 8px solid rgba(255,255,255,0.15);
+    box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .phone-notch {
+    width: 160px; height: 40px;
+    background: #0f172a;
+    border-radius: 0 0 28px 28px;
+    position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+  }
+
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: #f8fafc;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .status-bar {
+    height: 50px;
+    background: #ea580c;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 20px 8px;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .app-header {
+    background: linear-gradient(135deg, #ea580c, #f97316);
+    padding: 14px 18px 14px;
+    color: white;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left { font-size: 16px; font-weight: 800; }
+  .header-sub { font-size: 10px; opacity: 0.7; margin-top: 2px; }
+  .header-btn {
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .search-wrap {
+    padding: 10px 14px;
+    background: white;
+    border-bottom: 1px solid #f1f5f9;
+    flex-shrink: 0;
+  }
+  .search-box {
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 11px;
+    color: #94a3b8;
+  }
+
+  .product-list {
+    flex: 1;
+    overflow: hidden;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .product-row {
+    background: white;
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+
+  .prod-img {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+
+  .prod-info { flex: 1; min-width: 0; }
+  .prod-name { font-size: 11px; font-weight: 700; color: #1e293b; }
+  .prod-cat { font-size: 9px; color: #94a3b8; margin-top: 2px; }
+  .prod-prices { margin-top: 4px; }
+  .prod-sell { font-size: 12px; font-weight: 800; color: #ea580c; }
+  .prod-cost { font-size: 8px; color: #94a3b8; }
+  .prod-margin { font-size: 8px; font-weight: 700; color: #059669; }
+
+  .prod-stock {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .stock-num { font-size: 13px; font-weight: 800; color: #1e293b; }
+  .stock-label { font-size: 8px; color: #94a3b8; }
+
+  .prod-edit {
+    width: 28px; height: 28px;
+    background: #fff7ed;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .bottom-caption {
+    margin-top: 50px;
+    text-align: center;
+    z-index: 2;
+  }
+  .caption-title { color: white; font-size: 42px; font-weight: 800; margin-bottom: 12px; }
+  .caption-subtitle { color: rgba(255,255,255,0.7); font-size: 26px; }
+
+  .bottom-dots {
+    display: flex; gap: 10px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+  .bdot { width: 10px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 50%; }
+  .bdot.active { background: white; width: 28px; border-radius: 5px; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="screen-label">Manajemen Produk</div>
+  <div class="screen-desc">Kelola stok & pantau margin keuntungan</div>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span>📶 🔋</span>
+      </div>
+
+      <div class="app-header">
+        <div>
+          <div class="header-left">📦 Produk</div>
+          <div class="header-sub">12 produk aktif</div>
+        </div>
+        <div class="header-btn">+ Tambah</div>
+      </div>
+
+      <div class="search-wrap">
+        <div class="search-box">🔍  Cari nama produk...</div>
+      </div>
+
+      <div class="product-list">
+        <div class="product-row">
+          <div class="prod-img" style="background:#fef3c7">☕</div>
+          <div class="prod-info">
+            <div class="prod-name">Kopi Susu Premium</div>
+            <div class="prod-cat">Minuman • Kode: KOP-001</div>
+            <div class="prod-prices">
+              <div class="prod-sell">Rp 15.000</div>
+              <div class="prod-cost">Modal: Rp 7.000 <span class="prod-margin">+53%</span></div>
+            </div>
+          </div>
+          <div class="prod-stock">
+            <div class="stock-num">--</div>
+            <div class="stock-label">stok</div>
+          </div>
+          <div class="prod-edit">✏️</div>
+        </div>
+
+        <div class="product-row">
+          <div class="prod-img" style="background:#d1fae5">🍵</div>
+          <div class="prod-info">
+            <div class="prod-name">Teh Tarik</div>
+            <div class="prod-cat">Minuman • Kode: TEH-001</div>
+            <div class="prod-prices">
+              <div class="prod-sell">Rp 8.000</div>
+              <div class="prod-cost">Modal: Rp 3.500 <span class="prod-margin">+56%</span></div>
+            </div>
+          </div>
+          <div class="prod-stock">
+            <div class="stock-num">--</div>
+            <div class="stock-label">stok</div>
+          </div>
+          <div class="prod-edit">✏️</div>
+        </div>
+
+        <div class="product-row">
+          <div class="prod-img" style="background:#fee2e2">🍞</div>
+          <div class="prod-info">
+            <div class="prod-name">Roti Bakar Coklat</div>
+            <div class="prod-cat">Makanan • Kode: MKN-001</div>
+            <div class="prod-prices">
+              <div class="prod-sell">Rp 12.000</div>
+              <div class="prod-cost">Modal: Rp 5.000 <span class="prod-margin">+58%</span></div>
+            </div>
+          </div>
+          <div class="prod-stock">
+            <div class="stock-num">--</div>
+            <div class="stock-label">stok</div>
+          </div>
+          <div class="prod-edit">✏️</div>
+        </div>
+
+        <div class="product-row">
+          <div class="prod-img" style="background:#ede9fe">🥤</div>
+          <div class="prod-info">
+            <div class="prod-name">Jus Alpukat</div>
+            <div class="prod-cat">Minuman • Kode: JUS-002</div>
+            <div class="prod-prices">
+              <div class="prod-sell">Rp 18.000</div>
+              <div class="prod-cost">Modal: Rp 9.000 <span class="prod-margin">+50%</span></div>
+            </div>
+          </div>
+          <div class="prod-stock">
+            <div class="stock-num">--</div>
+            <div class="stock-label">stok</div>
+          </div>
+          <div class="prod-edit">✏️</div>
+        </div>
+
+        <div class="product-row">
+          <div class="prod-img" style="background:#fce7f3">🍰</div>
+          <div class="prod-info">
+            <div class="prod-name">Kue Brownies</div>
+            <div class="prod-cat">Kue • Kode: KUE-001</div>
+            <div class="prod-prices">
+              <div class="prod-sell">Rp 22.000</div>
+              <div class="prod-cost">Modal: Rp 10.000 <span class="prod-margin">+55%</span></div>
+            </div>
+          </div>
+          <div class="prod-stock">
+            <div class="stock-num">--</div>
+            <div class="stock-label">stok</div>
+          </div>
+          <div class="prod-edit">✏️</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-caption">
+    <div class="caption-title">Kelola Produk</div>
+    <div class="caption-subtitle">Stok & margin keuntungan terlihat jelas</div>
+  </div>
+  <div class="bottom-dots">
+    <div class="bdot"></div>
+    <div class="bdot"></div>
+    <div class="bdot"></div>
+    <div class="bdot active"></div>
+  </div>
+</div>
+</body>
+</html>

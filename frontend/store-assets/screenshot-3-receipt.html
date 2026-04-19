@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1080px; height: 1920px; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
+
+  .frame {
+    width: 1080px;
+    height: 1920px;
+    background: linear-gradient(160deg, #4c1d95 0%, #7c3aed 40%, #a855f7 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 60px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .frame::before {
+    content: '';
+    position: absolute; bottom: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+
+  .screen-label { color: rgba(255,255,255,0.9); font-size: 36px; font-weight: 700; text-align: center; margin-bottom: 12px; }
+  .screen-desc { color: rgba(255,255,255,0.6); font-size: 24px; text-align: center; margin-bottom: 60px; }
+
+  .phone-frame {
+    width: 520px;
+    height: 1080px;
+    background: #0f172a;
+    border-radius: 70px;
+    border: 8px solid rgba(255,255,255,0.15);
+    box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .phone-notch {
+    width: 160px; height: 40px;
+    background: #0f172a;
+    border-radius: 0 0 28px 28px;
+    position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+  }
+
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: #f8fafc;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .status-bar {
+    height: 50px;
+    background: #7c3aed;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 20px 8px;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .modal-overlay {
+    flex: 1;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 10px 10px;
+  }
+
+  .receipt-modal {
+    background: white;
+    border-radius: 24px 24px 16px 16px;
+    overflow: hidden;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.2);
+  }
+
+  .receipt-header {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    padding: 16px 18px 20px;
+    text-align: center;
+    color: white;
+    position: relative;
+  }
+
+  .success-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 100px;
+    padding: 4px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .receipt-title { font-size: 18px; font-weight: 800; }
+  .receipt-trx { font-size: 10px; opacity: 0.7; margin-top: 2px; }
+
+  .receipt-body {
+    padding: 14px 16px;
+    font-size: 11px;
+    color: #374151;
+  }
+
+  .receipt-store-name {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 4px;
+  }
+  .receipt-store-addr {
+    text-align: center;
+    font-size: 9px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px dashed #e5e7eb;
+    margin: 8px 0;
+  }
+
+  .receipt-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+  .receipt-row.item-name { font-weight: 600; color: #1e293b; }
+  .receipt-row.subtotal { color: #64748b; }
+  .receipt-row.total {
+    font-weight: 800;
+    font-size: 14px;
+    color: #1e293b;
+    padding: 8px 0;
+  }
+  .receipt-row.paid { font-weight: 700; color: #059669; }
+  .receipt-row.change { color: #7c3aed; font-weight: 700; }
+
+  .lunas-stamp {
+    text-align: center;
+    padding: 8px;
+    background: #f0fdf4;
+    border: 2px solid #86efac;
+    border-radius: 10px;
+    margin: 8px 0;
+    color: #16a34a;
+    font-weight: 800;
+    font-size: 13px;
+  }
+
+  .receipt-footer {
+    text-align: center;
+    font-size: 9px;
+    color: #94a3b8;
+    margin-top: 8px;
+    padding-bottom: 4px;
+  }
+
+  .action-btns {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid #f1f5f9;
+  }
+  .action-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .btn-print { background: #eff6ff; color: #2563eb; }
+  .btn-pdf { background: #faf5ff; color: #7c3aed; }
+  .btn-new {
+    width: 100%;
+    margin: 0 16px 14px;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(124,58,237,0.3);
+  }
+
+  .bottom-caption {
+    margin-top: 50px;
+    text-align: center;
+    z-index: 2;
+  }
+  .caption-title { color: white; font-size: 42px; font-weight: 800; margin-bottom: 12px; }
+  .caption-subtitle { color: rgba(255,255,255,0.7); font-size: 26px; }
+
+  .bottom-dots {
+    display: flex; gap: 10px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+  .bdot { width: 10px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 50%; }
+  .bdot.active { background: white; width: 28px; border-radius: 5px; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="screen-label">Struk Digital</div>
+  <div class="screen-desc">Cetak atau download PDF setelah transaksi</div>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span>📶 🔋</span>
+      </div>
+
+      <div class="modal-overlay">
+        <div class="receipt-modal">
+          <div class="receipt-header">
+            <div class="success-badge">✓ Transaksi Berhasil</div>
+            <div class="receipt-title">Struk Pembayaran</div>
+            <div class="receipt-trx">TRX-20260419-007 • 09:41 WIB</div>
+          </div>
+
+          <div class="receipt-body">
+            <div class="receipt-store-name">☕ Kafe Berkah Jaya</div>
+            <div class="receipt-store-addr">Jl. Raya Bogor No. 45, Jakarta</div>
+
+            <hr class="divider">
+
+            <div class="receipt-row item-name"><span>Kopi Susu × 2</span><span>Rp 30.000</span></div>
+            <div class="receipt-row item-name"><span>Roti Bakar × 1</span><span>Rp 12.000</span></div>
+            <div class="receipt-row item-name"><span>Jus Alpukat × 1</span><span>Rp 18.000</span></div>
+
+            <hr class="divider">
+
+            <div class="receipt-row subtotal"><span>Subtotal</span><span>Rp 60.000</span></div>
+            <div class="receipt-row subtotal"><span>Diskon</span><span>- Rp 6.000</span></div>
+            <div class="receipt-row total"><span>TOTAL</span><span>Rp 54.000</span></div>
+
+            <div class="lunas-stamp">✓ LUNAS — TUNAI</div>
+
+            <div class="receipt-row paid"><span>Bayar</span><span>Rp 60.000</span></div>
+            <div class="receipt-row change"><span>Kembalian</span><span>Rp 6.000</span></div>
+
+            <div class="receipt-footer">Terima kasih telah berbelanja!<br>Sampai jumpa lagi 😊</div>
+          </div>
+
+          <div class="action-btns">
+            <div class="action-btn btn-print">🖨 Cetak</div>
+            <div class="action-btn btn-pdf">📄 PDF</div>
+          </div>
+          <div class="btn-new">+ Transaksi Baru</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-caption">
+    <div class="caption-title">Struk Profesional</div>
+    <div class="caption-subtitle">Cetak atau kirim PDF ke pelanggan</div>
+  </div>
+  <div class="bottom-dots">
+    <div class="bdot"></div>
+    <div class="bdot"></div>
+    <div class="bdot active"></div>
+    <div class="bdot"></div>
+  </div>
+</div>
+</body>
+</html>

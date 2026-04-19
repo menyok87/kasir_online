@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1080px; height: 1920px; font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4ff; overflow: hidden; }
+
+  .frame {
+    width: 1080px;
+    height: 1920px;
+    background: linear-gradient(160deg, #1e3a8a 0%, #2563eb 40%, #4f46e5 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 60px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .frame::before {
+    content: '';
+    position: absolute; top: -200px; right: -200px;
+    width: 700px; height: 700px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+
+  .screen-label {
+    color: rgba(255,255,255,0.9);
+    font-size: 36px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+  .screen-desc {
+    color: rgba(255,255,255,0.6);
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  .phone-frame {
+    width: 520px;
+    height: 1080px;
+    background: #0f172a;
+    border-radius: 70px;
+    border: 8px solid rgba(255,255,255,0.15);
+    box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .phone-notch {
+    width: 160px; height: 40px;
+    background: #0f172a;
+    border-radius: 0 0 28px 28px;
+    position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+  }
+
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: #f8fafc;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 50px;
+    background: #2563eb;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 20px 8px;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* App header */
+  .app-header {
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    padding: 16px 20px 24px;
+    color: white;
+    flex-shrink: 0;
+  }
+  .app-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .app-logo {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 700;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .header-welcome { font-size: 12px; opacity: 0.7; }
+
+  /* Search bar */
+  .search-bar {
+    margin: 14px 20px 0;
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 10px 16px;
+    color: white;
+    font-size: 13px;
+    opacity: 0.8;
+    flex-shrink: 0;
+  }
+
+  /* Products grid */
+  .products-area {
+    flex: 1;
+    overflow: hidden;
+    padding: 16px;
+    background: #f1f5f9;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .product-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .product-img {
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+  }
+
+  .product-info {
+    padding: 10px 12px;
+  }
+  .product-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .product-price {
+    font-size: 12px;
+    font-weight: 700;
+    color: #2563eb;
+  }
+
+  .add-btn {
+    width: 26px; height: 26px;
+    background: #2563eb;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px; font-weight: 700;
+    float: right;
+    margin-top: -4px;
+    line-height: 1;
+  }
+
+  /* Cart bar */
+  .cart-bar {
+    background: #2563eb;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    box-shadow: 0 -4px 20px rgba(37,99,235,0.3);
+  }
+  .cart-info { color: white; }
+  .cart-count { font-size: 12px; opacity: 0.8; }
+  .cart-total { font-size: 20px; font-weight: 800; }
+  .checkout-btn {
+    background: white;
+    color: #2563eb;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 12px;
+  }
+
+  /* Bottom caption */
+  .bottom-caption {
+    margin-top: 50px;
+    text-align: center;
+    z-index: 2;
+  }
+  .caption-title {
+    color: white;
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+  .caption-subtitle {
+    color: rgba(255,255,255,0.7);
+    font-size: 26px;
+  }
+
+  .bottom-dots {
+    display: flex; gap: 10px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+  .bdot { width: 10px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 50%; }
+  .bdot.active { background: white; width: 28px; border-radius: 5px; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="screen-label">Tampilan Kasir (POS)</div>
+  <div class="screen-desc">Tambah produk ke keranjang dengan mudah</div>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span>📶 🔋</span>
+      </div>
+      <div class="app-header">
+        <div class="app-header-row">
+          <div class="app-logo">
+            <div class="logo-icon">🏪</div>
+            Kasir Online
+          </div>
+          <div style="font-size:12px;opacity:0.7">Admin ▾</div>
+        </div>
+        <div class="header-welcome">Selamat pagi! Siap melayani pelanggan?</div>
+        <div class="search-bar">🔍  Cari produk...</div>
+      </div>
+
+      <div class="products-area">
+        <div class="section-title">Semua Produk</div>
+        <div class="products-grid">
+          <div class="product-card">
+            <div class="product-img" style="background:linear-gradient(135deg,#fef3c7,#fde68a)">☕</div>
+            <div class="product-info">
+              <div class="product-name">Kopi Susu</div>
+              <div class="product-price">Rp 15.000 <div class="add-btn">+</div></div>
+            </div>
+          </div>
+          <div class="product-card">
+            <div class="product-img" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0)">🍵</div>
+            <div class="product-info">
+              <div class="product-name">Teh Manis</div>
+              <div class="product-price">Rp 8.000 <div class="add-btn">+</div></div>
+            </div>
+          </div>
+          <div class="product-card">
+            <div class="product-img" style="background:linear-gradient(135deg,#fee2e2,#fecaca)">🍞</div>
+            <div class="product-info">
+              <div class="product-name">Roti Bakar</div>
+              <div class="product-price">Rp 12.000 <div class="add-btn" style="background:#10b981">+</div></div>
+            </div>
+          </div>
+          <div class="product-card">
+            <div class="product-img" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe)">🥤</div>
+            <div class="product-info">
+              <div class="product-name">Jus Alpukat</div>
+              <div class="product-price">Rp 18.000 <div class="add-btn">+</div></div>
+            </div>
+          </div>
+          <div class="product-card">
+            <div class="product-img" style="background:linear-gradient(135deg,#fce7f3,#fbcfe8)">🍰</div>
+            <div class="product-info">
+              <div class="product-name">Kue Brownies</div>
+              <div class="product-price">Rp 22.000 <div class="add-btn">+</div></div>
+            </div>
+          </div>
+          <div class="product-card">
+            <div class="product-img" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd)">🧊</div>
+            <div class="product-info">
+              <div class="product-name">Es Krim</div>
+              <div class="product-price">Rp 10.000 <div class="add-btn">+</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cart-bar">
+        <div class="cart-info">
+          <div class="cart-count">🛒 3 produk dipilih</div>
+          <div class="cart-total">Rp 43.000</div>
+        </div>
+        <div class="checkout-btn">Bayar →</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-caption">
+    <div class="caption-title">Kasir Lebih Cepat</div>
+    <div class="caption-subtitle">Transaksi dalam hitungan detik</div>
+  </div>
+  <div class="bottom-dots">
+    <div class="bdot active"></div>
+    <div class="bdot"></div>
+    <div class="bdot"></div>
+    <div class="bdot"></div>
+  </div>
+</div>
+</body>
+</html>

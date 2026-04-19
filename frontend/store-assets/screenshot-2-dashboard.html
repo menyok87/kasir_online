@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1080px; height: 1920px; font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4ff; overflow: hidden; }
+
+  .frame {
+    width: 1080px;
+    height: 1920px;
+    background: linear-gradient(160deg, #065f46 0%, #059669 40%, #0d9488 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 60px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .frame::before {
+    content: '';
+    position: absolute; top: -200px; right: -200px;
+    width: 700px; height: 700px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+
+  .screen-label { color: rgba(255,255,255,0.9); font-size: 36px; font-weight: 700; text-align: center; margin-bottom: 12px; }
+  .screen-desc { color: rgba(255,255,255,0.6); font-size: 24px; text-align: center; margin-bottom: 60px; }
+
+  .phone-frame {
+    width: 520px;
+    height: 1080px;
+    background: #0f172a;
+    border-radius: 70px;
+    border: 8px solid rgba(255,255,255,0.15);
+    box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .phone-notch {
+    width: 160px; height: 40px;
+    background: #0f172a;
+    border-radius: 0 0 28px 28px;
+    position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+  }
+
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: #f8fafc;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .status-bar {
+    height: 50px;
+    background: #059669;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 20px 8px;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .app-header {
+    background: linear-gradient(135deg, #059669, #0d9488);
+    padding: 14px 18px 18px;
+    color: white;
+    flex-shrink: 0;
+  }
+  .header-title { font-size: 16px; font-weight: 800; }
+  .header-date { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+
+  /* Summary cards */
+  .summary-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px 14px 0;
+    flex-shrink: 0;
+  }
+
+  .summary-card {
+    background: white;
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .sc-label { font-size: 9px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .sc-value { font-size: 15px; font-weight: 800; margin-top: 4px; }
+  .sc-sub { font-size: 8px; color: #94a3b8; margin-top: 2px; }
+  .sc-blue .sc-value { color: #2563eb; }
+  .sc-green .sc-value { color: #059669; }
+  .sc-purple .sc-value { color: #7c3aed; }
+  .sc-orange .sc-value { color: #ea580c; }
+
+  /* Chart area */
+  .chart-section {
+    margin: 10px 14px 0;
+    background: white;
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  .chart-title { font-size: 11px; font-weight: 700; color: #374151; margin-bottom: 10px; }
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 70px;
+  }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar {
+    width: 100%;
+    background: linear-gradient(to top, #2563eb, #60a5fa);
+    border-radius: 4px 4px 0 0;
+  }
+  .bar-label { font-size: 8px; color: #94a3b8; }
+
+  /* Recent transactions */
+  .recent-section {
+    margin: 10px 14px 0;
+    flex: 1;
+    overflow: hidden;
+  }
+  .recent-title { font-size: 11px; font-weight: 700; color: #374151; margin-bottom: 8px; }
+  .trx-item {
+    background: white;
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .trx-icon {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    background: #eff6ff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .trx-id { font-size: 10px; font-weight: 700; color: #1e293b; }
+  .trx-time { font-size: 8px; color: #94a3b8; }
+  .trx-amount { margin-left: auto; font-size: 11px; font-weight: 800; color: #059669; }
+
+  .bottom-caption {
+    margin-top: 50px;
+    text-align: center;
+    z-index: 2;
+  }
+  .caption-title { color: white; font-size: 42px; font-weight: 800; margin-bottom: 12px; }
+  .caption-subtitle { color: rgba(255,255,255,0.7); font-size: 26px; }
+
+  .bottom-dots {
+    display: flex; gap: 10px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+  .bdot { width: 10px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 50%; }
+  .bdot.active { background: white; width: 28px; border-radius: 5px; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="screen-label">Dashboard Penjualan</div>
+  <div class="screen-desc">Pantau bisnis Anda secara real-time</div>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span>📶 🔋</span>
+      </div>
+      <div class="app-header">
+        <div class="header-title">📊 Dashboard</div>
+        <div class="header-date">Sabtu, 19 April 2026</div>
+      </div>
+
+      <div class="summary-row">
+        <div class="summary-card sc-blue">
+          <div class="sc-label">Pendapatan Bulan Ini</div>
+          <div class="sc-value">Rp 12,4 Jt</div>
+          <div class="sc-sub">↑ 18% dari bulan lalu</div>
+        </div>
+        <div class="summary-card sc-green">
+          <div class="sc-label">Laba Bersih</div>
+          <div class="sc-value">Rp 4,7 Jt</div>
+          <div class="sc-sub">Margin 37,9%</div>
+        </div>
+        <div class="summary-card sc-purple">
+          <div class="sc-label">Transaksi Hari Ini</div>
+          <div class="sc-value">24 Trx</div>
+          <div class="sc-sub">↑ 6 dari kemarin</div>
+        </div>
+        <div class="summary-card sc-orange">
+          <div class="sc-label">Produk Terjual</div>
+          <div class="sc-value">386 Item</div>
+          <div class="sc-sub">Bulan ini</div>
+        </div>
+      </div>
+
+      <div class="chart-section">
+        <div class="chart-title">📈 Penjualan 7 Hari Terakhir</div>
+        <div class="chart-bars">
+          <div class="bar-group">
+            <div class="bar" style="height:35px;opacity:0.5"></div>
+            <div class="bar-label">Sn</div>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:50px;opacity:0.6"></div>
+            <div class="bar-label">Sl</div>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:40px;opacity:0.7"></div>
+            <div class="bar-label">Rb</div>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:65px;opacity:0.8"></div>
+            <div class="bar-label">Km</div>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:55px;opacity:0.9"></div>
+            <div class="bar-label">Jm</div>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:70px"></div>
+            <div class="bar-label">Sb</div>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:45px;background:linear-gradient(to top,#d1d5db,#e5e7eb)"></div>
+            <div class="bar-label">Ah</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="recent-section">
+        <div class="recent-title">🕐 Transaksi Terbaru</div>
+        <div class="trx-item">
+          <div class="trx-icon">🛒</div>
+          <div>
+            <div class="trx-id">TRX-20260419-001</div>
+            <div class="trx-time">09:32 — Tunai</div>
+          </div>
+          <div class="trx-amount">+Rp 43.000</div>
+        </div>
+        <div class="trx-item">
+          <div class="trx-icon">💳</div>
+          <div>
+            <div class="trx-id">TRX-20260419-002</div>
+            <div class="trx-time">09:18 — QRIS</div>
+          </div>
+          <div class="trx-amount">+Rp 87.500</div>
+        </div>
+        <div class="trx-item">
+          <div class="trx-icon">🛒</div>
+          <div>
+            <div class="trx-id">TRX-20260419-003</div>
+            <div class="trx-time">08:55 — Tunai</div>
+          </div>
+          <div class="trx-amount">+Rp 25.000</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-caption">
+    <div class="caption-title">Laporan Real-time</div>
+    <div class="caption-subtitle">Pantau omzet & laba kapan saja</div>
+  </div>
+  <div class="bottom-dots">
+    <div class="bdot"></div>
+    <div class="bdot active"></div>
+    <div class="bdot"></div>
+    <div class="bdot"></div>
+  </div>
+</div>
+</body>
+</html>

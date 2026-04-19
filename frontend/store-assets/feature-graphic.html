@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1024px; height: 500px; overflow: hidden; background: transparent; font-family: 'Segoe UI', Arial, sans-serif; }
+
+  .banner {
+    width: 1024px;
+    height: 500px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 45%, #4f46e5 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  /* Decorative circles */
+  .circle-1 {
+    position: absolute; top: -100px; right: -80px;
+    width: 400px; height: 400px;
+    background: rgba(255,255,255,0.05); border-radius: 50%;
+  }
+  .circle-2 {
+    position: absolute; bottom: -120px; right: 200px;
+    width: 300px; height: 300px;
+    background: rgba(255,255,255,0.04); border-radius: 50%;
+  }
+  .circle-3 {
+    position: absolute; top: 50px; left: 380px;
+    width: 180px; height: 180px;
+    background: rgba(255,255,255,0.03); border-radius: 50%;
+  }
+  .dots {
+    position: absolute; bottom: 30px; left: 50px;
+    display: flex; gap: 8px;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    background: rgba(255,255,255,0.3); border-radius: 50%;
+  }
+
+  /* Left content */
+  .left {
+    padding: 60px 64px;
+    flex: 1;
+    z-index: 2;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .title {
+    color: white;
+    font-size: 62px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.2);
+  }
+  .title span { color: #93c5fd; }
+
+  .subtitle {
+    color: rgba(255,255,255,0.75);
+    font-size: 20px;
+    line-height: 1.5;
+    margin-bottom: 36px;
+    max-width: 400px;
+  }
+
+  /* Feature pills */
+  .features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .feature-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .feature-pill .dot2 {
+    width: 7px; height: 7px;
+    background: #4ade80;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Right: phone mockup */
+  .right {
+    width: 340px;
+    height: 100%;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .phone {
+    width: 220px;
+    height: 420px;
+    background: #0f172a;
+    border-radius: 36px;
+    border: 4px solid rgba(255,255,255,0.15);
+    box-shadow: -20px 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+    transform: translateY(40px);
+  }
+
+  /* Phone notch */
+  .phone-notch {
+    width: 80px; height: 22px;
+    background: #0f172a;
+    border-radius: 0 0 14px 14px;
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+  }
+
+  /* Phone screen content */
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: #f8fafc;
+    padding-top: 28px;
+    overflow: hidden;
+  }
+
+  /* App header */
+  .phone-header {
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    padding: 14px 14px 18px;
+    color: white;
+  }
+  .phone-header-title {
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .phone-header-sub {
+    font-size: 9px;
+    opacity: 0.7;
+  }
+  .phone-total {
+    font-size: 22px;
+    font-weight: 800;
+    margin-top: 8px;
+  }
+
+  /* Product list */
+  .phone-products {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .phone-product {
+    background: white;
+    border-radius: 10px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .phone-product-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .phone-product-name {
+    font-size: 9px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .phone-product-price {
+    font-size: 8px;
+    color: #64748b;
+  }
+  .phone-add-btn {
+    margin-left: auto;
+    width: 22px; height: 22px;
+    background: #2563eb;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .phone-cart-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: #2563eb;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+  }
+  .cart-label { font-size: 9px; font-weight: 600; }
+  .cart-total { font-size: 12px; font-weight: 800; }
+  .cart-btn {
+    background: white;
+    color: #2563eb;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="circle-1"></div>
+  <div class="circle-2"></div>
+  <div class="circle-3"></div>
+  <div class="dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+
+  <div class="left">
+    <div class="badge">
+      ⚡ Aplikasi Kasir Modern
+    </div>
+    <div class="title">Kasir<br><span>Online</span></div>
+    <div class="subtitle">Kelola penjualan, stok & laporan keuangan bisnis Anda dari mana saja</div>
+    <div class="features">
+      <div class="feature-pill"><div class="dot2"></div> Point of Sale</div>
+      <div class="feature-pill"><div class="dot2"></div> Laporan Real-time</div>
+      <div class="feature-pill"><div class="dot2"></div> Multi Kasir</div>
+      <div class="feature-pill"><div class="dot2"></div> Struk Digital</div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="phone-header">
+          <div class="phone-header-title">Kasir Online POS</div>
+          <div class="phone-header-sub">Selamat datang, Admin</div>
+          <div class="phone-total">Rp 0</div>
+        </div>
+        <div class="phone-products">
+          <div class="phone-product">
+            <div class="phone-product-img" style="background: linear-gradient(135deg,#fbbf24,#f59e0b);"></div>
+            <div>
+              <div class="phone-product-name">Kopi Susu</div>
+              <div class="phone-product-price">Rp 15.000</div>
+            </div>
+            <div class="phone-add-btn">+</div>
+          </div>
+          <div class="phone-product">
+            <div class="phone-product-img" style="background: linear-gradient(135deg,#34d399,#10b981);"></div>
+            <div>
+              <div class="phone-product-name">Teh Manis</div>
+              <div class="phone-product-price">Rp 8.000</div>
+            </div>
+            <div class="phone-add-btn">+</div>
+          </div>
+          <div class="phone-product">
+            <div class="phone-product-img" style="background: linear-gradient(135deg,#f87171,#ef4444);"></div>
+            <div>
+              <div class="phone-product-name">Roti Bakar</div>
+              <div class="phone-product-price">Rp 12.000</div>
+            </div>
+            <div class="phone-add-btn">+</div>
+          </div>
+          <div class="phone-product">
+            <div class="phone-product-img" style="background: linear-gradient(135deg,#a78bfa,#7c3aed);"></div>
+            <div>
+              <div class="phone-product-name">Jus Alpukat</div>
+              <div class="phone-product-price">Rp 18.000</div>
+            </div>
+            <div class="phone-add-btn">+</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-cart-bar">
+        <div>
+          <div class="cart-label">Keranjang (3 item)</div>
+          <div class="cart-total">Rp 43.000</div>
+        </div>
+        <div class="cart-btn">Bayar →</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
