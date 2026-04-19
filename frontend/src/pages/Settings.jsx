@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
 import {
   Store, Phone, MapPin, Mail, Globe, FileText, Save,
-  QrCode, Landmark, ImagePlus, X, CheckCircle, ChevronRight,
-  Building2, CreditCard, Receipt, Settings2
+  QrCode, Landmark, ImagePlus, X, CheckCircle,
+  Building2, CreditCard, Receipt, Settings2, ChevronRight
 } from 'lucide-react'
 import { getSettings, updateSettings, uploadProductImage } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
@@ -18,80 +18,22 @@ const defaultSettings = {
 }
 
 const SECTIONS = [
-  { id: 'toko',   label: 'Info Toko',    icon: Store,    color: 'blue'   },
-  { id: 'kontak', label: 'Kontak',       icon: MapPin,   color: 'teal'   },
-  { id: 'qris',   label: 'QRIS',         icon: QrCode,   color: 'violet' },
-  { id: 'bank',   label: 'Bank',         icon: Landmark, color: 'amber'  },
-  { id: 'struk',  label: 'Struk',        icon: FileText, color: 'rose'   },
+  { id: 'toko',   label: 'Info Toko', icon: Store,    color: 'blue'   },
+  { id: 'kontak', label: 'Kontak',    icon: MapPin,   color: 'teal'   },
+  { id: 'qris',   label: 'QRIS',      icon: QrCode,   color: 'violet' },
+  { id: 'bank',   label: 'Bank',      icon: Landmark, color: 'amber'  },
+  { id: 'struk',  label: 'Struk',     icon: FileText, color: 'rose'   },
 ]
 
-const COLOR = {
-  blue:   { bg: 'bg-blue-50 dark:bg-blue-900/20',   icon: 'text-blue-600',   ring: 'ring-blue-500',   active: 'bg-blue-600 text-white shadow-blue-200 dark:shadow-blue-900' },
-  teal:   { bg: 'bg-teal-50 dark:bg-teal-900/20',   icon: 'text-teal-600',   ring: 'ring-teal-500',   active: 'bg-teal-600 text-white shadow-teal-200 dark:shadow-teal-900'  },
-  violet: { bg: 'bg-violet-50 dark:bg-violet-900/20', icon: 'text-violet-600', ring: 'ring-violet-500', active: 'bg-violet-600 text-white shadow-violet-200 dark:shadow-violet-900' },
-  amber:  { bg: 'bg-amber-50 dark:bg-amber-900/20',  icon: 'text-amber-600',  ring: 'ring-amber-500',  active: 'bg-amber-600 text-white shadow-amber-200 dark:shadow-amber-900'  },
-  rose:   { bg: 'bg-rose-50 dark:bg-rose-900/20',    icon: 'text-rose-600',   ring: 'ring-rose-500',   active: 'bg-rose-600 text-white shadow-rose-200 dark:shadow-rose-900'    },
+const C = {
+  blue:   { bg: 'bg-blue-50 dark:bg-blue-900/20',     icon: 'text-blue-600 dark:text-blue-400',   activePill: 'bg-blue-600 text-white',   activeSide: 'bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/50' },
+  teal:   { bg: 'bg-teal-50 dark:bg-teal-900/20',     icon: 'text-teal-600 dark:text-teal-400',   activePill: 'bg-teal-600 text-white',   activeSide: 'bg-teal-600 text-white shadow-md shadow-teal-200 dark:shadow-teal-900/50'  },
+  violet: { bg: 'bg-violet-50 dark:bg-violet-900/20', icon: 'text-violet-600 dark:text-violet-400',activePill: 'bg-violet-600 text-white', activeSide: 'bg-violet-600 text-white shadow-md shadow-violet-200 dark:shadow-violet-900/50'},
+  amber:  { bg: 'bg-amber-50 dark:bg-amber-900/20',   icon: 'text-amber-600 dark:text-amber-400', activePill: 'bg-amber-500 text-white',  activeSide: 'bg-amber-500 text-white shadow-md shadow-amber-200 dark:shadow-amber-900/50' },
+  rose:   { bg: 'bg-rose-50 dark:bg-rose-900/20',     icon: 'text-rose-600 dark:text-rose-400',   activePill: 'bg-rose-600 text-white',   activeSide: 'bg-rose-600 text-white shadow-md shadow-rose-200 dark:shadow-rose-900/50'   },
 }
 
-function SectionNav({ active, onChange, saving }) {
-  return (
-    <>
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col gap-1 w-52 flex-shrink-0">
-        {SECTIONS.map(s => {
-          const c = COLOR[s.color]
-          const isActive = active === s.id
-          return (
-            <button
-              key={s.id}
-              onClick={() => onChange(s.id)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left
-                ${isActive
-                  ? `${c.active} shadow-md`
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-            >
-              <s.icon size={16} className={isActive ? 'text-white' : c.icon} />
-              {s.label}
-              {isActive && <ChevronRight size={14} className="ml-auto opacity-70" />}
-            </button>
-          )
-        })}
-
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <button
-            type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded-xl shadow-md shadow-blue-200 dark:shadow-blue-900/40 transition-all disabled:opacity-60"
-            disabled={saving}
-          >
-            {saving
-              ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Menyimpan...</>
-              : <><Save size={15} />Simpan</>}
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile tabs */}
-      <div className="lg:hidden flex gap-2 overflow-x-auto pb-1 mb-4 scrollbar-hide">
-        {SECTIONS.map(s => {
-          const c = COLOR[s.color]
-          const isActive = active === s.id
-          return (
-            <button
-              key={s.id}
-              onClick={() => onChange(s.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0
-                ${isActive ? `${c.active} shadow-sm` : `${c.bg} ${c.icon}`}`}
-            >
-              <s.icon size={13} />
-              {s.label}
-            </button>
-          )
-        })}
-      </div>
-    </>
-  )
-}
-
+// ── Shared ────────────────────────────────────────────────────────────────────
 function Field({ label, hint, required, children }) {
   return (
     <div>
@@ -106,88 +48,153 @@ function Field({ label, hint, required, children }) {
 }
 
 function SectionCard({ title, subtitle, icon: Icon, color = 'blue', children }) {
-  const c = COLOR[color]
+  const c = C[color]
   return (
-    <div className="card p-6 md:p-8">
-      <div className="flex items-start gap-4 mb-6 pb-5 border-b border-gray-100 dark:border-gray-800">
-        <div className={`p-2.5 ${c.bg} rounded-xl flex-shrink-0`}>
-          <Icon size={20} className={c.icon} />
+    <div className="card p-4 md:p-6">
+      <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100 dark:border-gray-800">
+        <div className={`w-9 h-9 rounded-xl ${c.bg} flex items-center justify-center flex-shrink-0`}>
+          <Icon size={17} className={c.icon} />
         </div>
-        <div>
-          <h3 className="font-bold text-gray-800 dark:text-gray-100">{title}</h3>
-          {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>}
+        <div className="min-w-0">
+          <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm md:text-base leading-tight">{title}</h3>
+          {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{subtitle}</p>}
         </div>
       </div>
-      <div className="space-y-5">{children}</div>
+      <div className="space-y-4">{children}</div>
     </div>
   )
 }
 
-// ── Panel: Info Toko ───────────────────────────────────────────────────────────
+// ── Desktop Sidebar ───────────────────────────────────────────────────────────
+function DesktopSidebar({ active, onChange, saving }) {
+  return (
+    <aside className="hidden lg:flex flex-col gap-1 w-52 flex-shrink-0 sticky top-4">
+      {SECTIONS.map(s => {
+        const c = C[s.color]
+        const on = active === s.id
+        return (
+          <button key={s.id} onClick={() => onChange(s.id)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left
+              ${on ? c.activeSide : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+            <s.icon size={15} className={on ? 'text-white' : c.icon} />
+            {s.label}
+            {on && <ChevronRight size={13} className="ml-auto opacity-70" />}
+          </button>
+        )
+      })}
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <button type="submit" disabled={saving}
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition-all">
+          {saving
+            ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Menyimpan...</>
+            : <><Save size={14} />Simpan</>}
+        </button>
+      </div>
+    </aside>
+  )
+}
+
+// ── Mobile Tab Bar ────────────────────────────────────────────────────────────
+function MobileTabs({ active, onChange }) {
+  return (
+    <div className="lg:hidden -mx-3 md:-mx-6 px-3 md:px-6 mb-4 overflow-x-auto scrollbar-hide border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-10">
+      <div className="flex gap-0 min-w-max">
+        {SECTIONS.map(s => {
+          const c = C[s.color]
+          const on = active === s.id
+          return (
+            <button key={s.id} onClick={() => onChange(s.id)}
+              className={`flex items-center gap-2 px-4 py-3.5 text-sm font-semibold border-b-2 transition-all whitespace-nowrap
+                ${on
+                  ? `${c.icon} border-current`
+                  : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-200'}`}>
+              <s.icon size={15} />
+              {s.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Floating Save (mobile) ────────────────────────────────────────────────────
+function FloatingSave({ saving }) {
+  return (
+    <div className="lg:hidden fixed bottom-4 right-4 z-50">
+      <button type="submit" disabled={saving}
+        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60 text-white font-semibold text-sm px-5 py-3 rounded-2xl shadow-xl shadow-blue-500/40 transition-all">
+        {saving
+          ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Menyimpan...</>
+          : <><Save size={15} />Simpan</>}
+      </button>
+    </div>
+  )
+}
+
+// ── Panel: Info Toko ──────────────────────────────────────────────────────────
 function PanelToko({ form, set }) {
   return (
-    <SectionCard title="Informasi Toko" subtitle="Nama dan identitas bisnis Anda" icon={Store} color="blue">
+    <SectionCard title="Informasi Toko" subtitle="Nama dan identitas bisnis" icon={Store} color="blue">
       <Field label="Nama Toko" required>
         <div className="relative">
-          <Building2 size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input className="input pl-9" value={form.store_name} onChange={set('store_name')}
             placeholder="Contoh: Warung Berkah Jaya" required />
         </div>
       </Field>
-      <Field label="Tagline / Slogan" hint="(opsional — tampil di bawah nama toko pada struk)">
+      <Field label="Tagline / Slogan" hint="(opsional)">
         <div className="relative">
-          <Settings2 size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Settings2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input className="input pl-9" value={form.store_tagline} onChange={set('store_tagline')}
             placeholder="Contoh: Belanja Mudah & Murah" />
         </div>
       </Field>
-
-      {/* Live badge preview */}
       {form.store_name && (
-        <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/30">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-md shadow-blue-300/40">
+        <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/30">
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow shadow-blue-400/30">
             {form.store_name.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <p className="font-bold text-blue-900 dark:text-blue-100 text-sm">{form.store_name}</p>
-            {form.store_tagline && <p className="text-xs text-blue-600 dark:text-blue-400">{form.store_tagline}</p>}
+          <div className="min-w-0">
+            <p className="font-bold text-blue-900 dark:text-blue-100 text-sm truncate">{form.store_name}</p>
+            {form.store_tagline && <p className="text-xs text-blue-600 dark:text-blue-400 truncate">{form.store_tagline}</p>}
           </div>
-          <CheckCircle size={16} className="ml-auto text-blue-500 flex-shrink-0" />
+          <CheckCircle size={15} className="ml-auto text-blue-500 flex-shrink-0" />
         </div>
       )}
     </SectionCard>
   )
 }
 
-// ── Panel: Kontak ──────────────────────────────────────────────────────────────
+// ── Panel: Kontak ─────────────────────────────────────────────────────────────
 function PanelKontak({ form, set }) {
   return (
-    <SectionCard title="Kontak & Alamat" subtitle="Informasi kontak yang tampil di struk" icon={MapPin} color="teal">
+    <SectionCard title="Kontak & Alamat" subtitle="Tampil di struk pembayaran" icon={MapPin} color="teal">
       <Field label="Alamat Toko">
         <textarea className="input resize-none" rows={2} value={form.store_address}
           onChange={set('store_address')} placeholder="Jl. Raya No. 1, Kecamatan, Kota" />
       </Field>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Nomor Telepon">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Field label="No. Telepon">
           <div className="relative">
-            <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input className="input pl-9" value={form.store_phone} onChange={set('store_phone')}
-              placeholder="0812-3456-7890" />
+              placeholder="0812-3456-7890" inputMode="tel" />
           </div>
         </Field>
         <Field label="Email">
           <div className="relative">
-            <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input className="input pl-9" type="email" value={form.store_email} onChange={set('store_email')}
-              placeholder="toko@email.com" />
+              placeholder="toko@email.com" inputMode="email" />
           </div>
         </Field>
       </div>
       <Field label="Website" hint="(opsional)">
         <div className="relative">
-          <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input className="input pl-9" value={form.store_website} onChange={set('store_website')}
-            placeholder="www.tokosaya.com" />
+            placeholder="www.tokosaya.com" inputMode="url" />
         </div>
       </Field>
     </SectionCard>
@@ -213,32 +220,32 @@ function PanelQris({ form, setForm }) {
   }
 
   return (
-    <SectionCard title="Pembayaran QRIS" subtitle="QR code muncul saat pelanggan memilih metode QRIS" icon={QrCode} color="violet">
-      <div className="flex flex-col sm:flex-row gap-6 items-start">
-        {/* Upload box */}
-        <div className="flex-shrink-0">
+    <SectionCard title="Pembayaran QRIS" subtitle="QR code untuk pembayaran pelanggan" icon={QrCode} color="violet">
+      {/* Upload area — centered on mobile, left on sm+ */}
+      <div className="flex flex-col items-center sm:flex-row sm:items-start gap-5">
+        <div className="flex flex-col items-center gap-2 flex-shrink-0">
           {form.qris_image ? (
-            <div className="relative w-40 h-40">
+            <div className="relative">
               <img src={getImageUrl(form.qris_image)} alt="QRIS"
-                className="w-40 h-40 object-contain rounded-2xl border-2 border-violet-200 dark:border-violet-800 bg-white p-2 shadow-md" />
+                className="w-36 h-36 object-contain rounded-2xl border-2 border-violet-200 dark:border-violet-700 bg-white dark:bg-gray-800 p-2 shadow-md" />
               <button type="button" onClick={() => setForm(f => ({ ...f, qris_image: '' }))}
-                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg transition-colors">
-                <X size={12} />
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors">
+                <X size={11} />
               </button>
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow whitespace-nowrap">
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow whitespace-nowrap">
                 ✓ QRIS Aktif
               </div>
             </div>
           ) : (
             <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}
-              className="w-40 h-40 rounded-2xl border-2 border-dashed border-violet-300 dark:border-violet-700 hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all flex flex-col items-center justify-center gap-2 text-violet-400 hover:text-violet-600 disabled:opacity-50 group">
+              className="w-36 h-36 rounded-2xl border-2 border-dashed border-violet-300 dark:border-violet-700 hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 active:scale-95 transition-all flex flex-col items-center justify-center gap-2 text-violet-400 hover:text-violet-600 disabled:opacity-50">
               {uploading
                 ? <div className="w-7 h-7 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
                 : <>
-                    <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/30 rounded-xl flex items-center justify-center group-hover:bg-violet-200 dark:group-hover:bg-violet-800/40 transition-colors">
+                    <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/30 rounded-xl flex items-center justify-center">
                       <ImagePlus size={22} />
                     </div>
-                    <span className="text-xs font-medium text-center px-2">Upload QR Code</span>
+                    <span className="text-xs font-medium">Upload QR Code</span>
                     <span className="text-[10px] text-violet-300 dark:text-violet-600">JPG / PNG</span>
                   </>
               }
@@ -247,24 +254,24 @@ function PanelQris({ form, setForm }) {
           <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleUpload} />
           {form.qris_image && (
             <button type="button" onClick={() => inputRef.current?.click()}
-              className="mt-3 text-xs text-violet-600 hover:text-violet-700 font-medium hover:underline block text-center w-40 transition-colors">
+              className="text-xs text-violet-600 hover:underline font-medium transition-colors">
               Ganti gambar
             </button>
           )}
         </div>
 
         {/* Steps */}
-        <div className="flex-1 space-y-3">
+        <div className="flex-1 space-y-3 w-full">
           {[
-            { n: 1, text: 'Dapatkan file QR code QRIS dari bank atau aplikasi dompet digital Anda (GoPay, OVO, Dana, dll.)' },
-            { n: 2, text: 'Upload gambar QR code di sini (format JPG atau PNG, maks 3 MB)' },
-            { n: 3, text: 'Saat kasir memilih metode "QRIS", QR code otomatis muncul di layar untuk dipindai pelanggan' },
-          ].map(step => (
-            <div key={step.n} className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                {step.n}
+            { n: 1, text: 'Dapatkan file QR code QRIS dari bank atau dompet digital Anda (GoPay, OVO, Dana, dll.)' },
+            { n: 2, text: 'Upload gambar di sini (JPG atau PNG, maks 3 MB)' },
+            { n: 3, text: 'Saat kasir memilih "QRIS", QR code muncul di layar untuk dipindai pelanggan' },
+          ].map(s => (
+            <div key={s.n} className="flex items-start gap-3">
+              <div className="w-5 h-5 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                {s.n}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{step.text}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{s.text}</p>
             </div>
           ))}
         </div>
@@ -273,48 +280,45 @@ function PanelQris({ form, setForm }) {
   )
 }
 
-// ── Panel: Bank ────────────────────────────────────────────────────────────────
+// ── Panel: Bank ───────────────────────────────────────────────────────────────
 function PanelBank({ form, set }) {
   const hasData = form.bank_name || form.bank_account_number
   return (
     <SectionCard title="Rekening Bank Transfer" subtitle="Tampil saat pelanggan memilih Transfer Bank" icon={Landmark} color="amber">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Nama Bank">
           <input className="input" value={form.bank_name} onChange={set('bank_name')}
             placeholder="BCA, BRI, Mandiri, BNI..." />
         </Field>
         <Field label="Nomor Rekening">
           <input className="input font-mono tracking-wider" value={form.bank_account_number}
-            onChange={set('bank_account_number')} placeholder="1234567890" />
+            onChange={set('bank_account_number')} placeholder="1234567890" inputMode="numeric" />
         </Field>
-        <Field label="Nama Pemilik Rekening">
+        <Field label="Nama Pemilik">
           <input className="input" value={form.bank_account_name} onChange={set('bank_account_name')}
             placeholder="Nama sesuai rekening" />
         </Field>
         <Field label="Cabang" hint="(opsional)">
           <input className="input" value={form.bank_branch} onChange={set('bank_branch')}
-            placeholder="Contoh: KCP Sudirman" />
+            placeholder="KCP Sudirman" />
         </Field>
       </div>
 
-      {/* Live bank card preview */}
       {hasData && (
-        <div className="mt-2 rounded-2xl overflow-hidden shadow-lg">
-          <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3 flex items-center justify-between">
+        <div className="rounded-2xl overflow-hidden border border-amber-200 dark:border-amber-800/50 shadow-sm">
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 flex items-center justify-between">
             <span className="text-white font-bold text-sm tracking-wide">{form.bank_name || 'NAMA BANK'}</span>
-            <CreditCard size={20} className="text-white/80" />
+            <CreditCard size={17} className="text-white/80" />
           </div>
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/40 px-5 py-4">
-            <p className="text-xs text-amber-700 dark:text-amber-400 font-semibold uppercase tracking-wide mb-1">Nomor Rekening</p>
-            <p className="font-mono text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-widest mb-2">
+          <div className="bg-amber-50 dark:bg-amber-900/10 px-4 py-3">
+            <p className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wide mb-1">Nomor Rekening</p>
+            <p className="font-mono text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-widest break-all">
               {form.bank_account_number || '—'}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               a.n. <span className="font-semibold text-gray-800 dark:text-gray-200">{form.bank_account_name || '—'}</span>
             </p>
-            {form.bank_branch && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{form.bank_branch}</p>
-            )}
+            {form.bank_branch && <p className="text-xs text-gray-400 mt-0.5">{form.bank_branch}</p>}
           </div>
         </div>
       )}
@@ -322,112 +326,93 @@ function PanelBank({ form, set }) {
   )
 }
 
-// ── Panel: Struk ───────────────────────────────────────────────────────────────
+// ── Panel: Struk ──────────────────────────────────────────────────────────────
 function PanelStruk({ form, set, setCheck }) {
   const now = new Date()
   const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
   const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div className="space-y-4">
       {/* Form */}
-      <SectionCard title="Pengaturan Struk" subtitle="Konfigurasi pesan footer struk" icon={FileText} color="rose">
-        <Field label="Pesan Footer" hint="(tampil di bawah struk, tekan Enter untuk baris baru)">
-          <textarea className="input resize-none" rows={4} value={form.footer_msg} onChange={set('footer_msg')}
+      <SectionCard title="Pengaturan Struk" subtitle="Pesan footer dan catatan" icon={FileText} color="rose">
+        <Field label="Pesan Footer" hint="(Enter untuk baris baru)">
+          <textarea className="input resize-none" rows={3} value={form.footer_msg} onChange={set('footer_msg')}
             placeholder={'Terima kasih telah berbelanja!\nBarang yang sudah dibeli tidak dapat dikembalikan.'} />
         </Field>
-        <label className="flex items-start gap-3 cursor-pointer group">
-          <div className="relative mt-0.5">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div className="relative flex-shrink-0">
             <input type="checkbox" className="sr-only peer" checked={form.show_footer_note} onChange={setCheck('show_footer_note')} />
-            <div className="w-10 h-6 bg-gray-200 dark:bg-gray-700 peer-checked:bg-rose-500 rounded-full transition-colors"></div>
-            <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+            <div className="w-10 h-6 bg-gray-200 dark:bg-gray-700 peer-checked:bg-rose-500 rounded-full transition-colors" />
+            <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-              Tampilkan catatan bukti pembelian
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-              "Simpan struk ini sebagai bukti pembelian"
-            </p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Catatan bukti pembelian</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">"Simpan struk ini sebagai bukti pembelian"</p>
           </div>
         </label>
       </SectionCard>
 
       {/* Receipt preview */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <Receipt size={15} className="text-gray-400" />
-          <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Preview Struk</p>
+      <div className="card p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Receipt size={14} className="text-gray-400" />
+          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Preview Struk</p>
         </div>
-        <div className="card p-0 overflow-hidden shadow-xl max-w-xs mx-auto w-full">
-          {/* Struk header */}
-          <div className="bg-gradient-to-b from-gray-800 to-gray-900 text-white px-5 py-4 text-center">
+        <div className="max-w-xs mx-auto bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800">
+          {/* Header */}
+          <div className="bg-gradient-to-b from-gray-800 to-gray-900 text-white px-4 py-4 text-center">
             <p className="font-bold text-sm tracking-widest uppercase">{form.store_name || 'NAMA TOKO'}</p>
             {form.store_tagline && <p className="text-gray-400 text-xs mt-0.5">{form.store_tagline}</p>}
             {form.store_address && <p className="text-gray-400 text-xs mt-1 leading-relaxed">{form.store_address}</p>}
             {form.store_phone   && <p className="text-gray-400 text-xs">Telp: {form.store_phone}</p>}
             {form.store_email   && <p className="text-gray-400 text-xs">{form.store_email}</p>}
           </div>
-
-          {/* Struk body */}
-          <div className="bg-white dark:bg-gray-900 px-4 py-3 font-mono text-xs">
-            <div className="flex justify-between text-gray-500 dark:text-gray-400 mb-2 border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
+          {/* Body */}
+          <div className="px-4 py-3 font-mono text-xs">
+            <div className="flex justify-between text-gray-500 dark:text-gray-400 mb-2 pb-2 border-b border-dashed border-gray-200 dark:border-gray-700">
               <span>{dateStr} {timeStr}</span>
-              <span>Kasir: Admin</span>
+              <span>Admin</span>
             </div>
-
-            {/* Sample items */}
-            <div className="space-y-1 border-b border-dashed border-gray-200 dark:border-gray-700 pb-2 mb-2">
-              {[
-                { name: 'Kopi Susu', qty: 2, price: 30000 },
-                { name: 'Roti Bakar', qty: 1, price: 12000 },
-              ].map(item => (
-                <div key={item.name}>
-                  <div className="font-semibold text-gray-700 dark:text-gray-200">{item.name}</div>
+            <div className="space-y-1.5 pb-2 mb-2 border-b border-dashed border-gray-200 dark:border-gray-700">
+              {[['Kopi Susu', 2, 30000], ['Roti Bakar', 1, 12000]].map(([name, qty, price]) => (
+                <div key={name}>
+                  <p className="font-semibold text-gray-700 dark:text-gray-200">{name}</p>
                   <div className="flex justify-between text-gray-500 dark:text-gray-400 pl-2">
-                    <span>{item.qty} × Rp {(item.price / item.qty).toLocaleString('id-ID')}</span>
-                    <span>Rp {item.price.toLocaleString('id-ID')}</span>
+                    <span>{qty} × Rp {(price/qty).toLocaleString('id-ID')}</span>
+                    <span>Rp {price.toLocaleString('id-ID')}</span>
                   </div>
                 </div>
               ))}
             </div>
-
             <div className="flex justify-between font-bold text-gray-800 dark:text-gray-100 text-sm py-1">
               <span>TOTAL</span><span>Rp 42.000</span>
             </div>
             <div className="flex justify-between text-gray-500 dark:text-gray-400">
-              <span>Bayar (Tunai)</span><span>Rp 50.000</span>
+              <span>Tunai</span><span>Rp 50.000</span>
             </div>
             <div className="flex justify-between text-gray-700 dark:text-gray-300 font-semibold">
               <span>Kembalian</span><span>Rp 8.000</span>
             </div>
-
-            {/* Footer */}
             {(form.footer_msg || form.show_footer_note) && (
               <div className="mt-2 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700 text-center text-gray-500 dark:text-gray-400 space-y-0.5">
-                {form.footer_msg
-                  ? form.footer_msg.split('\n').map((l, i) => <p key={i}>{l}</p>)
-                  : null}
+                {form.footer_msg?.split('\n').map((l, i) => <p key={i}>{l}</p>)}
                 {form.show_footer_note && (
-                  <p className="italic text-gray-400 dark:text-gray-500 text-[10px]">
+                  <p className="italic text-[10px] text-gray-400 dark:text-gray-500">
                     Simpan struk ini sebagai bukti pembelian
                   </p>
                 )}
               </div>
             )}
           </div>
-
-          {/* Struk bottom notch */}
-          <div className="h-4 bg-white dark:bg-gray-900 flex items-end justify-center overflow-hidden">
-            <div className="w-full h-2 border-t-2 border-dashed border-gray-200 dark:border-gray-700" />
-          </div>
+          <div className="h-3 bg-white dark:bg-gray-900 border-t-2 border-dashed border-gray-100 dark:border-gray-800" />
         </div>
       </div>
     </div>
   )
 }
 
-// ── Main ───────────────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function Settings() {
   const [form, setForm]       = useState(defaultSettings)
   const [loading, setLoading] = useState(true)
@@ -461,32 +446,31 @@ export default function Settings() {
   return (
     <form onSubmit={handleSubmit}>
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100">Pengaturan Toko</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Konfigurasi informasi, pembayaran, dan tampilan struk</p>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Pengaturan Toko</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Informasi, pembayaran, dan tampilan struk</p>
         </div>
-        <button type="submit"
-          className="lg:hidden btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
-          disabled={saving}>
-          {saving
-            ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Menyimpan...</>
-            : <><Save size={15} />Simpan Pengaturan</>}
-        </button>
       </div>
+
+      {/* Mobile tab bar */}
+      <MobileTabs active={active} onChange={setActive} />
 
       {/* Body */}
       <div className="flex gap-6 items-start">
-        <SectionNav active={active} onChange={setActive} saving={saving} />
+        <DesktopSidebar active={active} onChange={setActive} saving={saving} />
 
-        <div className="flex-1 min-w-0">
-          {active === 'toko'   && <PanelToko  form={form} set={set} />}
+        <div className="flex-1 min-w-0 pb-20 lg:pb-0">
+          {active === 'toko'   && <PanelToko   form={form} set={set} />}
           {active === 'kontak' && <PanelKontak form={form} set={set} />}
-          {active === 'qris'   && <PanelQris  form={form} setForm={setForm} />}
-          {active === 'bank'   && <PanelBank  form={form} set={set} />}
-          {active === 'struk'  && <PanelStruk form={form} set={set} setCheck={setCheck} />}
+          {active === 'qris'   && <PanelQris   form={form} setForm={setForm} />}
+          {active === 'bank'   && <PanelBank   form={form} set={set} />}
+          {active === 'struk'  && <PanelStruk  form={form} set={set} setCheck={setCheck} />}
         </div>
       </div>
+
+      {/* Floating save button — mobile only */}
+      <FloatingSave saving={saving} />
     </form>
   )
 }
