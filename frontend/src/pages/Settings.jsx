@@ -3,9 +3,10 @@ import toast from 'react-hot-toast'
 import {
   Store, Phone, MapPin, Mail, Globe, FileText, Save,
   QrCode, Landmark, ImagePlus, X, CheckCircle,
-  Building2, CreditCard, Receipt, Settings2, ChevronRight
+  Building2, CreditCard, Receipt, Settings2, ChevronRight,
+  Lock, Eye, EyeOff, ShieldCheck
 } from 'lucide-react'
-import { getSettings, updateSettings, uploadProductImage } from '../api'
+import { getSettings, updateSettings, uploadProductImage, changePassword } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
 import { getImageUrl } from '../utils/getImageUrl'
 
@@ -18,11 +19,12 @@ const defaultSettings = {
 }
 
 const SECTIONS = [
-  { id: 'toko',   label: 'Info Toko', icon: Store,    color: 'blue'   },
-  { id: 'kontak', label: 'Kontak',    icon: MapPin,   color: 'teal'   },
-  { id: 'qris',   label: 'QRIS',      icon: QrCode,   color: 'violet' },
-  { id: 'bank',   label: 'Bank',      icon: Landmark, color: 'amber'  },
-  { id: 'struk',  label: 'Struk',     icon: FileText, color: 'rose'   },
+  { id: 'toko',      label: 'Info Toko', icon: Store,    color: 'blue'   },
+  { id: 'kontak',    label: 'Kontak',    icon: MapPin,   color: 'teal'   },
+  { id: 'qris',      label: 'QRIS',      icon: QrCode,   color: 'violet' },
+  { id: 'bank',      label: 'Bank',      icon: Landmark, color: 'amber'  },
+  { id: 'struk',     label: 'Struk',     icon: FileText, color: 'rose'   },
+  { id: 'keamanan',  label: 'Keamanan',  icon: Lock,     color: 'green'  },
 ]
 
 const C = {
@@ -31,6 +33,7 @@ const C = {
   violet: { bg: 'bg-violet-50 dark:bg-violet-900/20', icon: 'text-violet-600 dark:text-violet-400',activePill: 'bg-violet-600 text-white', activeSide: 'bg-violet-600 text-white shadow-md shadow-violet-200 dark:shadow-violet-900/50'},
   amber:  { bg: 'bg-amber-50 dark:bg-amber-900/20',   icon: 'text-amber-600 dark:text-amber-400', activePill: 'bg-amber-500 text-white',  activeSide: 'bg-amber-500 text-white shadow-md shadow-amber-200 dark:shadow-amber-900/50' },
   rose:   { bg: 'bg-rose-50 dark:bg-rose-900/20',     icon: 'text-rose-600 dark:text-rose-400',   activePill: 'bg-rose-600 text-white',   activeSide: 'bg-rose-600 text-white shadow-md shadow-rose-200 dark:shadow-rose-900/50'   },
+  green:  { bg: 'bg-green-50 dark:bg-green-900/20',   icon: 'text-green-600 dark:text-green-400', activePill: 'bg-green-600 text-white',  activeSide: 'bg-green-600 text-white shadow-md shadow-green-200 dark:shadow-green-900/50' },
 }
 
 // ── Shared ────────────────────────────────────────────────────────────────────
@@ -82,14 +85,16 @@ function DesktopSidebar({ active, onChange, saving }) {
           </button>
         )
       })}
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <button type="submit" disabled={saving}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition-all">
-          {saving
-            ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Menyimpan...</>
-            : <><Save size={14} />Simpan</>}
-        </button>
-      </div>
+      {active !== 'keamanan' && (
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <button type="submit" disabled={saving}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition-all">
+            {saving
+              ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Menyimpan...</>
+              : <><Save size={14} />Simpan</>}
+          </button>
+        </div>
+      )}
     </aside>
   )
 }
@@ -412,6 +417,124 @@ function PanelStruk({ form, set, setCheck }) {
   )
 }
 
+// ── Panel: Keamanan (Ganti Password) ─────────────────────────────────────────
+function PanelPassword() {
+  const [form, setForm]     = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [show, setShow]     = useState({ current: false, new: false, confirm: false })
+  const [saving, setSaving] = useState(false)
+  const [done, setDone]     = useState(false)
+
+  function toggle(field) { setShow(s => ({ ...s, [field]: !s[field] })) }
+  function set(k) { return e => { setForm(f => ({ ...f, [k]: e.target.value })); setDone(false) } }
+
+  function strength(pwd) {
+    if (!pwd) return 0
+    let s = 0
+    if (pwd.length >= 6)  s++
+    if (pwd.length >= 10) s++
+    if (/[A-Z]/.test(pwd)) s++
+    if (/[0-9]/.test(pwd)) s++
+    if (/[^A-Za-z0-9]/.test(pwd)) s++
+    return s
+  }
+
+  const str = strength(form.newPassword)
+  const strLabel = ['', 'Sangat Lemah', 'Lemah', 'Cukup', 'Kuat', 'Sangat Kuat'][str]
+  const strColor = ['', 'bg-red-500', 'bg-orange-400', 'bg-yellow-400', 'bg-blue-500', 'bg-green-500'][str]
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (form.newPassword !== form.confirmPassword) {
+      return toast.error('Konfirmasi password tidak cocok')
+    }
+    if (form.newPassword.length < 6) {
+      return toast.error('Password baru minimal 6 karakter')
+    }
+    setSaving(true)
+    try {
+      await changePassword({ currentPassword: form.currentPassword, newPassword: form.newPassword })
+      toast.success('Password berhasil diubah')
+      setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      setDone(true)
+    } catch (err) {
+      toast.error(err.message)
+    } finally { setSaving(false) }
+  }
+
+  function PasswordInput({ field, value, placeholder, label }) {
+    return (
+      <Field label={label} required>
+        <div className="relative">
+          <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            className="input pl-9 pr-10"
+            type={show[field] ? 'text' : 'password'}
+            value={value}
+            onChange={set(field === 'current' ? 'currentPassword' : field === 'new' ? 'newPassword' : 'confirmPassword')}
+            placeholder={placeholder}
+            autoComplete={field === 'current' ? 'current-password' : 'new-password'}
+            required
+          />
+          <button type="button" onClick={() => toggle(field)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+            {show[field] ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+        </div>
+      </Field>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <SectionCard title="Ganti Password" subtitle="Perbarui kata sandi akun Anda" icon={Lock} color="green">
+        {done && (
+          <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+            <ShieldCheck size={18} className="text-green-600 flex-shrink-0" />
+            <p className="text-sm text-green-800 dark:text-green-200 font-medium">Password berhasil diperbarui.</p>
+          </div>
+        )}
+
+        <PasswordInput field="current" value={form.currentPassword} label="Password Saat Ini" placeholder="Masukkan password saat ini" />
+        <PasswordInput field="new"     value={form.newPassword}     label="Password Baru"     placeholder="Minimal 6 karakter" />
+
+        {/* Strength bar */}
+        {form.newPassword && (
+          <div className="space-y-1.5">
+            <div className="flex gap-1">
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= str ? strColor : 'bg-gray-200 dark:bg-gray-700'}`} />
+              ))}
+            </div>
+            <p className={`text-xs font-medium ${['','text-red-500','text-orange-400','text-yellow-500','text-blue-500','text-green-500'][str]}`}>
+              Kekuatan: {strLabel}
+            </p>
+          </div>
+        )}
+
+        <PasswordInput field="confirm" value={form.confirmPassword} label="Konfirmasi Password Baru" placeholder="Ulangi password baru" />
+
+        {/* Match indicator */}
+        {form.confirmPassword && (
+          <p className={`text-xs font-medium flex items-center gap-1.5 ${form.newPassword === form.confirmPassword ? 'text-green-600' : 'text-red-500'}`}>
+            {form.newPassword === form.confirmPassword
+              ? <><CheckCircle size={13} /> Password cocok</>
+              : <><X size={13} /> Password tidak cocok</>}
+          </p>
+        )}
+
+        <div className="pt-1">
+          <button type="submit" disabled={saving}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold text-sm px-6 py-2.5 rounded-xl shadow-sm shadow-green-500/30 transition-all">
+            {saving
+              ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Menyimpan...</>
+              : <><ShieldCheck size={15} />Ubah Password</>}
+          </button>
+        </div>
+      </SectionCard>
+    </form>
+  )
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Settings() {
   const [form, setForm]       = useState(defaultSettings)
@@ -461,16 +584,17 @@ export default function Settings() {
         <DesktopSidebar active={active} onChange={setActive} saving={saving} />
 
         <div className="flex-1 min-w-0 pb-20 lg:pb-0">
-          {active === 'toko'   && <PanelToko   form={form} set={set} />}
-          {active === 'kontak' && <PanelKontak form={form} set={set} />}
-          {active === 'qris'   && <PanelQris   form={form} setForm={setForm} />}
-          {active === 'bank'   && <PanelBank   form={form} set={set} />}
-          {active === 'struk'  && <PanelStruk  form={form} set={set} setCheck={setCheck} />}
+          {active === 'toko'     && <PanelToko     form={form} set={set} />}
+          {active === 'kontak'   && <PanelKontak   form={form} set={set} />}
+          {active === 'qris'     && <PanelQris     form={form} setForm={setForm} />}
+          {active === 'bank'     && <PanelBank     form={form} set={set} />}
+          {active === 'struk'    && <PanelStruk    form={form} set={set} setCheck={setCheck} />}
+          {active === 'keamanan' && <PanelPassword />}
         </div>
       </div>
 
-      {/* Floating save button — mobile only */}
-      <FloatingSave saving={saving} />
+      {/* Floating save button — mobile only, hidden on keamanan tab */}
+      {active !== 'keamanan' && <FloatingSave saving={saving} />}
     </form>
   )
 }
