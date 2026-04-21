@@ -5,10 +5,12 @@ function isConfigured() {
 }
 
 function createTransporter() {
+  const port   = Number(process.env.SMTP_PORT) || 465
+  const secure = port === 465  // port 465 = SSL langsung; port 587 = STARTTLS
   return nodemailer.createTransport({
-    host:   process.env.SMTP_HOST,
-    port:   Number(process.env.SMTP_PORT) || 587,
-    secure: Number(process.env.SMTP_PORT) === 465,
+    host:   process.env.SMTP_HOST   || 'srv.mnx-email.com',
+    port,
+    secure,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
