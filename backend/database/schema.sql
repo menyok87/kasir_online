@@ -1,15 +1,19 @@
 -- Tabel pengguna (didefinisikan duluan karena tabel lain mereferensikannya)
 CREATE TABLE IF NOT EXISTS users (
-  id            SERIAL PRIMARY KEY,
-  username      VARCHAR(50)  NOT NULL UNIQUE,
-  password      TEXT         NOT NULL,
-  role          VARCHAR(20)  NOT NULL DEFAULT 'kasir' CHECK(role IN ('superadmin', 'admin', 'supervisor', 'kasir')),
-  name          VARCHAR(100) NOT NULL,
-  is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
-  created_by    INTEGER      REFERENCES users(id) ON DELETE SET NULL,
-  created_at    TIMESTAMPTZ  DEFAULT NOW(),
-  reset_token   VARCHAR(6),
-  reset_expires TIMESTAMPTZ
+  id                   SERIAL PRIMARY KEY,
+  username             VARCHAR(50)  NOT NULL UNIQUE,
+  password             TEXT         NOT NULL,
+  role                 VARCHAR(20)  NOT NULL DEFAULT 'kasir' CHECK(role IN ('superadmin', 'admin', 'supervisor', 'kasir')),
+  name                 VARCHAR(100) NOT NULL,
+  email                VARCHAR(150) UNIQUE,
+  email_verified       BOOLEAN      NOT NULL DEFAULT FALSE,
+  verification_token   VARCHAR(64),
+  verification_expires TIMESTAMPTZ,
+  is_active            BOOLEAN      NOT NULL DEFAULT TRUE,
+  created_by           INTEGER      REFERENCES users(id) ON DELETE SET NULL,
+  created_at           TIMESTAMPTZ  DEFAULT NOW(),
+  reset_token          VARCHAR(6),
+  reset_expires        TIMESTAMPTZ
 );
 
 -- Tabel kategori produk (per admin)

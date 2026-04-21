@@ -5,6 +5,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import Layout from './components/layout/Layout'
 import Login from './pages/Login'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import VerifyEmail from './pages/VerifyEmail'
 
 const Dashboard    = lazy(() => import('./pages/Dashboard'))
 const Categories   = lazy(() => import('./pages/Categories'))
@@ -80,6 +81,7 @@ export default function App() {
           {/* Public */}
           <Route path="/login"          element={<PublicOnly><Login /></PublicOnly>} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/verify-email"   element={<VerifyEmail />} />
 
           {/* Protected */}
           <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>

@@ -33,8 +33,14 @@ async function seed() {
     await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`).catch(() => {});
     await client.query(`ALTER TABLE users ADD CONSTRAINT users_role_check CHECK(role IN ('superadmin','admin','supervisor','kasir'))`).catch(() => {});
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id) ON DELETE SET NULL`).catch(() => {});
-    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token   VARCHAR(6)`).catch(() => {});
-    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMPTZ`).catch(() => {});
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token          VARCHAR(6)`).catch(() => {});
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_expires        TIMESTAMPTZ`).catch(() => {});
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email                VARCHAR(150) UNIQUE`).catch(() => {});
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified       BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token   VARCHAR(64)`).catch(() => {});
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_expires TIMESTAMPTZ`).catch(() => {});
+    // Pengguna lama (tanpa email) dianggap sudah terverifikasi agar tidak terkunci
+    await client.query(`UPDATE users SET email_verified = TRUE WHERE email IS NULL`).catch(() => {});
 
     // ── Default users ──────────────────────────────────────────────────────────
     const superHash      = await bcrypt.hash('super123', 10);
