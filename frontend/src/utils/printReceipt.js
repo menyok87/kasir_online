@@ -25,18 +25,113 @@ function formatDateShort(dateStr) {
   })
 }
 
-function openWin(html, w = 480, h = 720) {
+// Deteksi Capacitor (Android/iOS)
+function isCapacitor() {
+  return typeof window !== 'undefined' && !!window.Capacitor
+}
+
+// ── Desktop: buka popup window ────────────────────────────────────────────────
+function openPopup(html, w = 480, h = 720) {
   const win = window.open('', '_blank', `width=${w},height=${h},scrollbars=yes`)
   if (!win) {
     alert('Popup diblokir browser. Izinkan popup untuk melanjutkan.')
-    return null
+    return
   }
   win.document.write(html)
   win.document.close()
-  return win
 }
 
-// ── Thermal 80mm receipt ──────────────────────────────────────────────────────
+// ── Android/Capacitor: overlay fullscreen + window.print() ───────────────────
+// window.print() di Android WebView membuka dialog cetak/simpan PDF native Android
+function openOverlay(html, title) {
+  const OVERLAY_ID = '__kasir_print_overlay__'
+  document.getElementById(OVERLAY_ID)?.remove()
+
+  const overlay = document.createElement('div')
+  overlay.id = OVERLAY_ID
+
+  const close = () => overlay.remove()
+
+  // Tombol aksi
+  const barHtml = `
+    <div id="${OVERLAY_ID}_bar" style="
+      position:sticky;top:0;z-index:10;
+      background:#1e293b;padding:10px 14px;
+      display:flex;align-items:center;gap:8px;flex-shrink:0;
+    ">
+      <span style="color:#94a3b8;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${title}</span>
+      <button id="${OVERLAY_ID}_print" style="
+        padding:9px 18px;background:#2563eb;color:#fff;
+        border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;gap:6px;flex-shrink:0;
+      ">🖨️ Cetak / PDF</button>
+      <button id="${OVERLAY_ID}_close" style="
+        padding:9px 12px;background:#374151;color:#d1d5db;
+        border:none;border-radius:8px;font-size:13px;cursor:pointer;flex-shrink:0;
+      ">✕ Tutup</button>
+    </div>`
+
+  overlay.style.cssText = `
+    position:fixed;inset:0;z-index:9999;
+    background:#e8ecf0;overflow-y:auto;
+    display:flex;flex-direction:column;
+  `
+
+  // iframe dengan srcdoc agar terisolasi dari CSS aplikasi
+  const iframe = document.createElement('iframe')
+  iframe.setAttribute('srcdoc', html)
+  iframe.style.cssText = 'flex:1;border:none;min-height:60vh;'
+
+  overlay.innerHTML = barHtml
+  overlay.appendChild(iframe)
+  document.body.appendChild(overlay)
+
+  document.getElementById(`${OVERLAY_ID}_close`).onclick = close
+  document.getElementById(`${OVERLAY_ID}_print`).onclick = () => {
+    try {
+      iframe.contentWindow.focus()
+      iframe.contentWindow.print()
+    } catch {
+      // Fallback: cetak dari window utama dengan menyembunyikan app
+      window.print()
+    }
+  }
+
+  // Share via Web Share API jika tersedia (Android Chrome)
+  if (navigator.share) {
+    const shareBtn = document.createElement('button')
+    shareBtn.textContent = '📤'
+    shareBtn.title = 'Bagikan'
+    shareBtn.style.cssText = `
+      padding:9px 12px;background:#374151;color:#d1d5db;
+      border:none;border-radius:8px;font-size:15px;cursor:pointer;flex-shrink:0;
+    `
+    shareBtn.onclick = async () => {
+      try {
+        const blob = new Blob([html], { type: 'text/html' })
+        const file = new File([blob], `struk-${Date.now()}.html`, { type: 'text/html' })
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], title })
+        } else {
+          await navigator.share({ title, text: title })
+        }
+      } catch { /* user cancelled */ }
+    }
+    const bar = document.getElementById(`${OVERLAY_ID}_bar`)
+    bar.insertBefore(shareBtn, document.getElementById(`${OVERLAY_ID}_close`))
+  }
+}
+
+// ── Pilih metode tampilan ─────────────────────────────────────────────────────
+function showReceipt(html, title, popupW = 480, popupH = 720) {
+  if (isCapacitor()) {
+    openOverlay(html, title)
+  } else {
+    openPopup(html, popupW, popupH)
+  }
+}
+
+// ── Thermal 80mm ──────────────────────────────────────────────────────────────
 export function printReceipt(transaction, settings = {}) {
   if (!transaction) return
   const tx = transaction
@@ -73,6 +168,7 @@ export function printReceipt(transaction, settings = {}) {
 
   const html = `<!DOCTYPE html><html lang="id"><head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Struk ${tx.invoice_number}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -108,7 +204,11 @@ export function printReceipt(transaction, settings = {}) {
     .footer{text-align:center;font-size:10px;color:#444;margin-top:8px;line-height:1.6}
     .status-ok{display:inline-block;border:2px solid #000;padding:1px 8px;font-weight:900;font-size:11px;letter-spacing:2px;margin:4px 0}
     @page{size:80mm auto;margin:0}
-    @media print{body{padding:2mm}.no-print{display:none!important}}
+    @media print{
+      body{padding:2mm}
+      .no-print{display:none!important}
+    }
+    /* tombol hanya muncul di popup web (bukan Capacitor) */
     .print-btn{display:block;width:100%;margin-top:14px;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif}
     .print-btn:hover{background:#1d4ed8}
     .close-btn{display:block;width:100%;margin-top:8px;padding:8px;background:#f3f4f6;color:#374151;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:sans-serif}
@@ -149,15 +249,16 @@ export function printReceipt(transaction, settings = {}) {
     ${footerMsg.split('\n').map(l => `<p>${l}</p>`).join('')}
     ${showNote ? '<p style="margin-top:6px;font-size:9px">*** Simpan struk ini sebagai bukti pembelian ***</p>' : ''}
   </div>
+  <!-- Tombol ini hanya tampil di popup web, bukan di overlay Capacitor -->
   <button class="print-btn no-print" onclick="window.print()">🖨️ Cetak Struk</button>
   <button class="close-btn no-print" onclick="window.close()">Tutup</button>
-  <script>window.onload=function(){setTimeout(function(){window.print()},300)}</script>
+  <script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script>
 </body></html>`
 
-  openWin(html, 400, 680)
+  showReceipt(html, `Struk ${tx.invoice_number}`, 400, 680)
 }
 
-// ── A4 PDF receipt ────────────────────────────────────────────────────────────
+// ── A4 / Faktur PDF ───────────────────────────────────────────────────────────
 export function downloadPDF(transaction, settings = {}) {
   if (!transaction) return
   const tx = transaction
@@ -184,6 +285,7 @@ export function downloadPDF(transaction, settings = {}) {
 
   const html = `<!DOCTYPE html><html lang="id"><head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Faktur ${tx.invoice_number} — ${storeName}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -191,7 +293,6 @@ export function downloadPDF(transaction, settings = {}) {
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
       background:#e8ecf0;min-height:100vh;
     }
-    /* Action bar — hidden on print */
     .action-bar{
       position:sticky;top:0;z-index:100;
       background:#1e293b;padding:10px 16px;
@@ -203,11 +304,7 @@ export function downloadPDF(transaction, settings = {}) {
     .abtn-blue:hover{background:#1d4ed8}
     .abtn-gray{background:#374151;color:#d1d5db}
     .abtn-gray:hover{background:#4b5563}
-
-    /* Receipt wrapper */
     .wrap{max-width:800px;margin:24px auto;background:#fff;box-shadow:0 8px 40px rgba(0,0,0,.15);border-radius:12px;overflow:hidden}
-
-    /* Header */
     .hdr{background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 60%,#1e40af 100%);color:#fff;padding:36px 40px 32px}
     .hdr-top{display:flex;justify-content:space-between;align-items:flex-start}
     .hdr-logo{display:flex;align-items:center;gap:14px}
@@ -218,27 +315,17 @@ export function downloadPDF(transaction, settings = {}) {
     .hdr-badge .label{font-size:10px;opacity:.7;text-transform:uppercase;font-weight:600;letter-spacing:.5px}
     .hdr-badge .doc-type{font-size:18px;font-weight:800;margin-top:2px}
     .contact{margin-top:16px;font-size:12px;opacity:.7;line-height:1.6}
-
-    /* Invoice banner */
     .inv-bar{background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:18px 40px;display:flex;justify-content:space-between;align-items:center}
     .inv-bar .lbl{font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:4px}
     .inv-bar .inv-num{font-size:20px;font-weight:800;color:#0f172a;letter-spacing:.5px}
     .status-badge{background:#dcfce7;color:#15803d;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #bbf7d0;display:flex;align-items:center;gap:5px}
-
-    /* Body */
     .body{padding:32px 40px}
-
-    /* Info grid */
     .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #f1f5f9}
     .info-item .lbl{font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:5px}
     .info-item .val{font-size:14px;color:#0f172a;font-weight:600}
-
-    /* Items table */
     .section-title{font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:10px}
     .tbl{width:100%;border-collapse:collapse;margin-bottom:24px}
     .tbl thead th{background:#f1f5f9;padding:10px 12px;font-size:11px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid #e2e8f0}
-    .tbl thead th:first-child{border-radius:8px 0 0 0}
-    .tbl thead th:last-child{border-radius:0 8px 0 0}
     .tbl tbody td{padding:12px 12px;font-size:13px;color:#1e293b;border-bottom:1px solid #f1f5f9;vertical-align:middle}
     .row-alt td{background:#fafafa}
     .num{color:#94a3b8;font-size:12px;width:32px}
@@ -248,8 +335,6 @@ export function downloadPDF(transaction, settings = {}) {
     .dim{color:#64748b;font-size:12px}
     .bold{font-weight:700}
     .qty{color:#475569}
-
-    /* Summary */
     .summary-wrap{display:flex;justify-content:flex-end}
     .summary-box{min-width:300px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}
     .sum-row{display:flex;justify-content:space-between;padding:10px 16px;font-size:13px;color:#475569;border-bottom:1px solid #f1f5f9}
@@ -261,25 +346,21 @@ export function downloadPDF(transaction, settings = {}) {
     .sum-total{background:linear-gradient(135deg,#2563eb,#1d4ed8);padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
     .sum-total .k{font-size:14px;font-weight:700;color:#fff}
     .sum-total .v{font-size:22px;font-weight:900;color:#fff}
-
-    /* Footer */
     .ftr{border-top:1px solid #e2e8f0;padding:24px 40px;text-align:center}
     .ftr .msg{font-size:15px;color:#475569;font-weight:600;margin-bottom:6px}
     .ftr .note{font-size:11px;color:#94a3b8}
     .ftr .powered{margin-top:12px;font-size:11px;color:#cbd5e1}
-
     @media print{
       body{background:#fff}
       .no-print{display:none!important}
       .wrap{max-width:100%;margin:0;box-shadow:none;border-radius:0}
-      @page{size:A4;margin:0}
+      @page{size:A4;margin:10mm}
     }
   </style>
 </head><body>
 
-  <!-- Action bar -->
   <div class="action-bar no-print">
-    <span>Preview Faktur — ${tx.invoice_number}</span>
+    <span>Faktur — ${tx.invoice_number}</span>
     <button class="abtn abtn-blue" onclick="window.print()">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
       Cetak / Simpan PDF
@@ -288,8 +369,6 @@ export function downloadPDF(transaction, settings = {}) {
   </div>
 
   <div class="wrap">
-
-    <!-- Header -->
     <div class="hdr">
       <div class="hdr-top">
         <div class="hdr-logo">
@@ -304,10 +383,9 @@ export function downloadPDF(transaction, settings = {}) {
           <div class="doc-type">FAKTUR</div>
         </div>
       </div>
-      ${contactParts.length ? `<div class="contact">${contactParts.join('&nbsp; · &nbsp;')}</div>` : ''}
+      ${contactParts.length ? `<div class="contact">${contactParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
     </div>
 
-    <!-- Invoice banner -->
     <div class="inv-bar">
       <div>
         <div class="lbl">Nomor Faktur</div>
@@ -319,13 +397,10 @@ export function downloadPDF(transaction, settings = {}) {
       </div>
     </div>
 
-    <!-- Body -->
     <div class="body">
-
-      <!-- Meta info -->
       <div class="info-grid">
         <div class="info-item">
-          <div class="lbl">Tanggal & Waktu</div>
+          <div class="lbl">Tanggal &amp; Waktu</div>
           <div class="val">${formatDateLong(tx.created_at)}</div>
         </div>
         <div class="info-item">
@@ -338,7 +413,6 @@ export function downloadPDF(transaction, settings = {}) {
         </div>
       </div>
 
-      <!-- Item table -->
       <div class="section-title">Detail Pembelian</div>
       <table class="tbl">
         <thead>
@@ -353,7 +427,6 @@ export function downloadPDF(transaction, settings = {}) {
         <tbody>${itemRows}</tbody>
       </table>
 
-      <!-- Summary -->
       <div class="summary-wrap">
         <div class="summary-box">
           <div class="sum-row"><span class="k">Subtotal</span><span class="v">${formatRupiah(tx.subtotal)}</span></div>
@@ -366,21 +439,15 @@ export function downloadPDF(transaction, settings = {}) {
       </div>
     </div>
 
-    <!-- Footer -->
     <div class="ftr">
       <div class="msg">${footerMsg}</div>
       ${showNote ? '<div class="note">Simpan faktur ini sebagai bukti pembelian yang sah</div>' : ''}
       <div class="powered">Powered by ${storeName}</div>
     </div>
-
   </div>
 
-  <script>
-    window.onload = function() {
-      setTimeout(function() { window.print(); }, 500);
-    };
-  </script>
+  <script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script>
 </body></html>`
 
-  openWin(html, 860, 720)
+  showReceipt(html, `Faktur ${tx.invoice_number}`, 860, 720)
 }
