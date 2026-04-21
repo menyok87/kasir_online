@@ -14,7 +14,7 @@ const defaultSettings = {
   store_name: '', store_tagline: '', store_address: '',
   store_phone: '', store_email: '', store_website: '',
   footer_msg: '', show_footer_note: true,
-  qris_image: '', bank_name: '', bank_account_number: '',
+  store_logo: '', qris_image: '', bank_name: '', bank_account_number: '',
   bank_account_name: '', bank_branch: '',
 }
 
@@ -138,9 +138,65 @@ function FloatingSave({ saving }) {
 }
 
 // ── Panel: Info Toko ──────────────────────────────────────────────────────────
-function PanelToko({ form, set }) {
+function PanelToko({ form, set, setForm }) {
+  const [uploading, setUploading] = useState(false)
+  const logoRef = useRef(null)
+
+  async function handleLogoUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const { data } = await uploadProductImage(file)
+      setForm(f => ({ ...f, store_logo: data.url }))
+      toast.success('Logo toko berhasil diupload')
+    } catch (err) {
+      toast.error(err.message)
+    } finally { setUploading(false) }
+  }
+
   return (
-    <SectionCard title="Informasi Toko" subtitle="Nama dan identitas bisnis" icon={Store} color="blue">
+    <SectionCard title="Informasi Toko" subtitle="Nama, logo, dan identitas bisnis" icon={Store} color="blue">
+      {/* Logo upload */}
+      <Field label="Logo Toko" hint="(opsional — tampil di struk)">
+        <div className="flex items-center gap-4">
+          <div className="relative flex-shrink-0">
+            {form.store_logo ? (
+              <>
+                <img src={getImageUrl(form.store_logo)} alt="Logo"
+                  className="w-20 h-20 object-contain rounded-2xl border-2 border-blue-200 dark:border-blue-700 bg-white dark:bg-gray-800 p-1.5 shadow-md" />
+                <button type="button" onClick={() => setForm(f => ({ ...f, store_logo: '' }))}
+                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors">
+                  <X size={10} />
+                </button>
+              </>
+            ) : (
+              <button type="button" onClick={() => logoRef.current?.click()} disabled={uploading}
+                className="w-20 h-20 rounded-2xl border-2 border-dashed border-blue-300 dark:border-blue-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-95 transition-all flex flex-col items-center justify-center gap-1 text-blue-400 hover:text-blue-600 disabled:opacity-50">
+                {uploading
+                  ? <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  : <>
+                      <ImagePlus size={18} />
+                      <span className="text-[10px] font-medium">Upload</span>
+                    </>
+                }
+              </button>
+            )}
+            <input ref={logoRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleLogoUpload} />
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+            <p>Logo tampil di header struk dan faktur PDF.</p>
+            <p>Format JPG / PNG, transparan (PNG) lebih baik.</p>
+            {form.store_logo && (
+              <button type="button" onClick={() => logoRef.current?.click()}
+                className="text-blue-600 hover:underline font-medium transition-colors">
+                Ganti logo
+              </button>
+            )}
+          </div>
+        </div>
+      </Field>
+
       <Field label="Nama Toko" required>
         <div className="relative">
           <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -157,9 +213,13 @@ function PanelToko({ form, set }) {
       </Field>
       {form.store_name && (
         <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/30">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow shadow-blue-400/30">
-            {form.store_name.charAt(0).toUpperCase()}
-          </div>
+          {form.store_logo
+            ? <img src={getImageUrl(form.store_logo)} alt="Logo"
+                className="w-9 h-9 object-contain rounded-xl bg-white dark:bg-gray-800 p-0.5 flex-shrink-0 border border-blue-100 dark:border-blue-800" />
+            : <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow shadow-blue-400/30">
+                {form.store_name.charAt(0).toUpperCase()}
+              </div>
+          }
           <div className="min-w-0">
             <p className="font-bold text-blue-900 dark:text-blue-100 text-sm truncate">{form.store_name}</p>
             {form.store_tagline && <p className="text-xs text-blue-600 dark:text-blue-400 truncate">{form.store_tagline}</p>}
@@ -332,7 +392,7 @@ function PanelBank({ form, set }) {
 }
 
 // ── Panel: Struk ──────────────────────────────────────────────────────────────
-function PanelStruk({ form, set, setCheck }) {
+function PanelStruk({ form, set, setCheck, setForm }) {
   const now = new Date()
   const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
   const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
@@ -367,6 +427,10 @@ function PanelStruk({ form, set, setCheck }) {
         <div className="max-w-xs mx-auto bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800">
           {/* Header */}
           <div className="bg-gradient-to-b from-gray-800 to-gray-900 text-white px-4 py-4 text-center">
+            {form.store_logo && (
+              <img src={getImageUrl(form.store_logo)} alt="Logo"
+                className="w-12 h-12 object-contain mx-auto mb-2 rounded-lg bg-white/10 p-1" />
+            )}
             <p className="font-bold text-sm tracking-widest uppercase">{form.store_name || 'NAMA TOKO'}</p>
             {form.store_tagline && <p className="text-gray-400 text-xs mt-0.5">{form.store_tagline}</p>}
             {form.store_address && <p className="text-gray-400 text-xs mt-1 leading-relaxed">{form.store_address}</p>}
@@ -584,11 +648,11 @@ export default function Settings() {
         <DesktopSidebar active={active} onChange={setActive} saving={saving} />
 
         <div className="flex-1 min-w-0 pb-20 lg:pb-0">
-          {active === 'toko'     && <PanelToko     form={form} set={set} />}
+          {active === 'toko'     && <PanelToko     form={form} set={set} setForm={setForm} />}
           {active === 'kontak'   && <PanelKontak   form={form} set={set} />}
           {active === 'qris'     && <PanelQris     form={form} setForm={setForm} />}
           {active === 'bank'     && <PanelBank     form={form} set={set} />}
-          {active === 'struk'    && <PanelStruk    form={form} set={set} setCheck={setCheck} />}
+          {active === 'struk'    && <PanelStruk    form={form} set={set} setCheck={setCheck} setForm={setForm} />}
           {active === 'keamanan' && <PanelPassword />}
         </div>
       </div>

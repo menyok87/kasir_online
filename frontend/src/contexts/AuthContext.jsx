@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import api from '../api'
+import api, { updateAvatar as apiUpdateAvatar } from '../api'
 
 const AuthContext = createContext(null)
 
@@ -37,6 +37,13 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  async function setAvatar(url) {
+    await apiUpdateAvatar(url)
+    const updated = { ...user, avatar: url }
+    localStorage.setItem('user', JSON.stringify(updated))
+    setUser(updated)
+  }
+
   const role         = user?.role
   const isSuperAdmin = role === 'superadmin'
   const isAdmin      = role === 'superadmin' || role === 'admin'
@@ -55,7 +62,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, isAdmin, isSuperAdmin, isManager, can }}>
+    <AuthContext.Provider value={{ user, login, logout, setAvatar, loading, isAdmin, isSuperAdmin, isManager, can }}>
       {children}
     </AuthContext.Provider>
   )

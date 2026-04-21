@@ -235,6 +235,15 @@ router.get('/me', authenticate, (req, res) => {
   res.json({ user: req.user })
 })
 
+// PATCH /api/auth/avatar — simpan URL avatar user yang sedang login
+router.patch('/avatar', authenticate, async (req, res, next) => {
+  try {
+    const { avatar } = req.body
+    await pool.query('UPDATE users SET avatar = $1 WHERE id = $2', [avatar || null, req.user.id])
+    res.json({ avatar: avatar || null })
+  } catch (err) { next(err) }
+})
+
 // PUT /api/auth/change-password
 router.put('/change-password', authenticate, async (req, res, next) => {
   try {

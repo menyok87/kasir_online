@@ -7,7 +7,7 @@ const DEFAULT_SETTINGS = {
   store_name: 'Kasir Online', store_tagline: 'Point of Sale',
   store_address: '', store_phone: '', store_email: '', store_website: '',
   footer_msg: 'Terima kasih telah berbelanja!', show_footer_note: true,
-  qris_image: '', bank_name: '', bank_account_number: '', bank_account_name: '', bank_branch: '',
+  store_logo: '', qris_image: '', bank_name: '', bank_account_number: '', bank_account_name: '', bank_branch: '',
 };
 
 // GET /api/settings — pengaturan toko milik tenant
@@ -27,7 +27,7 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
       store_name, store_tagline, store_address,
       store_phone, store_email, store_website,
       footer_msg, show_footer_note,
-      qris_image, bank_name, bank_account_number, bank_account_name, bank_branch,
+      store_logo, qris_image, bank_name, bank_account_number, bank_account_name, bank_branch,
     } = req.body;
 
     if (!store_name?.trim()) return res.status(400).json({ error: 'Nama toko wajib diisi' });
@@ -44,14 +44,14 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
         UPDATE store_settings SET
           store_name=$1, store_tagline=$2, store_address=$3, store_phone=$4,
           store_email=$5, store_website=$6, footer_msg=$7, show_footer_note=$8,
-          qris_image=$9, bank_name=$10, bank_account_number=$11,
-          bank_account_name=$12, bank_branch=$13, updated_at=NOW()
-        WHERE admin_id=$14 RETURNING *`,
+          store_logo=$9, qris_image=$10, bank_name=$11, bank_account_number=$12,
+          bank_account_name=$13, bank_branch=$14, updated_at=NOW()
+        WHERE admin_id=$15 RETURNING *`,
         [
           store_name.trim(), store_tagline?.trim() || '', store_address?.trim() || '',
           store_phone?.trim() || '', store_email?.trim() || '', store_website?.trim() || '',
           footer_msg?.trim() || '', show_footer_note !== false,
-          qris_image?.trim() || '', bank_name?.trim() || '',
+          store_logo?.trim() || '', qris_image?.trim() || '', bank_name?.trim() || '',
           bank_account_number?.trim() || '', bank_account_name?.trim() || '',
           bank_branch?.trim() || '', tid,
         ]
@@ -61,14 +61,14 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
       const result = await pool.query(`
         INSERT INTO store_settings
           (admin_id, store_name, store_tagline, store_address, store_phone, store_email,
-           store_website, footer_msg, show_footer_note, qris_image, bank_name,
+           store_website, footer_msg, show_footer_note, store_logo, qris_image, bank_name,
            bank_account_number, bank_account_name, bank_branch)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
         [
           tid, store_name.trim(), store_tagline?.trim() || '', store_address?.trim() || '',
           store_phone?.trim() || '', store_email?.trim() || '', store_website?.trim() || '',
           footer_msg?.trim() || '', show_footer_note !== false,
-          qris_image?.trim() || '', bank_name?.trim() || '',
+          store_logo?.trim() || '', qris_image?.trim() || '', bank_name?.trim() || '',
           bank_account_number?.trim() || '', bank_account_name?.trim() || '',
           bank_branch?.trim() || '',
         ]

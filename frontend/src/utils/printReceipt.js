@@ -141,6 +141,7 @@ export function printReceipt(transaction, settings = {}) {
   const storeAddress = settings.store_address  || ''
   const storePhone   = settings.store_phone    || ''
   const storeEmail   = settings.store_email    || ''
+  const storeLogo    = settings.store_logo     || ''
   const footerMsg    = settings.footer_msg     || 'Terima kasih telah berbelanja!'
   const showNote     = settings.show_footer_note !== false
 
@@ -177,6 +178,7 @@ export function printReceipt(transaction, settings = {}) {
       font-size:12px;color:#000;background:#fff;
       width:80mm;max-width:80mm;margin:0 auto;padding:4mm 4mm 8mm;
     }
+    .store-logo{display:block;width:56px;height:56px;object-fit:contain;margin:0 auto 6px}
     .store-name{font-size:17px;font-weight:900;text-align:center;letter-spacing:3px;margin-bottom:2px}
     .store-sub{font-size:10px;text-align:center;color:#444;line-height:1.5;margin-bottom:5px}
     .sep{border:none;border-top:1px dashed #000;margin:5px 0}
@@ -215,6 +217,7 @@ export function printReceipt(transaction, settings = {}) {
     .close-btn:hover{background:#e5e7eb}
   </style>
 </head><body>
+  ${storeLogo ? `<img class="store-logo" src="${storeLogo}" alt="Logo">` : ''}
   <div class="store-name">${storeName.toUpperCase()}</div>
   <div class="store-sub">
     ${[storeTagline, storeAddress, storePhone ? 'Telp: ' + storePhone : '', storeEmail].filter(Boolean).join('<br>')}
@@ -269,6 +272,7 @@ export function downloadPDF(transaction, settings = {}) {
   const storePhone   = settings.store_phone    || ''
   const storeEmail   = settings.store_email    || ''
   const storeWebsite = settings.store_website  || ''
+  const storeLogo    = settings.store_logo     || ''
   const footerMsg    = settings.footer_msg     || 'Terima kasih telah berbelanja!'
   const showNote     = settings.show_footer_note !== false
 
@@ -308,7 +312,8 @@ export function downloadPDF(transaction, settings = {}) {
     .hdr{background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 60%,#1e40af 100%);color:#fff;padding:36px 40px 32px}
     .hdr-top{display:flex;justify-content:space-between;align-items:flex-start}
     .hdr-logo{display:flex;align-items:center;gap:14px}
-    .hdr-icon{width:48px;height:48px;background:rgba(255,255,255,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px}
+    .hdr-icon{width:48px;height:48px;background:rgba(255,255,255,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden}
+    .hdr-icon img{width:100%;height:100%;object-fit:contain;padding:6px}
     .store-name{font-size:26px;font-weight:800;letter-spacing:-.5px}
     .store-tagline{font-size:13px;opacity:.75;margin-top:2px}
     .hdr-badge{background:rgba(255,255,255,.15);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:8px 16px;text-align:right}
@@ -372,7 +377,7 @@ export function downloadPDF(transaction, settings = {}) {
     <div class="hdr">
       <div class="hdr-top">
         <div class="hdr-logo">
-          <div class="hdr-icon">🏪</div>
+          <div class="hdr-icon">${storeLogo ? `<img src="${storeLogo}" alt="Logo">` : '🏪'}</div>
           <div>
             <div class="store-name">${storeName}</div>
             ${storeTagline ? `<div class="store-tagline">${storeTagline}</div>` : ''}

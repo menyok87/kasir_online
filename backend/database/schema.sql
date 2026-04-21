@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
   created_by           INTEGER      REFERENCES users(id) ON DELETE SET NULL,
   created_at           TIMESTAMPTZ  DEFAULT NOW(),
   reset_token          VARCHAR(6),
-  reset_expires        TIMESTAMPTZ
+  reset_expires        TIMESTAMPTZ,
+  avatar               TEXT
 );
 
 -- Tabel kategori produk (per admin)
@@ -84,6 +85,7 @@ CREATE TABLE IF NOT EXISTS store_settings (
   store_website        VARCHAR(200)          DEFAULT '',
   footer_msg           TEXT                  DEFAULT 'Terima kasih telah berbelanja!',
   show_footer_note     BOOLEAN NOT NULL      DEFAULT TRUE,
+  store_logo           TEXT                  DEFAULT '',
   qris_image           TEXT                  DEFAULT '',
   bank_name            VARCHAR(100)          DEFAULT '',
   bank_account_number  VARCHAR(50)           DEFAULT '',

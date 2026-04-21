@@ -39,6 +39,7 @@ async function seed() {
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified       BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token   VARCHAR(64)`).catch(() => {});
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_expires TIMESTAMPTZ`).catch(() => {});
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar               TEXT`).catch(() => {});
     // Pengguna lama (tanpa email) dianggap sudah terverifikasi agar tidak terkunci
     await client.query(`UPDATE users SET email_verified = TRUE WHERE email IS NULL`).catch(() => {});
 
@@ -124,6 +125,7 @@ async function seed() {
     await client.query(`ALTER TABLE store_settings ADD CONSTRAINT store_settings_admin_id_key UNIQUE (admin_id)`).catch(() => {});
     // Add new columns if missing
     const settingsCols = [
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS store_logo TEXT DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS qris_image TEXT DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100) DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(50) DEFAULT ''`,

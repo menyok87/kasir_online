@@ -48,7 +48,8 @@ export const uploadProductImage = (file) => {
 export const deleteProductImage = (filename) => api.delete('/uploads', { data: { filename } });
 
 // Auth
-export const changePassword = (data) => api.put('/auth/change-password', data);
+export const changePassword = (data)    => api.put('/auth/change-password', data);
+export const updateAvatar   = (avatar)  => api.patch('/auth/avatar', { avatar });
 
 // Transactions
 export const getTransactions        = (params) => api.get('/transactions', { params });

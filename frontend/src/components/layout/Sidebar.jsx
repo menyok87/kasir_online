@@ -1,9 +1,13 @@
+import { useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Tags, Package,
-  ShoppingCart, Receipt, Store, X, LogOut, Users, Settings, BookOpen
+  ShoppingCart, Receipt, Store, X, LogOut, Users, Settings, BookOpen, Camera
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useAuth } from '../../contexts/AuthContext'
+import { uploadProductImage } from '../../api'
+import { getImageUrl } from '../../utils/getImageUrl'
 
 const allMenus = [
   { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard',       feature: 'dashboard' },
@@ -31,8 +35,26 @@ const roleBadgeColor = {
 }
 
 export default function Sidebar({ onClose }) {
-  const { user, logout, can } = useAuth()
+  const { user, logout, setAvatar, can } = useAuth()
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef(null)
   const navItems = allMenus.filter(m => can?.[m.feature])
+
+  async function handleAvatarChange(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const { data } = await uploadProductImage(file)
+      await setAvatar(data.url)
+      toast.success('Foto profil diperbarui')
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
 
   return (
     <aside className="w-64 bg-gray-950 dark:bg-gray-900 text-white flex flex-col h-screen border-r border-gray-800">
@@ -76,9 +98,34 @@ export default function Sidebar({ onClose }) {
       {/* User info + actions */}
       <div className="px-3 py-3 border-t border-gray-800">
         <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl mb-1 bg-gray-900/50">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold shadow">
-            {user?.name?.charAt(0).toUpperCase()}
-          </div>
+          {/* Avatar — click to upload */}
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            title="Ganti foto profil"
+            className="relative w-9 h-9 flex-shrink-0 rounded-full overflow-hidden group focus:outline-none"
+          >
+            {user?.avatar ? (
+              <img
+                src={getImageUrl(user.avatar)}
+                alt={user.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-sm font-bold shadow">
+                {user?.name?.charAt(0).toUpperCase()}
+              </div>
+            )}
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              {uploading
+                ? <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                : <Camera size={13} className="text-white" />}
+            </div>
+          </button>
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} />
+
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-gray-200 truncate">{user?.name}</p>
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full text-white ${roleBadgeColor[user?.role] || 'bg-gray-600'}`}>
