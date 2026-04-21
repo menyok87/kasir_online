@@ -1,21 +1,22 @@
 const nodemailer = require('nodemailer')
 
+// Resend SMTP: host=smtp.resend.com, port=465, user=resend, pass=API_KEY
+// Docs: https://resend.com/docs/send-with-smtp
 function isConfigured() {
   return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
 }
 
 function createTransporter() {
   const port   = Number(process.env.SMTP_PORT) || 465
-  const secure = port === 465  // port 465 = SSL langsung; port 587 = STARTTLS
+  const secure = port === 465
   return nodemailer.createTransport({
-    host:   process.env.SMTP_HOST   || 'srv.mnx-email.com',
+    host:   process.env.SMTP_HOST,
     port,
     secure,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-    tls: { rejectUnauthorized: false },
   })
 }
 
