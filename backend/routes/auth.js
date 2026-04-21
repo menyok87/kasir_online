@@ -2,6 +2,7 @@ const express   = require('express');
 const router    = express.Router();
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
+const crypto    = require('crypto');
 const pool      = require('../database/db');
 const { authenticate } = require('../middleware/authMiddleware');
 
@@ -125,6 +126,81 @@ router.put('/change-password', authenticate, async (req, res, next) => {
     await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hash, req.user.id]);
 
     res.json({ message: 'Password berhasil diubah' });
+  } catch (err) { next(err); }
+});
+
+// POST /api/auth/forgot-password — buat kode reset 6 digit
+router.post('/forgot-password', async (req, res, next) => {
+  try {
+    const { username } = req.body;
+    if (!username?.trim()) {
+      return res.status(400).json({ error: 'Username wajib diisi' });
+    }
+
+    const { rows } = await pool.query(
+      'SELECT id FROM users WHERE username = $1 AND is_active = TRUE',
+      [username.trim().toLowerCase()]
+    );
+
+    // Selalu response 200 meski user tidak ada (mencegah username enumeration)
+    if (rows.length === 0) {
+      return res.json({ message: 'Jika username terdaftar, kode reset telah dibuat.' });
+    }
+
+    // Kode 6 digit numerik, simpan plaintext (sudah time-limited & single-use)
+    const code    = String(crypto.randomInt(100000, 999999));
+    const expires = new Date(Date.now() + 30 * 60 * 1000); // 30 menit
+
+    await pool.query(
+      'UPDATE users SET reset_token = $1, reset_expires = $2 WHERE id = $3',
+      [code, expires, rows[0].id]
+    );
+
+    // Untuk sistem lokal: kembalikan kode langsung ke client
+    res.json({ code, expires_at: expires });
+  } catch (err) { next(err); }
+});
+
+// POST /api/auth/reset-password — verifikasi kode & set password baru
+router.post('/reset-password', async (req, res, next) => {
+  try {
+    const { username, code, newPassword } = req.body;
+    if (!username?.trim() || !code?.trim() || !newPassword) {
+      return res.status(400).json({ error: 'Username, kode, dan password baru wajib diisi' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password minimal 6 karakter' });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT id, reset_token, reset_expires FROM users
+       WHERE username = $1 AND is_active = TRUE`,
+      [username.trim().toLowerCase()]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ error: 'Username tidak ditemukan' });
+    }
+
+    const user = rows[0];
+
+    if (!user.reset_token || !user.reset_expires) {
+      return res.status(400).json({ error: 'Belum ada kode reset. Minta kode reset terlebih dahulu.' });
+    }
+    if (new Date() > new Date(user.reset_expires)) {
+      return res.status(400).json({ error: 'Kode reset sudah kadaluarsa. Minta kode baru.' });
+    }
+    if (user.reset_token !== code.trim()) {
+      return res.status(400).json({ error: 'Kode reset salah' });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await pool.query(
+      'UPDATE users SET password = $1, reset_token = NULL, reset_expires = NULL WHERE id = $2',
+      [hash, user.id]
+    );
+
+    res.json({ message: 'Password berhasil direset. Silakan login dengan password baru.' });
   } catch (err) { next(err); }
 });
 

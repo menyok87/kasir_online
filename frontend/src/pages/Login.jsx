@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Store, Eye, EyeOff, AlertCircle, Moon, Sun, UserPlus, LogIn } from 'lucide-react'
+import {
+  Store, Eye, EyeOff, AlertCircle, Moon, Sun,
+  UserPlus, LogIn, KeyRound, ArrowLeft, CheckCircle2, Copy, RefreshCw,
+} from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import api from '../api'
 
 export default function Login() {
-  const [tab, setTab]           = useState('login')  // 'login' | 'register'
-  const { login }               = useAuth()
-  const { dark, toggle }        = useTheme()
-  const navigate                = useNavigate()
+  const [tab, setTab]     = useState('login')  // 'login' | 'register' | 'forgot'
+  const { login }         = useAuth()
+  const { dark, toggle }  = useTheme()
+  const navigate          = useNavigate()
+
+  const switchTab = t => setTab(t)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4 transition-colors duration-300">
@@ -32,36 +37,37 @@ export default function Login() {
           <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Point of Sale</p>
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex mx-8 mb-5 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
-          <button
-            onClick={() => setTab('login')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all
-              ${tab === 'login'
-                ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-          >
-            <LogIn size={15} /> Masuk
-          </button>
-          <button
-            onClick={() => setTab('register')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all
-              ${tab === 'register'
-                ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-          >
-            <UserPlus size={15} /> Daftar
-          </button>
-        </div>
+        {/* Tab switcher — sembunyikan jika di halaman forgot */}
+        {tab !== 'forgot' && (
+          <div className="flex mx-8 mb-5 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+            <button
+              onClick={() => switchTab('login')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all
+                ${tab === 'login'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            >
+              <LogIn size={15} /> Masuk
+            </button>
+            <button
+              onClick={() => switchTab('register')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all
+                ${tab === 'register'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            >
+              <UserPlus size={15} /> Daftar
+            </button>
+          </div>
+        )}
 
         <div className="px-8 pb-8">
-          {tab === 'login'
-            ? <LoginForm login={login} navigate={navigate} />
-            : <RegisterForm login={login} navigate={navigate} onSwitchToLogin={() => setTab('login')} />
-          }
+          {tab === 'login'   && <LoginForm    login={login} navigate={navigate} onForgot={() => switchTab('forgot')} />}
+          {tab === 'register'&& <RegisterForm login={login} navigate={navigate} onSwitchToLogin={() => switchTab('login')} />}
+          {tab === 'forgot'  && <ForgotPasswordForm onBack={() => switchTab('login')} />}
         </div>
 
-        {/* Privacy Policy link */}
+        {/* Privacy Policy */}
         <div className="px-8 pb-6 text-center">
           <Link
             to="/privacy-policy"
@@ -76,7 +82,7 @@ export default function Login() {
 }
 
 // ── Form Masuk ────────────────────────────────────────────────────────────────
-function LoginForm({ login, navigate }) {
+function LoginForm({ login, navigate, onForgot }) {
   const [form, setForm]         = useState({ username: '', password: '' })
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading]   = useState(false)
@@ -122,7 +128,16 @@ function LoginForm({ login, navigate }) {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+          <button
+            type="button"
+            onClick={onForgot}
+            className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
+          >
+            Lupa password?
+          </button>
+        </div>
         <div className="relative">
           <input
             className={`input pr-10 ${error ? 'border-red-300 dark:border-red-700 focus:ring-red-400' : ''}`}
@@ -143,8 +158,228 @@ function LoginForm({ login, navigate }) {
           : 'Masuk'
         }
       </button>
-
     </form>
+  )
+}
+
+// ── Form Lupa Password ────────────────────────────────────────────────────────
+function ForgotPasswordForm({ onBack }) {
+  // step: 'request' | 'reset' | 'done'
+  const [step, setStep]           = useState('request')
+  const [username, setUsername]   = useState('')
+  const [code, setCode]           = useState('')       // kode yang diterima dari server
+  const [inputCode, setInputCode] = useState('')       // kode yang diketik user
+  const [newPass, setNewPass]     = useState('')
+  const [showPass, setShowPass]   = useState(false)
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState('')
+  const [copied, setCopied]       = useState(false)
+  const [expiresAt, setExpiresAt] = useState(null)
+
+  // Step 1: minta kode reset
+  async function handleRequest(e) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      const { data } = await api.post('/auth/forgot-password', { username })
+      if (data.code) {
+        setCode(data.code)
+        setExpiresAt(data.expires_at)
+        setStep('reset')
+      } else {
+        // username tidak ditemukan (server tidak kasih kode)
+        setError('Username tidak ditemukan atau akun tidak aktif.')
+      }
+    } catch (err) {
+      setError(err.message || 'Gagal meminta kode reset')
+    } finally { setLoading(false) }
+  }
+
+  // Step 2: set password baru
+  async function handleReset(e) {
+    e.preventDefault()
+    setError('')
+    if (newPass.length < 6) { setError('Password minimal 6 karakter'); return }
+    setLoading(true)
+    try {
+      await api.post('/auth/reset-password', {
+        username,
+        code: inputCode,
+        newPassword: newPass,
+      })
+      setStep('done')
+    } catch (err) {
+      setError(err.message || 'Reset password gagal')
+    } finally { setLoading(false) }
+  }
+
+  function copyCode() {
+    navigator.clipboard?.writeText(code).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  // ── Step 1: masukkan username ─────────────────────────────────────────────
+  if (step === 'request') {
+    return (
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-1">
+          <button type="button" onClick={onBack}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors -ml-1">
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Lupa Password</h2>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Masukkan username untuk mendapat kode reset</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleRequest} className="space-y-4">
+          {error && (
+            <div className="flex items-start gap-2.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-3.5 py-3 text-sm">
+              <AlertCircle size={16} className="flex-shrink-0 mt-0.5 text-red-500" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username</label>
+            <input
+              className="input"
+              placeholder="Masukkan username Anda"
+              value={username}
+              onChange={e => { setError(''); setUsername(e.target.value) }}
+              required autoFocus autoComplete="username"
+            />
+          </div>
+
+          <button type="submit" className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2" disabled={loading}>
+            {loading
+              ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Memproses...</>
+              : <><KeyRound size={15} />Buat Kode Reset</>
+            }
+          </button>
+
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-3.5 py-3">
+            <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+              <span className="font-semibold">Catatan:</span> Kode reset akan ditampilkan di layar ini dan berlaku selama 30 menit.
+            </p>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
+  // ── Step 2: tampilkan kode & input password baru ─────────────────────────
+  if (step === 'reset') {
+    const expiry = expiresAt ? new Date(expiresAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''
+
+    return (
+      <form onSubmit={handleReset} className="space-y-4">
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-1">
+          <button type="button" onClick={() => { setStep('request'); setError('') }}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-colors -ml-1">
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Kode Reset</h2>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Berlaku hingga {expiry}</p>
+          </div>
+        </div>
+
+        {/* Kode ditampilkan */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 text-center">
+          <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-2">Kode Reset Anda</p>
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-4xl font-black tracking-[0.3em] text-blue-700 dark:text-blue-300 tabular-nums font-mono">
+              {code}
+            </span>
+            <button
+              type="button"
+              onClick={copyCode}
+              className="p-2 rounded-xl bg-blue-100 dark:bg-blue-800/40 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-400 transition-all active:scale-90"
+              title="Salin kode"
+            >
+              {copied ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Copy size={16} />}
+            </button>
+          </div>
+          <p className="text-xs text-blue-500 dark:text-blue-500 mt-2">Gunakan kode ini untuk set password baru</p>
+        </div>
+
+        {error && (
+          <div className="flex items-start gap-2.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-3.5 py-3 text-sm">
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5 text-red-500" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Input kode */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Masukkan Kode (6 digit)</label>
+          <input
+            className="input text-center tracking-widest text-lg font-mono font-bold"
+            placeholder="––––––"
+            value={inputCode}
+            onChange={e => { setError(''); setInputCode(e.target.value.replace(/\D/g, '').slice(0, 6)) }}
+            required
+            inputMode="numeric"
+            maxLength={6}
+          />
+        </div>
+
+        {/* Password baru */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password Baru</label>
+          <div className="relative">
+            <input
+              className="input pr-10"
+              type={showPass ? 'text' : 'password'}
+              placeholder="Minimal 6 karakter"
+              value={newPass}
+              onChange={e => { setError(''); setNewPass(e.target.value) }}
+              required
+              autoComplete="new-password"
+            />
+            <button type="button" onClick={() => setShowPass(s => !s)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2" disabled={loading || inputCode.length !== 6}>
+          {loading
+            ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Memproses...</>
+            : <><KeyRound size={15} />Reset Password</>
+          }
+        </button>
+      </form>
+    )
+  }
+
+  // ── Step 3: berhasil ──────────────────────────────────────────────────────
+  return (
+    <div className="text-center space-y-4 py-2">
+      <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
+        <CheckCircle2 size={36} className="text-emerald-500" />
+      </div>
+      <div>
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Password Direset!</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Password berhasil diubah. Silakan login dengan password baru Anda.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onBack}
+        className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2"
+      >
+        <LogIn size={15} /> Masuk Sekarang
+      </button>
+    </div>
   )
 }
 
