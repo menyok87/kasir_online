@@ -5,7 +5,7 @@ const jwt       = require('jsonwebtoken')
 const crypto    = require('crypto')
 const pool      = require('../database/db')
 const { authenticate }                     = require('../middleware/authMiddleware')
-const { isConfigured, maskEmail, sendVerificationEmail } = require('../utils/mailer')
+const { isConfigured, maskEmail, sendVerificationEmail, sendResetPasswordEmail } = require('../utils/mailer')
 
 const JWT_SECRET  = process.env.JWT_SECRET || 'kasir-jwt-secret-ganti-di-production'
 const JWT_EXPIRES = '8h'
@@ -268,31 +268,48 @@ router.put('/change-password', authenticate, async (req, res, next) => {
   } catch (err) { next(err) }
 })
 
-// POST /api/auth/forgot-password — buat kode reset 6 digit
+// POST /api/auth/forgot-password — kirim kode reset 6 digit via email
 router.post('/forgot-password', async (req, res, next) => {
   try {
-    const { username } = req.body
-    if (!username?.trim()) {
-      return res.status(400).json({ error: 'Username wajib diisi' })
+    const { email } = req.body
+    if (!email?.trim()) {
+      return res.status(400).json({ error: 'Email wajib diisi' })
     }
 
+    const emailClean = email.trim().toLowerCase()
     const { rows } = await pool.query(
-      'SELECT id FROM users WHERE username = $1 AND is_active = TRUE',
-      [username.trim().toLowerCase()]
+      'SELECT id, name, email FROM users WHERE email = $1 AND is_active = TRUE',
+      [emailClean]
     )
 
+    // Selalu 200 untuk mencegah email enumeration
     if (rows.length === 0) {
-      return res.json({ message: 'Jika username terdaftar, kode reset telah dibuat.' })
+      return res.json({ message: 'Jika email terdaftar, kode reset telah dikirim.' })
     }
 
+    const user    = rows[0]
     const code    = String(crypto.randomInt(100000, 999999))
     const expires = new Date(Date.now() + 30 * 60 * 1000)
 
     await pool.query(
       'UPDATE users SET reset_token = $1, reset_expires = $2 WHERE id = $3',
-      [code, expires, rows[0].id]
+      [code, expires, user.id]
     )
 
+    const smtpReady = isConfigured()
+    if (smtpReady) {
+      // Kirim kode via email, jangan tampilkan di response
+      sendResetPasswordEmail({ to: user.email, name: user.name, code })
+        .catch(err => console.error('[Mailer] Gagal kirim reset email:', err.message))
+
+      return res.json({
+        emailSent:   true,
+        maskedEmail: maskEmail(user.email),
+        message:     `Kode reset dikirim ke ${maskEmail(user.email)}`,
+      })
+    }
+
+    // Fallback jika SMTP belum dikonfigurasi — tampilkan kode di layar (dev/offline)
     res.json({ code, expires_at: expires })
   } catch (err) { next(err) }
 })
@@ -300,20 +317,20 @@ router.post('/forgot-password', async (req, res, next) => {
 // POST /api/auth/reset-password — verifikasi kode & set password baru
 router.post('/reset-password', async (req, res, next) => {
   try {
-    const { username, code, newPassword } = req.body
-    if (!username?.trim() || !code?.trim() || !newPassword) {
-      return res.status(400).json({ error: 'Username, kode, dan password baru wajib diisi' })
+    const { email, code, newPassword } = req.body
+    if (!email?.trim() || !code?.trim() || !newPassword) {
+      return res.status(400).json({ error: 'Email, kode, dan password baru wajib diisi' })
     }
     if (newPassword.length < 6) {
       return res.status(400).json({ error: 'Password minimal 6 karakter' })
     }
 
     const { rows } = await pool.query(
-      'SELECT id, reset_token, reset_expires FROM users WHERE username = $1 AND is_active = TRUE',
-      [username.trim().toLowerCase()]
+      'SELECT id, reset_token, reset_expires FROM users WHERE email = $1 AND is_active = TRUE',
+      [email.trim().toLowerCase()]
     )
 
-    if (rows.length === 0) return res.status(400).json({ error: 'Username tidak ditemukan' })
+    if (rows.length === 0) return res.status(400).json({ error: 'Email tidak ditemukan' })
 
     const user = rows[0]
     if (!user.reset_token || !user.reset_expires) {

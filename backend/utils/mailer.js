@@ -112,4 +112,83 @@ async function sendVerificationEmail({ to, name, token, baseUrl }) {
   return { sent: true }
 }
 
-module.exports = { isConfigured, maskEmail, sendVerificationEmail }
+// ── Template email reset password ─────────────────────────────────────────────
+function resetPasswordEmailHtml(name, code, storeName = 'Kasir Online') {
+  return `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reset Password</title>
+<style>
+  body{margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  .wrap{max-width:560px;margin:40px auto;padding:0 16px 40px}
+  .card{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+  .header{background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:40px 40px 36px;text-align:center}
+  .logo-box{width:60px;height:60px;background:rgba(255,255,255,.2);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:16px}
+  .header h1{margin:0;color:#fff;font-size:24px;font-weight:800;letter-spacing:-.5px}
+  .header p{margin:6px 0 0;color:rgba(255,255,255,.75);font-size:14px}
+  .body{padding:36px 40px}
+  .greeting{font-size:16px;color:#1e293b;font-weight:600;margin:0 0 12px}
+  .text{font-size:14px;color:#475569;line-height:1.7;margin:0 0 24px}
+  .code-wrap{background:#f5f3ff;border:2px dashed #a78bfa;border-radius:16px;padding:24px;text-align:center;margin:0 0 24px}
+  .code-label{font-size:12px;color:#7c3aed;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+  .code{font-size:42px;font-weight:900;color:#4f46e5;letter-spacing:.35em;font-family:'Courier New',monospace}
+  .code-note{font-size:12px;color:#7c3aed;margin-top:8px}
+  .warning{background:#fef9c3;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;font-size:12px;color:#92400e;line-height:1.6}
+  .footer{background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e2e8f0}
+  .footer p{margin:0;font-size:12px;color:#94a3b8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="header">
+      <div class="logo-box">🔐</div>
+      <h1>${storeName}</h1>
+      <p>Reset Password</p>
+    </div>
+    <div class="body">
+      <p class="greeting">Halo, ${name}!</p>
+      <p class="text">
+        Kami menerima permintaan reset password untuk akun Anda.<br>
+        Gunakan kode di bawah ini untuk membuat password baru.
+      </p>
+      <div class="code-wrap">
+        <div class="code-label">Kode Reset Password</div>
+        <div class="code">${code}</div>
+        <div class="code-note">⏰ Berlaku selama <strong>30 menit</strong></div>
+      </div>
+      <div class="warning">
+        🔒 &nbsp;Jangan bagikan kode ini kepada siapapun. Jika Anda tidak meminta reset password, abaikan email ini — akun Anda tetap aman.
+      </div>
+    </div>
+    <div class="footer">
+      <p>Email ini dikirim otomatis oleh sistem ${storeName}. Jangan balas email ini.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>`
+}
+
+// ── Kirim email reset password ────────────────────────────────────────────────
+async function sendResetPasswordEmail({ to, name, code }) {
+  if (!isConfigured()) {
+    console.log(`[Mailer] SMTP tidak dikonfigurasi. Kode reset: ${code}`)
+    return { skipped: true }
+  }
+
+  const transporter = createTransporter()
+
+  await transporter.sendMail({
+    from:    process.env.SMTP_FROM || `"Kasir Online" <${process.env.SMTP_USER}>`,
+    to,
+    subject: '🔐 Kode Reset Password Anda — Kasir Online',
+    html:    resetPasswordEmailHtml(name, code),
+  })
+
+  return { sent: true }
+}
+
+module.exports = { isConfigured, maskEmail, sendVerificationEmail, sendResetPasswordEmail }

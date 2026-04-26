@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   Store, Eye, EyeOff, AlertCircle, Moon, Sun,
-  UserPlus, LogIn, KeyRound, ArrowLeft, CheckCircle2, Copy, RefreshCw, Mail,
+  UserPlus, LogIn, KeyRound, ArrowLeft, CheckCircle2, Copy, Mail,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -272,48 +272,47 @@ function ResendForm({ maskedEmail, loading, onSubmit, onCancel }) {
 function ForgotPasswordForm({ onBack }) {
   // step: 'request' | 'reset' | 'done'
   const [step, setStep]           = useState('request')
-  const [username, setUsername]   = useState('')
-  const [code, setCode]           = useState('')       // kode yang diterima dari server
-  const [inputCode, setInputCode] = useState('')       // kode yang diketik user
+  const [email, setEmail]         = useState('')
+  const [maskedEmail, setMasked]  = useState('')
+  const [devCode, setDevCode]     = useState('')   // kode tampil di layar (fallback: SMTP off)
+  const [inputCode, setInputCode] = useState('')
   const [newPass, setNewPass]     = useState('')
   const [showPass, setShowPass]   = useState(false)
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState('')
   const [copied, setCopied]       = useState(false)
-  const [expiresAt, setExpiresAt] = useState(null)
 
-  // Step 1: minta kode reset
+  // Step 1: kirim kode ke email
   async function handleRequest(e) {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      const { data } = await api.post('/auth/forgot-password', { username })
-      if (data.code) {
-        setCode(data.code)
-        setExpiresAt(data.expires_at)
-        setStep('reset')
-      } else {
-        // username tidak ditemukan (server tidak kasih kode)
-        setError('Username tidak ditemukan atau akun tidak aktif.')
+      const { data } = await api.post('/auth/forgot-password', { email })
+      if (data.emailSent) {
+        // SMTP aktif → kode dikirim via email
+        setMasked(data.maskedEmail || '')
+        setDevCode('')
+      } else if (data.code) {
+        // Fallback: SMTP belum dikonfigurasi → tampilkan di layar
+        setDevCode(data.code)
+        setMasked('')
       }
+      // Jika email tidak ditemukan server tetap jawab 200 dengan message saja
+      setStep('reset')
     } catch (err) {
       setError(err.message || 'Gagal meminta kode reset')
     } finally { setLoading(false) }
   }
 
-  // Step 2: set password baru
+  // Step 2: verifikasi kode & set password baru
   async function handleReset(e) {
     e.preventDefault()
     setError('')
     if (newPass.length < 6) { setError('Password minimal 6 karakter'); return }
     setLoading(true)
     try {
-      await api.post('/auth/reset-password', {
-        username,
-        code: inputCode,
-        newPassword: newPass,
-      })
+      await api.post('/auth/reset-password', { email, code: inputCode, newPassword: newPass })
       setStep('done')
     } catch (err) {
       setError(err.message || 'Reset password gagal')
@@ -321,16 +320,15 @@ function ForgotPasswordForm({ onBack }) {
   }
 
   function copyCode() {
-    navigator.clipboard?.writeText(code).catch(() => {})
+    navigator.clipboard?.writeText(devCode).catch(() => {})
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // ── Step 1: masukkan username ─────────────────────────────────────────────
+  // ── Step 1: masukkan email ────────────────────────────────────────────────
   if (step === 'request') {
     return (
       <div className="space-y-4">
-        {/* Header */}
         <div className="flex items-center gap-2 mb-1">
           <button type="button" onClick={onBack}
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors -ml-1">
@@ -338,7 +336,7 @@ function ForgotPasswordForm({ onBack }) {
           </button>
           <div>
             <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Lupa Password</h2>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Masukkan username untuk mendapat kode reset</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Kode reset akan dikirim ke email Anda</p>
           </div>
         </div>
 
@@ -351,69 +349,85 @@ function ForgotPasswordForm({ onBack }) {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username</label>
-            <input
-              className="input"
-              placeholder="Masukkan username Anda"
-              value={username}
-              onChange={e => { setError(''); setUsername(e.target.value) }}
-              required autoFocus autoComplete="username"
-            />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+            <div className="relative">
+              <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                className="input pl-9"
+                type="email"
+                placeholder="email@contoh.com"
+                value={email}
+                onChange={e => { setError(''); setEmail(e.target.value) }}
+                required autoFocus autoComplete="email" inputMode="email"
+              />
+            </div>
           </div>
 
           <button type="submit" className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2" disabled={loading}>
             {loading
-              ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Memproses...</>
-              : <><KeyRound size={15} />Buat Kode Reset</>
+              ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Mengirim...</>
+              : <><Mail size={15} />Kirim Kode Reset</>
             }
           </button>
-
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-3.5 py-3">
-            <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
-              <span className="font-semibold">Catatan:</span> Kode reset akan ditampilkan di layar ini dan berlaku selama 30 menit.
-            </p>
-          </div>
         </form>
       </div>
     )
   }
 
-  // ── Step 2: tampilkan kode & input password baru ─────────────────────────
+  // ── Step 2: masukkan kode + password baru ────────────────────────────────
   if (step === 'reset') {
-    const expiry = expiresAt ? new Date(expiresAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''
-
     return (
       <form onSubmit={handleReset} className="space-y-4">
-        {/* Header */}
         <div className="flex items-center gap-2 mb-1">
-          <button type="button" onClick={() => { setStep('request'); setError('') }}
+          <button type="button" onClick={() => { setStep('request'); setError(''); setInputCode('') }}
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-colors -ml-1">
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Kode Reset</h2>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Berlaku hingga {expiry}</p>
+            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Masukkan Kode</h2>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Berlaku 30 menit</p>
           </div>
         </div>
 
-        {/* Kode ditampilkan */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 text-center">
-          <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-2">Kode Reset Anda</p>
-          <div className="flex items-center justify-center gap-3">
-            <span className="text-4xl font-black tracking-[0.3em] text-blue-700 dark:text-blue-300 tabular-nums font-mono">
-              {code}
-            </span>
-            <button
-              type="button"
-              onClick={copyCode}
-              className="p-2 rounded-xl bg-blue-100 dark:bg-blue-800/40 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-400 transition-all active:scale-90"
-              title="Salin kode"
-            >
-              {copied ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Copy size={16} />}
-            </button>
+        {/* Notif email terkirim */}
+        {maskedEmail && !devCode && (
+          <div className="flex items-start gap-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3.5 py-3">
+            <Mail size={16} className="flex-shrink-0 mt-0.5 text-blue-500" />
+            <div>
+              <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">Cek Email Anda</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                Kode 6 digit dikirim ke <strong>{maskedEmail}</strong>. Cek inbox atau folder Spam.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-blue-500 dark:text-blue-500 mt-2">Gunakan kode ini untuk set password baru</p>
-        </div>
+        )}
+
+        {/* Fallback: SMTP off — tampilkan kode di layar */}
+        {devCode && (
+          <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-4 text-center">
+            <p className="text-xs text-violet-600 dark:text-violet-400 font-medium mb-2">Kode Reset (mode offline)</p>
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-4xl font-black tracking-[0.3em] text-violet-700 dark:text-violet-300 tabular-nums font-mono">
+                {devCode}
+              </span>
+              <button type="button" onClick={copyCode}
+                className="p-2 rounded-xl bg-violet-100 dark:bg-violet-800/40 hover:bg-violet-200 text-violet-600 dark:text-violet-400 transition-all active:scale-90"
+                title="Salin kode">
+                {copied ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Copy size={16} />}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Email tidak terdaftar — tetap tampilkan form tapi beri info */}
+        {!maskedEmail && !devCode && (
+          <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-3.5 py-3">
+            <Mail size={16} className="flex-shrink-0 mt-0.5 text-amber-500" />
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              Jika email terdaftar, kode telah dikirim ke inbox Anda. Cek folder Spam jika tidak ada.
+            </p>
+          </div>
+        )}
 
         {error && (
           <div className="flex items-start gap-2.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-3.5 py-3 text-sm">
@@ -422,21 +436,17 @@ function ForgotPasswordForm({ onBack }) {
           </div>
         )}
 
-        {/* Input kode */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Masukkan Kode (6 digit)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Kode Reset (6 digit)</label>
           <input
-            className="input text-center tracking-widest text-lg font-mono font-bold"
-            placeholder="––––––"
+            className="input text-center tracking-widest text-xl font-mono font-bold"
+            placeholder="• • • • • •"
             value={inputCode}
             onChange={e => { setError(''); setInputCode(e.target.value.replace(/\D/g, '').slice(0, 6)) }}
-            required
-            inputMode="numeric"
-            maxLength={6}
+            required inputMode="numeric" maxLength={6} autoFocus
           />
         </div>
 
-        {/* Password baru */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password Baru</label>
           <div className="relative">
@@ -446,8 +456,7 @@ function ForgotPasswordForm({ onBack }) {
               placeholder="Minimal 6 karakter"
               value={newPass}
               onChange={e => { setError(''); setNewPass(e.target.value) }}
-              required
-              autoComplete="new-password"
+              required autoComplete="new-password"
             />
             <button type="button" onClick={() => setShowPass(s => !s)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
@@ -456,12 +465,21 @@ function ForgotPasswordForm({ onBack }) {
           </div>
         </div>
 
-        <button type="submit" className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2" disabled={loading || inputCode.length !== 6}>
+        <button type="submit" className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2"
+          disabled={loading || inputCode.length !== 6}>
           {loading
             ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Memproses...</>
             : <><KeyRound size={15} />Reset Password</>
           }
         </button>
+
+        <p className="text-center text-xs text-gray-400 dark:text-gray-500">
+          Tidak terima email?{' '}
+          <button type="button" onClick={() => { setStep('request'); setInputCode(''); setError('') }}
+            className="text-blue-600 hover:underline font-medium flex-shrink-0 inline">
+            Kirim ulang
+          </button>
+        </p>
       </form>
     )
   }
@@ -478,11 +496,8 @@ function ForgotPasswordForm({ onBack }) {
           Password berhasil diubah. Silakan login dengan password baru Anda.
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onBack}
-        className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2"
-      >
+      <button type="button" onClick={onBack}
+        className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2">
         <LogIn size={15} /> Masuk Sekarang
       </button>
     </div>
