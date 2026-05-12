@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   Store, Eye, EyeOff, AlertCircle, Moon, Sun,
-  UserPlus, LogIn, KeyRound, ArrowLeft, CheckCircle2, Copy, Mail,
+  UserPlus, LogIn, KeyRound, ArrowLeft, CheckCircle2, Copy, Mail, RefreshCw, Timer,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -268,44 +268,113 @@ function ResendForm({ maskedEmail, loading, onSubmit, onCancel }) {
   )
 }
 
+// ── OTP boxes input ───────────────────────────────────────────────────────────
+function OtpBoxes({ value, onChange, autoFocus }) {
+  const inputRef = useRef(null)
+  const digits   = value.split('')
+
+  return (
+    <div className="relative select-none">
+      {/* Visual boxes */}
+      <div className="flex gap-2" aria-hidden>
+        {[0,1,2,3,4,5].map(i => {
+          const filled  = i < value.length
+          const current = i === value.length
+          return (
+            <div key={i} onClick={() => inputRef.current?.focus()}
+              className={`flex-1 h-14 rounded-xl border-2 flex items-center justify-center text-2xl font-black font-mono cursor-text transition-all duration-150
+                ${filled  ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/60 text-gray-900 dark:text-white shadow-sm'
+                : current ? 'border-blue-400 bg-white dark:bg-gray-800 shadow-sm shadow-blue-200 dark:shadow-blue-900/30'
+                :           'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-400'}`}>
+              {filled
+                ? digits[i]
+                : current
+                  ? <span className="w-0.5 h-6 bg-blue-500 rounded-full animate-pulse" />
+                  : <span className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
+              }
+            </div>
+          )
+        })}
+      </div>
+      {/* Transparent real input — sits on top, captures keyboard */}
+      <input
+        ref={inputRef}
+        type="text"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        maxLength={6}
+        value={value}
+        onChange={e => onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
+        autoFocus={autoFocus}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-text"
+        aria-label="Kode 6 digit"
+      />
+    </div>
+  )
+}
+
 // ── Form Lupa Password ────────────────────────────────────────────────────────
 function ForgotPasswordForm({ onBack }) {
-  // step: 'request' | 'reset' | 'done'
   const [step, setStep]           = useState('request')
   const [email, setEmail]         = useState('')
-  const [maskedEmail, setMasked]  = useState('')
-  const [devCode, setDevCode]     = useState('')   // kode tampil di layar (fallback: SMTP off)
+  const [devCode, setDevCode]     = useState('')
   const [inputCode, setInputCode] = useState('')
   const [newPass, setNewPass]     = useState('')
   const [showPass, setShowPass]   = useState(false)
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState('')
   const [copied, setCopied]       = useState(false)
+  const [countdown, setCountdown] = useState(0)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendDone, setResendDone]       = useState(false)
 
-  // Step 1: kirim kode ke email
+  // Countdown timer
+  useEffect(() => {
+    if (countdown <= 0) return
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [countdown])
+
+  async function sendCode() {
+    const { data } = await api.post('/auth/forgot-password', { email })
+    if (data.code) setDevCode(data.code)
+    else setDevCode('')
+    return data
+  }
+
+  // Step 1: kirim kode pertama kali
   async function handleRequest(e) {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      const { data } = await api.post('/auth/forgot-password', { email })
-      if (data.emailSent) {
-        // SMTP aktif → kode dikirim via email
-        setMasked(data.maskedEmail || '')
-        setDevCode('')
-      } else if (data.code) {
-        // Fallback: SMTP belum dikonfigurasi → tampilkan di layar
-        setDevCode(data.code)
-        setMasked('')
-      }
-      // Jika email tidak ditemukan server tetap jawab 200 dengan message saja
+      await sendCode()
+      setInputCode('')
+      setCountdown(60)
+      setResendDone(false)
       setStep('reset')
     } catch (err) {
-      setError(err.message || 'Gagal meminta kode reset')
+      setError(err.message || 'Gagal mengirim kode reset')
     } finally { setLoading(false) }
   }
 
-  // Step 2: verifikasi kode & set password baru
+  // Kirim ulang kode (tanpa kembali ke step 1)
+  async function handleResend() {
+    setResendLoading(true)
+    setResendDone(false)
+    setError('')
+    try {
+      await sendCode()
+      setInputCode('')
+      setCountdown(60)
+      setResendDone(true)
+      setTimeout(() => setResendDone(false), 4000)
+    } catch {
+      setError('Gagal mengirim ulang. Coba lagi.')
+    } finally { setResendLoading(false) }
+  }
+
+  // Step 2: reset password dengan kode
   async function handleReset(e) {
     e.preventDefault()
     setError('')
@@ -316,6 +385,9 @@ function ForgotPasswordForm({ onBack }) {
       setStep('done')
     } catch (err) {
       setError(err.message || 'Reset password gagal')
+      if (err.message?.includes('salah') || err.message?.includes('kadaluarsa')) {
+        setInputCode('')
+      }
     } finally { setLoading(false) }
   }
 
@@ -325,20 +397,33 @@ function ForgotPasswordForm({ onBack }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  // ── Step indicator ────────────────────────────────────────────────────────
+  function StepDots({ current }) {
+    return (
+      <div className="flex items-center justify-center gap-1.5 mb-4">
+        {[1,2].map(n => (
+          <div key={n} className={`rounded-full transition-all duration-300 ${n === current ? 'w-5 h-2 bg-blue-500' : n < current ? 'w-2 h-2 bg-blue-300' : 'w-2 h-2 bg-gray-200 dark:bg-gray-700'}`} />
+        ))}
+      </div>
+    )
+  }
+
   // ── Step 1: masukkan email ────────────────────────────────────────────────
   if (step === 'request') {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2">
           <button type="button" onClick={onBack}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors -ml-1">
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors -ml-1 flex-shrink-0">
             <ArrowLeft size={18} />
           </button>
-          <div>
+          <div className="flex-1">
             <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Lupa Password</h2>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Kode reset akan dikirim ke email Anda</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Kode reset dikirim ke email terdaftar</p>
           </div>
         </div>
+
+        <StepDots current={1} />
 
         <form onSubmit={handleRequest} className="space-y-4">
           {error && (
@@ -349,7 +434,9 @@ function ForgotPasswordForm({ onBack }) {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Alamat Email
+            </label>
             <div className="relative">
               <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
@@ -361,6 +448,9 @@ function ForgotPasswordForm({ onBack }) {
                 required autoFocus autoComplete="email" inputMode="email"
               />
             </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
+              Masukkan email yang digunakan saat mendaftar.
+            </p>
           </div>
 
           <button type="submit" className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2" disabled={loading}>
@@ -378,54 +468,56 @@ function ForgotPasswordForm({ onBack }) {
   if (step === 'reset') {
     return (
       <form onSubmit={handleReset} className="space-y-4">
-        <div className="flex items-center gap-2 mb-1">
-          <button type="button" onClick={() => { setStep('request'); setError(''); setInputCode('') }}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-colors -ml-1">
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => { setStep('request'); setError(''); setInputCode(''); setCountdown(0) }}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-colors -ml-1 flex-shrink-0">
             <ArrowLeft size={18} />
           </button>
-          <div>
-            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Masukkan Kode</h2>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Berlaku 30 menit</p>
+          <div className="flex-1">
+            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Verifikasi Kode</h2>
+            <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{email}</p>
           </div>
         </div>
 
-        {/* Notif email terkirim */}
-        {maskedEmail && !devCode && (
-          <div className="flex items-start gap-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3.5 py-3">
-            <Mail size={16} className="flex-shrink-0 mt-0.5 text-blue-500" />
-            <div>
-              <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">Cek Email Anda</p>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
-                Kode 6 digit dikirim ke <strong>{maskedEmail}</strong>. Cek inbox atau folder Spam.
-              </p>
+        <StepDots current={2} />
+
+        {/* Banner: kode dikirim via email */}
+        {!devCode && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3.5 py-3">
+            <div className="flex items-start gap-2.5">
+              <Mail size={15} className="flex-shrink-0 mt-0.5 text-blue-500" />
+              <div>
+                <p className="text-xs font-semibold text-blue-800 dark:text-blue-200">Cek inbox Anda</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 leading-relaxed">
+                  Kode 6 digit dikirim ke <strong>{email}</strong>.<br />
+                  Tidak ada? Cek folder <em>Spam / Junk</em>.
+                </p>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Fallback: SMTP off — tampilkan kode di layar */}
+        {/* Fallback offline: kode tampil di layar */}
         {devCode && (
-          <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-4 text-center">
-            <p className="text-xs text-violet-600 dark:text-violet-400 font-medium mb-2">Kode Reset (mode offline)</p>
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-4xl font-black tracking-[0.3em] text-violet-700 dark:text-violet-300 tabular-nums font-mono">
-                {devCode}
-              </span>
+          <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-xl px-3.5 py-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-violet-700 dark:text-violet-300">Kode Reset (mode offline)</p>
+                <p className="text-2xl font-black tracking-[0.25em] text-violet-700 dark:text-violet-200 font-mono mt-1">{devCode}</p>
+              </div>
               <button type="button" onClick={copyCode}
-                className="p-2 rounded-xl bg-violet-100 dark:bg-violet-800/40 hover:bg-violet-200 text-violet-600 dark:text-violet-400 transition-all active:scale-90"
-                title="Salin kode">
+                className="p-2 rounded-xl bg-violet-100 dark:bg-violet-800/40 hover:bg-violet-200 text-violet-600 dark:text-violet-400 transition-all active:scale-90">
                 {copied ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Copy size={16} />}
               </button>
             </div>
           </div>
         )}
 
-        {/* Email tidak terdaftar — tetap tampilkan form tapi beri info */}
-        {!maskedEmail && !devCode && (
-          <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-3.5 py-3">
-            <Mail size={16} className="flex-shrink-0 mt-0.5 text-amber-500" />
-            <p className="text-xs text-amber-700 dark:text-amber-400">
-              Jika email terdaftar, kode telah dikirim ke inbox Anda. Cek folder Spam jika tidak ada.
-            </p>
+        {/* Kode berhasil dikirim ulang */}
+        {resendDone && (
+          <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl px-3.5 py-2.5">
+            <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
+            <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Kode baru telah dikirim ke email Anda.</p>
           </div>
         )}
 
@@ -436,17 +528,15 @@ function ForgotPasswordForm({ onBack }) {
           </div>
         )}
 
+        {/* OTP boxes */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Kode Reset (6 digit)</label>
-          <input
-            className="input text-center tracking-widest text-xl font-mono font-bold"
-            placeholder="• • • • • •"
-            value={inputCode}
-            onChange={e => { setError(''); setInputCode(e.target.value.replace(/\D/g, '').slice(0, 6)) }}
-            required inputMode="numeric" maxLength={6} autoFocus
-          />
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Kode 6 Digit
+          </label>
+          <OtpBoxes value={inputCode} onChange={v => { setError(''); setInputCode(v) }} autoFocus />
         </div>
 
+        {/* Password baru */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password Baru</label>
           <div className="relative">
@@ -466,20 +556,30 @@ function ForgotPasswordForm({ onBack }) {
         </div>
 
         <button type="submit" className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2"
-          disabled={loading || inputCode.length !== 6}>
+          disabled={loading || inputCode.length !== 6 || !newPass}>
           {loading
             ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Memproses...</>
             : <><KeyRound size={15} />Reset Password</>
           }
         </button>
 
-        <p className="text-center text-xs text-gray-400 dark:text-gray-500">
-          Tidak terima email?{' '}
-          <button type="button" onClick={() => { setStep('request'); setInputCode(''); setError('') }}
-            className="text-blue-600 hover:underline font-medium flex-shrink-0 inline">
-            Kirim ulang
-          </button>
-        </p>
+        {/* Kirim ulang dengan countdown */}
+        <div className="flex items-center justify-center gap-2 pt-1">
+          {countdown > 0 ? (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+              <Timer size={13} />
+              <span>Kirim ulang kode dalam <strong className="tabular-nums">{countdown}d</strong></span>
+            </div>
+          ) : (
+            <button type="button" onClick={handleResend} disabled={resendLoading}
+              className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 disabled:opacity-50 transition-colors">
+              {resendLoading
+                ? <><span className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />Mengirim...</>
+                : <><RefreshCw size={13} />Kirim Ulang Kode</>
+              }
+            </button>
+          )}
+        </div>
       </form>
     )
   }
@@ -493,7 +593,7 @@ function ForgotPasswordForm({ onBack }) {
       <div>
         <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Password Direset!</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Password berhasil diubah. Silakan login dengan password baru Anda.
+          Password berhasil diubah. Silakan login dengan password baru.
         </p>
       </div>
       <button type="button" onClick={onBack}
