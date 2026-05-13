@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /home/user/kasir_online && git add -A && git diff --staged --quiet || git commit -m \"auto: save changes [$(date '+%H:%M')]\" && git push -u origin claude/build-online-cashier-p4jw2 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
