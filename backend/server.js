@@ -21,7 +21,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 
 // ── Public routes ────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok', env: process.env.NODE_ENV }));
-app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth',  require('./routes/auth'));
 
 // ── Protected API Routes ──────────────────────────────────────
 // superadmin + admin + supervisor: dashboard & transaksi (read)
@@ -35,6 +35,11 @@ app.use('/api/uploads',      authenticate, requireAdmin,  require('./routes/uplo
 app.use('/api/users',        authenticate,               require('./routes/users'));
 app.use('/api/settings',     authenticate, requireAdmin,  require('./routes/settings'));
 app.use('/api/accounts',     authenticate, requireAdmin,  require('./routes/accounts'));
+// GoPay: webhook /notification publik, sisanya butuh auth
+app.use('/api/gopay', (req, res, next) => {
+  if (req.path === '/notification' && req.method === 'POST') return next()
+  return authenticate(req, res, next)
+}, require('./routes/gopay'));
 
 // ── Static Frontend (production) ────────────────────────────
 // Nginx memproksi semua request ke Express, jadi Express

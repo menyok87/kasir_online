@@ -8,6 +8,7 @@ const DEFAULT_SETTINGS = {
   store_address: '', store_phone: '', store_email: '', store_website: '',
   footer_msg: 'Terima kasih telah berbelanja!', show_footer_note: true,
   store_logo: '', qris_image: '', bank_name: '', bank_account_number: '', bank_account_name: '', bank_branch: '',
+  midtrans_server_key: '', midtrans_client_key: '', midtrans_is_production: false,
 };
 
 // GET /api/settings — pengaturan toko milik tenant
@@ -28,6 +29,7 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
       store_phone, store_email, store_website,
       footer_msg, show_footer_note,
       store_logo, qris_image, bank_name, bank_account_number, bank_account_name, bank_branch,
+      midtrans_server_key, midtrans_client_key, midtrans_is_production,
     } = req.body;
 
     if (!store_name?.trim()) return res.status(400).json({ error: 'Nama toko wajib diisi' });
@@ -45,15 +47,20 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
           store_name=$1, store_tagline=$2, store_address=$3, store_phone=$4,
           store_email=$5, store_website=$6, footer_msg=$7, show_footer_note=$8,
           store_logo=$9, qris_image=$10, bank_name=$11, bank_account_number=$12,
-          bank_account_name=$13, bank_branch=$14, updated_at=NOW()
-        WHERE admin_id=$15 RETURNING *`,
+          bank_account_name=$13, bank_branch=$14,
+          midtrans_server_key=$15, midtrans_client_key=$16, midtrans_is_production=$17,
+          updated_at=NOW()
+        WHERE admin_id=$18 RETURNING *`,
         [
           store_name.trim(), store_tagline?.trim() || '', store_address?.trim() || '',
           store_phone?.trim() || '', store_email?.trim() || '', store_website?.trim() || '',
           footer_msg?.trim() || '', show_footer_note !== false,
           store_logo?.trim() || '', qris_image?.trim() || '', bank_name?.trim() || '',
           bank_account_number?.trim() || '', bank_account_name?.trim() || '',
-          bank_branch?.trim() || '', tid,
+          bank_branch?.trim() || '',
+          midtrans_server_key?.trim() || '', midtrans_client_key?.trim() || '',
+          midtrans_is_production === true,
+          tid,
         ]
       );
       rows = result.rows;
@@ -62,8 +69,9 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
         INSERT INTO store_settings
           (admin_id, store_name, store_tagline, store_address, store_phone, store_email,
            store_website, footer_msg, show_footer_note, store_logo, qris_image, bank_name,
-           bank_account_number, bank_account_name, bank_branch)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+           bank_account_number, bank_account_name, bank_branch,
+           midtrans_server_key, midtrans_client_key, midtrans_is_production)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING *`,
         [
           tid, store_name.trim(), store_tagline?.trim() || '', store_address?.trim() || '',
           store_phone?.trim() || '', store_email?.trim() || '', store_website?.trim() || '',
@@ -71,6 +79,8 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
           store_logo?.trim() || '', qris_image?.trim() || '', bank_name?.trim() || '',
           bank_account_number?.trim() || '', bank_account_name?.trim() || '',
           bank_branch?.trim() || '',
+          midtrans_server_key?.trim() || '', midtrans_client_key?.trim() || '',
+          midtrans_is_production === true,
         ]
       );
       rows = result.rows;

@@ -4,7 +4,7 @@ import {
   Store, Phone, MapPin, Mail, Globe, FileText, Save,
   QrCode, Landmark, ImagePlus, X, CheckCircle,
   Building2, CreditCard, Receipt, Settings2, ChevronRight,
-  Lock, Eye, EyeOff, ShieldCheck
+  Lock, Eye, EyeOff, ShieldCheck, Smartphone, ExternalLink, AlertTriangle
 } from 'lucide-react'
 import { getSettings, updateSettings, uploadProductImage, changePassword } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
@@ -16,15 +16,17 @@ const defaultSettings = {
   footer_msg: '', show_footer_note: true,
   store_logo: '', qris_image: '', bank_name: '', bank_account_number: '',
   bank_account_name: '', bank_branch: '',
+  midtrans_server_key: '', midtrans_client_key: '', midtrans_is_production: false,
 }
 
 const SECTIONS = [
-  { id: 'toko',      label: 'Info Toko', icon: Store,    color: 'blue'   },
-  { id: 'kontak',    label: 'Kontak',    icon: MapPin,   color: 'teal'   },
-  { id: 'qris',      label: 'QRIS',      icon: QrCode,   color: 'violet' },
-  { id: 'bank',      label: 'Bank',      icon: Landmark, color: 'amber'  },
-  { id: 'struk',     label: 'Struk',     icon: FileText, color: 'rose'   },
-  { id: 'keamanan',  label: 'Keamanan',  icon: Lock,     color: 'green'  },
+  { id: 'toko',      label: 'Info Toko', icon: Store,       color: 'blue'   },
+  { id: 'kontak',    label: 'Kontak',    icon: MapPin,      color: 'teal'   },
+  { id: 'qris',      label: 'QRIS',      icon: QrCode,      color: 'violet' },
+  { id: 'bank',      label: 'Bank',      icon: Landmark,    color: 'amber'  },
+  { id: 'gopay',     label: 'GoPay',     icon: Smartphone,  color: 'green'  },
+  { id: 'struk',     label: 'Struk',     icon: FileText,    color: 'rose'   },
+  { id: 'keamanan',  label: 'Keamanan',  icon: Lock,        color: 'slate'  },
 ]
 
 const C = {
@@ -34,6 +36,7 @@ const C = {
   amber:  { bg: 'bg-amber-50 dark:bg-amber-900/20',   icon: 'text-amber-600 dark:text-amber-400', activePill: 'bg-amber-500 text-white',  activeSide: 'bg-amber-500 text-white shadow-md shadow-amber-200 dark:shadow-amber-900/50' },
   rose:   { bg: 'bg-rose-50 dark:bg-rose-900/20',     icon: 'text-rose-600 dark:text-rose-400',   activePill: 'bg-rose-600 text-white',   activeSide: 'bg-rose-600 text-white shadow-md shadow-rose-200 dark:shadow-rose-900/50'   },
   green:  { bg: 'bg-green-50 dark:bg-green-900/20',   icon: 'text-green-600 dark:text-green-400', activePill: 'bg-green-600 text-white',  activeSide: 'bg-green-600 text-white shadow-md shadow-green-200 dark:shadow-green-900/50' },
+  slate:  { bg: 'bg-slate-50 dark:bg-slate-800/60',   icon: 'text-slate-600 dark:text-slate-400', activePill: 'bg-slate-600 text-white',  activeSide: 'bg-slate-600 text-white shadow-md shadow-slate-200 dark:shadow-slate-900/50' },
 }
 
 // ── Shared ────────────────────────────────────────────────────────────────────
@@ -85,7 +88,7 @@ function DesktopSidebar({ active, onChange, saving }) {
           </button>
         )
       })}
-      {active !== 'keamanan' && (
+      {!['keamanan'].includes(active) && (
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <button type="submit" disabled={saving}
             className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition-all">
@@ -599,6 +602,130 @@ function PanelPassword() {
   )
 }
 
+// ── Panel: GoPay / Midtrans ───────────────────────────────────────────────────
+function PanelGopay({ form, set, setForm }) {
+  const [showSK, setShowSK] = useState(false)
+  const [showCK, setShowCK] = useState(false)
+  const hasKeys = form.midtrans_server_key && form.midtrans_client_key
+
+  return (
+    <div className="space-y-4">
+      <SectionCard title="Konfigurasi GoPay" subtitle="Midtrans API keys untuk menerima pembayaran GoPay" icon={Smartphone} color="green">
+        {/* Setup guide */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3.5 border border-blue-100 dark:border-blue-900/30">
+          <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1.5">Cara Setup GoPay via Midtrans:</p>
+          <ol className="text-xs text-blue-600 dark:text-blue-400 space-y-1 list-decimal list-inside leading-relaxed">
+            <li>Daftar di <strong>dashboard.midtrans.com</strong></li>
+            <li>Masuk ke <strong>Settings → Access Keys</strong></li>
+            <li>Salin <em>Server Key</em> dan <em>Client Key</em></li>
+            <li>Aktifkan metode pembayaran <strong>GoPay</strong></li>
+          </ol>
+          <a href="https://dashboard.midtrans.com" target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-blue-700 dark:text-blue-300 font-semibold mt-2 hover:underline">
+            Buka Midtrans Dashboard <ExternalLink size={10} />
+          </a>
+        </div>
+
+        {/* Mode toggle */}
+        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+          <div>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Mode</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {form.midtrans_is_production ? 'Production — transaksi nyata' : 'Sandbox — uji coba gratis'}
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer"
+              checked={!!form.midtrans_is_production}
+              onChange={e => setForm(f => ({ ...f, midtrans_is_production: e.target.checked }))} />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700
+              peer-checked:after:translate-x-full peer-checked:after:border-white
+              after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+              after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
+              after:transition-all peer-checked:bg-green-500" />
+          </label>
+        </div>
+
+        {form.midtrans_is_production && (
+          <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 border border-amber-200 dark:border-amber-800">
+            <AlertTriangle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              <strong>Mode Production aktif.</strong> Transaksi akan memotong saldo GoPay pelanggan sungguhan.
+              Pastikan keys sudah benar.
+            </p>
+          </div>
+        )}
+
+        {/* Server Key */}
+        <Field label="Server Key" required hint="Dimulai dengan SB- (sandbox) atau tanpa prefix (production)">
+          <div className="relative">
+            <input type={showSK ? 'text' : 'password'}
+              className="input pr-10 font-mono text-sm"
+              value={form.midtrans_server_key || ''}
+              onChange={set('midtrans_server_key')}
+              placeholder={form.midtrans_is_production ? 'Mid-server-...' : 'SB-Mid-server-...'} />
+            <button type="button" onClick={() => setShowSK(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showSK ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+        </Field>
+
+        {/* Client Key */}
+        <Field label="Client Key" hint="Untuk verifikasi di sisi klien">
+          <div className="relative">
+            <input type={showCK ? 'text' : 'password'}
+              className="input pr-10 font-mono text-sm"
+              value={form.midtrans_client_key || ''}
+              onChange={set('midtrans_client_key')}
+              placeholder={form.midtrans_is_production ? 'Mid-client-...' : 'SB-Mid-client-...'} />
+            <button type="button" onClick={() => setShowCK(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showCK ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+        </Field>
+
+        {/* Status */}
+        <div className={`rounded-xl px-4 py-3 flex items-center gap-2.5 border ${
+          hasKeys
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30'
+            : 'bg-gray-50 dark:bg-gray-800/60 border-gray-100 dark:border-gray-700'
+        }`}>
+          {hasKeys ? (
+            <>
+              <CheckCircle size={15} className="text-green-600 flex-shrink-0" />
+              <p className="text-xs font-semibold text-green-700 dark:text-green-300">
+                GoPay siap digunakan dalam mode {form.midtrans_is_production ? 'Production' : 'Sandbox'}.
+                Metode bayar "GoPay" akan tersedia di halaman POS.
+              </p>
+            </>
+          ) : (
+            <>
+              <Smartphone size={15} className="text-gray-400 flex-shrink-0" />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Isi Server Key dan Client Key untuk mengaktifkan pembayaran GoPay.
+              </p>
+            </>
+          )}
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Webhook Midtrans" subtitle="Konfigurasi notifikasi pembayaran otomatis" icon={Settings2} color="green">
+        <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3.5 border border-gray-100 dark:border-gray-700">
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1.5">URL Webhook:</p>
+          <code className="text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-lg block font-mono border border-gray-200 dark:border-gray-700 break-all select-all">
+            {(import.meta.env.VITE_API_BASE_URL || window.location.origin) + '/api/gopay/notification'}
+          </code>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Daftarkan URL ini di <strong>Midtrans Dashboard → Settings → Configuration → Payment Notification URL</strong>.
+          </p>
+        </div>
+      </SectionCard>
+    </div>
+  )
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Settings() {
   const [form, setForm]       = useState(defaultSettings)
@@ -652,13 +779,14 @@ export default function Settings() {
           {active === 'kontak'   && <PanelKontak   form={form} set={set} />}
           {active === 'qris'     && <PanelQris     form={form} setForm={setForm} />}
           {active === 'bank'     && <PanelBank     form={form} set={set} />}
+          {active === 'gopay'    && <PanelGopay    form={form} set={set} setForm={setForm} />}
           {active === 'struk'    && <PanelStruk    form={form} set={set} setCheck={setCheck} setForm={setForm} />}
           {active === 'keamanan' && <PanelPassword />}
         </div>
       </div>
 
       {/* Floating save button — mobile only, hidden on keamanan tab */}
-      {active !== 'keamanan' && <FloatingSave saving={saving} />}
+      {!['keamanan'].includes(active) && <FloatingSave saving={saving} />}
     </form>
   )
 }

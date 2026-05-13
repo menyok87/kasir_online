@@ -100,6 +100,11 @@ async function seed() {
     if (superAdminId) {
       await client.query(`UPDATE transactions SET admin_id = $1 WHERE admin_id IS NULL`, [superAdminId]).catch(() => {});
     }
+    // GoPay columns
+    await client.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS gopay_order_id VARCHAR(100)`).catch(() => {});
+    await client.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS gopay_status   VARCHAR(20)`).catch(() => {});
+    await client.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS gopay_qr_url   TEXT`).catch(() => {});
+    await client.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS gopay_deeplink TEXT`).catch(() => {});
 
     // ── Migrasi store_settings ────────────────────────────────────────────────
     await client.query(`ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS admin_id INTEGER REFERENCES users(id) ON DELETE CASCADE`).catch(() => {});
@@ -131,6 +136,9 @@ async function seed() {
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(50) DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS bank_account_name VARCHAR(100) DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS bank_branch VARCHAR(100) DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS midtrans_server_key TEXT DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS midtrans_client_key TEXT DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS midtrans_is_production BOOLEAN NOT NULL DEFAULT FALSE`,
     ];
     for (const sql of settingsCols) await client.query(sql).catch(() => {});
     // Default settings per admin

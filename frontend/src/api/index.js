@@ -68,4 +68,9 @@ export const createAccount  = (data)    => api.post('/accounts', data);
 export const updateAccount  = (id,data) => api.put(`/accounts/${id}`, data);
 export const deleteAccount  = (id)      => api.delete(`/accounts/${id}`);
 
+// GoPay (Midtrans)
+export const gopayCharge     = (data)     => api.post('/gopay/charge', data);
+export const gopayStatus     = (order_id) => api.get(`/gopay/status/${order_id}`);
+export const gopayCancel     = (order_id) => api.post(`/gopay/cancel/${order_id}`);
+
 export default api;

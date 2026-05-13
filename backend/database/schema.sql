@@ -57,6 +57,10 @@ CREATE TABLE IF NOT EXISTS transactions (
   payment_method VARCHAR(20)   NOT NULL DEFAULT 'cash',
   notes          TEXT,
   created_at     TIMESTAMPTZ   DEFAULT NOW(),
+  gopay_order_id VARCHAR(100),
+  gopay_status   VARCHAR(20),
+  gopay_qr_url   TEXT,
+  gopay_deeplink TEXT,
   UNIQUE(invoice_number, admin_id)
 );
 
@@ -85,13 +89,16 @@ CREATE TABLE IF NOT EXISTS store_settings (
   store_website        VARCHAR(200)          DEFAULT '',
   footer_msg           TEXT                  DEFAULT 'Terima kasih telah berbelanja!',
   show_footer_note     BOOLEAN NOT NULL      DEFAULT TRUE,
-  store_logo           TEXT                  DEFAULT '',
-  qris_image           TEXT                  DEFAULT '',
-  bank_name            VARCHAR(100)          DEFAULT '',
-  bank_account_number  VARCHAR(50)           DEFAULT '',
-  bank_account_name    VARCHAR(100)          DEFAULT '',
-  bank_branch          VARCHAR(100)          DEFAULT '',
-  updated_at           TIMESTAMPTZ           DEFAULT NOW()
+  store_logo              TEXT                  DEFAULT '',
+  qris_image              TEXT                  DEFAULT '',
+  bank_name               VARCHAR(100)          DEFAULT '',
+  bank_account_number     VARCHAR(50)           DEFAULT '',
+  bank_account_name       VARCHAR(100)          DEFAULT '',
+  bank_branch             VARCHAR(100)          DEFAULT '',
+  midtrans_server_key     TEXT                  DEFAULT '',
+  midtrans_client_key     TEXT                  DEFAULT '',
+  midtrans_is_production  BOOLEAN               NOT NULL DEFAULT FALSE,
+  updated_at              TIMESTAMPTZ           DEFAULT NOW()
 );
 
 -- Daftar Akun (Chart of Accounts)

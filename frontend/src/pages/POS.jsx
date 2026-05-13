@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, Printer, CheckCircle,
   Tag, ArrowLeft, X, FileDown, Wallet, QrCode, Building2, CreditCard,
-  Package, ChevronRight, Sparkles,
+  Package, ChevronRight, Sparkles, Smartphone, RefreshCw, XCircle, Clock,
 } from 'lucide-react'
-import { getProducts, getCategories, createTransaction, getSettings } from '../api'
+import { getProducts, getCategories, createTransaction, getSettings, gopayCharge, gopayStatus, gopayCancel } from '../api'
 import { getImageUrl } from '../utils/getImageUrl'
 import Modal from '../components/ui/Modal'
 import { FullPageSpinner } from '../components/ui/Spinner'
@@ -34,14 +34,16 @@ function getQuickAmounts(total) {
 }
 
 const PAYMENT_METHODS = [
-  { val: 'cash',     label: 'Tunai',    Icon: Wallet,    color: 'emerald' },
-  { val: 'qris',     label: 'QRIS',     Icon: QrCode,    color: 'blue' },
-  { val: 'transfer', label: 'Transfer', Icon: Building2, color: 'violet' },
+  { val: 'cash',     label: 'Tunai',    Icon: Wallet,     color: 'emerald' },
+  { val: 'gopay',    label: 'GoPay',    Icon: Smartphone, color: 'green' },
+  { val: 'qris',     label: 'QRIS',     Icon: QrCode,     color: 'blue' },
+  { val: 'transfer', label: 'Transfer', Icon: Building2,  color: 'violet' },
   { val: 'card',     label: 'Kartu',    Icon: CreditCard, color: 'orange' },
 ]
 
 const COLOR_ACTIVE = {
   emerald: 'bg-emerald-500 text-white shadow-emerald-200 dark:shadow-emerald-900/40',
+  green:   'bg-green-500 text-white shadow-green-200 dark:shadow-green-900/40',
   blue:    'bg-blue-500 text-white shadow-blue-200 dark:shadow-blue-900/40',
   violet:  'bg-violet-500 text-white shadow-violet-200 dark:shadow-violet-900/40',
   orange:  'bg-orange-500 text-white shadow-orange-200 dark:shadow-orange-900/40',
@@ -164,7 +166,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
 // ── Modal Struk ───────────────────────────────────────────────────────────────
 function ReceiptModal({ isOpen, transaction, settings, onClose }) {
   if (!transaction) return null
-  const paymentLabel = { cash: 'Tunai', qris: 'QRIS', transfer: 'Transfer', card: 'Kartu' }
+  const paymentLabel = { cash: 'Tunai', gopay: 'GoPay', qris: 'QRIS', transfer: 'Transfer', card: 'Kartu' }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" size="sm">
@@ -348,6 +350,154 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
   )
 }
 
+// ── GoPay QR Modal ────────────────────────────────────────────────────────────
+function GopayModal({ isOpen, gopayData, onSuccess, onCancel }) {
+  const [status, setStatus]       = useState('pending')
+  const [elapsed, setElapsed]     = useState(0)
+  const [cancelling, setCancelling] = useState(false)
+  const pollRef  = useRef(null)
+  const timerRef = useRef(null)
+
+  useEffect(() => {
+    if (!isOpen || !gopayData) return
+    setStatus('pending')
+    setElapsed(0)
+
+    // Countdown timer
+    timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
+
+    // Poll status every 3s
+    pollRef.current = setInterval(async () => {
+      try {
+        const { data } = await gopayStatus(gopayData.order_id)
+        if (data.transaction_status === 'settlement' || data.transaction_status === 'capture') {
+          clearInterval(pollRef.current)
+          clearInterval(timerRef.current)
+          setStatus('settlement')
+          setTimeout(() => onSuccess(data.transaction), 800)
+        } else if (['cancel', 'deny', 'expire'].includes(data.transaction_status)) {
+          clearInterval(pollRef.current)
+          clearInterval(timerRef.current)
+          setStatus(data.transaction_status)
+        }
+      } catch (_) {}
+    }, 3000)
+
+    return () => {
+      clearInterval(pollRef.current)
+      clearInterval(timerRef.current)
+    }
+  }, [isOpen, gopayData]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!isOpen || !gopayData) return null
+
+  const mins = String(Math.floor(elapsed / 60)).padStart(2, '0')
+  const secs = String(elapsed % 60).padStart(2, '0')
+
+  async function handleCancel() {
+    setCancelling(true)
+    try {
+      await gopayCancel(gopayData.order_id)
+      onCancel()
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setCancelling(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+              <Smartphone size={17} className="text-white" />
+            </div>
+            <div>
+              <div className="font-bold text-white text-sm">Pembayaran GoPay</div>
+              <div className="text-[11px] text-white/70">{gopayData.order_id}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 bg-black/20 rounded-xl px-2.5 py-1">
+            <Clock size={11} className="text-white/70" />
+            <span className="text-xs font-mono font-bold text-white">{mins}:{secs}</span>
+          </div>
+        </div>
+
+        <div className="p-5">
+          {status === 'settlement' ? (
+            <div className="text-center py-6">
+              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle size={36} className="text-green-500" />
+              </div>
+              <p className="font-bold text-gray-800 dark:text-gray-100">Pembayaran Berhasil!</p>
+            </div>
+          ) : ['cancel', 'deny', 'expire'].includes(status) ? (
+            <div className="text-center py-6">
+              <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-3">
+                <XCircle size={36} className="text-red-500" />
+              </div>
+              <p className="font-bold text-gray-800 dark:text-gray-100">
+                Pembayaran {status === 'expire' ? 'Kadaluarsa' : 'Dibatalkan'}
+              </p>
+              <button onClick={onCancel} className="mt-4 btn-secondary text-sm px-6">Tutup</button>
+            </div>
+          ) : (
+            <>
+              {/* QR Code */}
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 text-center mb-4 border border-green-100 dark:border-green-900/30">
+                {gopayData.qr_url ? (
+                  <>
+                    <img src={gopayData.qr_url} alt="GoPay QR"
+                      className="w-44 h-44 mx-auto rounded-xl bg-white border border-green-200 p-1.5 shadow-sm object-contain" />
+                    <p className="text-xs text-green-700 dark:text-green-400 font-semibold mt-2">
+                      Scan QR dengan app Gojek / GoPay
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 py-6">
+                    <div className="w-10 h-10 border-2 border-green-400/40 border-t-green-500 rounded-full animate-spin" />
+                    <p className="text-xs text-gray-500">Memuat QR Code...</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Amount */}
+              <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 flex justify-between items-center mb-4 border border-gray-100 dark:border-gray-700">
+                <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Tagihan</span>
+                <span className="font-black text-green-600 dark:text-green-400 text-lg">
+                  {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(gopayData.gross_amount)}
+                </span>
+              </div>
+
+              {/* Status */}
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-400 mb-4">
+                <RefreshCw size={12} className="animate-spin" />
+                <span>Menunggu pembayaran...</span>
+              </div>
+
+              {/* Deeplink (mobile) */}
+              {gopayData.deeplink && (
+                <a href={gopayData.deeplink}
+                  className="block text-center text-xs text-green-600 underline mb-3">
+                  Buka di app GoPay →
+                </a>
+              )}
+
+              <button onClick={handleCancel} disabled={cancelling}
+                className="w-full py-2.5 rounded-xl text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all disabled:opacity-50">
+                {cancelling ? 'Membatalkan...' : 'Batalkan Tagihan'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Panel Keranjang ───────────────────────────────────────────────────────────
 function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMethod,
   amountPaid, setAmountPaid, onIncrease, onDecrease, onRemove, onClear,
@@ -356,13 +506,14 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
   const subtotal   = cart.reduce((s, i) => s + i.product.price * i.quantity, 0)
   const grandTotal = Math.max(0, subtotal - Number(discount))
   const change     = Number(amountPaid) - grandTotal
-  const canCheckout = cart.length > 0 && Number(amountPaid) >= grandTotal
-  const isNonCash   = paymentMethod === 'qris' || paymentMethod === 'transfer'
+  const isGoPay    = paymentMethod === 'gopay'
+  const canCheckout = cart.length > 0 && (isGoPay || Number(amountPaid) >= grandTotal)
+  const isNonCash   = paymentMethod === 'qris' || paymentMethod === 'transfer' || isGoPay
   const totalQty    = cart.reduce((s, i) => s + i.quantity, 0)
 
   useEffect(() => {
     if (isNonCash) setAmountPaid(String(grandTotal))
-  }, [paymentMethod, grandTotal]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [paymentMethod, grandTotal, isNonCash]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const quickAmounts = grandTotal > 0 ? getQuickAmounts(grandTotal) : []
 
@@ -464,6 +615,25 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           </div>
         </div>
 
+        {/* Info GoPay */}
+        {paymentMethod === 'gopay' && (
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3 border border-green-100 dark:border-green-900/30">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Smartphone size={14} className="text-green-600" />
+              <p className="text-xs text-green-700 dark:text-green-400 font-semibold">Bayar via GoPay</p>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              QR Code akan muncul setelah klik <strong>Buat Tagihan GoPay</strong>.
+              Pelanggan scan dengan app Gojek/GoPay.
+            </p>
+            {settings.midtrans_server_key ? null : (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1.5 font-medium">
+                ⚠ Midtrans Key belum diatur di Pengaturan &gt; GoPay.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Info QRIS */}
         {paymentMethod === 'qris' && (
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center border border-blue-100 dark:border-blue-900/30">
@@ -550,7 +720,9 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           disabled={!canCheckout || checkoutLoading}
           className={`w-full py-4 rounded-2xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2
             ${canCheckout && !checkoutLoading
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-300 dark:shadow-blue-900/50 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98]'
+              ? isGoPay
+                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-300 dark:shadow-green-900/50 hover:from-green-600 hover:to-green-700 active:scale-[0.98]'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-300 dark:shadow-blue-900/50 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98]'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
             }`}
         >
@@ -561,8 +733,8 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
             </>
           ) : canCheckout ? (
             <>
-              <CheckCircle size={16} />
-              Bayar {formatRupiah(grandTotal)}
+              {isGoPay ? <Smartphone size={16} /> : <CheckCircle size={16} />}
+              {isGoPay ? `Buat Tagihan GoPay ${formatRupiah(grandTotal)}` : `Bayar ${formatRupiah(grandTotal)}`}
             </>
           ) : (
             <>
@@ -590,6 +762,7 @@ export default function POS() {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [receipt, setReceipt]             = useState(null)
   const [settings, setSettings]           = useState({})
+  const [gopayModal, setGopayModal]       = useState(null)
   const [mobileTab, setMobileTab]         = useState('products')
 
   const fetchData = useCallback(async () => {
@@ -648,6 +821,27 @@ export default function POS() {
 
   async function handleCheckout() {
     if (cart.length === 0) { toast.error('Keranjang kosong'); return }
+
+    if (paymentMethod === 'gopay') {
+      setCheckoutLoading(true)
+      try {
+        const { data } = await gopayCharge({
+          items:    cart.map(i => ({ product_id: i.product.id, quantity: i.quantity })),
+          discount: Number(discount),
+          tax:      0,
+        })
+        clearCart()
+        setMobileTab('products')
+        fetchData()
+        setGopayModal(data.gopay)
+      } catch (err) {
+        toast.error(err.message)
+      } finally {
+        setCheckoutLoading(false)
+      }
+      return
+    }
+
     if (Number(amountPaid) < grandTotal) { toast.error('Pembayaran kurang'); return }
     setCheckoutLoading(true)
     try {
@@ -668,6 +862,18 @@ export default function POS() {
     } finally {
       setCheckoutLoading(false)
     }
+  }
+
+  function handleGopaySuccess(transaction) {
+    setGopayModal(null)
+    setReceipt(transaction)
+    fetchData()
+    toast.success(`Transaksi ${transaction?.invoice_number} berhasil!`)
+  }
+
+  function handleGopayCancel() {
+    setGopayModal(null)
+    fetchData()
   }
 
   if (loading) return <FullPageSpinner />
@@ -712,6 +918,8 @@ export default function POS() {
       </div>
 
       <ReceiptModal isOpen={!!receipt} transaction={receipt} settings={settings} onClose={() => setReceipt(null)} />
+      <GopayModal isOpen={!!gopayModal} gopayData={gopayModal}
+        onSuccess={handleGopaySuccess} onCancel={handleGopayCancel} />
     </>
   )
 }
