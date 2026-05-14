@@ -30,9 +30,17 @@ const upload = multer({
 });
 
 // POST /api/uploads — unggah gambar baru
-router.post('/', upload.single('image'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'File tidak ditemukan' });
-  res.json({ url: `/uploads/${req.file.filename}` });
+router.post('/', (req, res, next) => {
+  upload.single('image')(req, res, err => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: 'Ukuran file maks 3 MB' });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+    if (!req.file) return res.status(400).json({ error: 'File tidak ditemukan' });
+    res.json({ url: `/uploads/${req.file.filename}` });
+  });
 });
 
 // DELETE /api/uploads — hapus file lama (opsional, dipanggil saat ganti/hapus gambar)

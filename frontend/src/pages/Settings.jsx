@@ -6,7 +6,7 @@ import {
   Building2, CreditCard, Receipt, Settings2, ChevronRight,
   Lock, Eye, EyeOff, ShieldCheck, Smartphone, ExternalLink, AlertTriangle
 } from 'lucide-react'
-import { getSettings, updateSettings, uploadProductImage, changePassword } from '../api'
+import { getSettings, updateSettings, uploadProductImage, deleteProductImage, changePassword } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
 import { getImageUrl } from '../utils/getImageUrl'
 
@@ -141,21 +141,36 @@ function FloatingSave({ saving }) {
 }
 
 // ── Panel: Info Toko ──────────────────────────────────────────────────────────
-function PanelToko({ form, set, setForm }) {
+function PanelToko({ form, set, setForm, onSave }) {
   const [uploading, setUploading] = useState(false)
   const logoRef = useRef(null)
 
   async function handleLogoUpload(e) {
     const file = e.target.files[0]
     if (!file) return
+    e.target.value = null   // reset agar bisa pilih file yang sama lagi
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('Ukuran file maks 3 MB')
+      return
+    }
     setUploading(true)
     try {
+      if (form.store_logo) {
+        deleteProductImage(form.store_logo).catch(() => {})
+      }
       const { data } = await uploadProductImage(file)
-      setForm(f => ({ ...f, store_logo: data.url }))
-      toast.success('Logo toko berhasil diupload')
+      await onSave('store_logo', data.url)
+      toast.success('Logo toko berhasil disimpan')
     } catch (err) {
       toast.error(err.message)
     } finally { setUploading(false) }
+  }
+
+  async function handleLogoRemove() {
+    if (form.store_logo) {
+      deleteProductImage(form.store_logo).catch(() => {})
+    }
+    await onSave('store_logo', '')
   }
 
   return (
@@ -168,8 +183,8 @@ function PanelToko({ form, set, setForm }) {
               <>
                 <img src={getImageUrl(form.store_logo)} alt="Logo"
                   className="w-20 h-20 object-contain rounded-2xl border-2 border-blue-200 dark:border-blue-700 bg-white dark:bg-gray-800 p-1.5 shadow-md" />
-                <button type="button" onClick={() => setForm(f => ({ ...f, store_logo: '' }))}
-                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors">
+                <button type="button" onClick={handleLogoRemove} disabled={uploading}
+                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-full flex items-center justify-center shadow-lg transition-colors">
                   <X size={10} />
                 </button>
               </>
@@ -270,21 +285,36 @@ function PanelKontak({ form, set }) {
 }
 
 // ── Panel: QRIS ───────────────────────────────────────────────────────────────
-function PanelQris({ form, setForm }) {
+function PanelQris({ form, setForm, onSave }) {
   const [uploading, setUploading] = useState(false)
   const inputRef = useRef(null)
 
   async function handleUpload(e) {
     const file = e.target.files[0]
     if (!file) return
+    e.target.value = null   // reset agar bisa pilih file yang sama lagi
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('Ukuran file maks 3 MB')
+      return
+    }
     setUploading(true)
     try {
+      if (form.qris_image) {
+        deleteProductImage(form.qris_image).catch(() => {})
+      }
       const { data } = await uploadProductImage(file)
-      setForm(f => ({ ...f, qris_image: data.url }))
-      toast.success('Gambar QRIS berhasil diupload')
+      await onSave('qris_image', data.url)
+      toast.success('Gambar QRIS berhasil disimpan')
     } catch (err) {
       toast.error(err.message)
     } finally { setUploading(false) }
+  }
+
+  async function handleRemove() {
+    if (form.qris_image) {
+      deleteProductImage(form.qris_image).catch(() => {})
+    }
+    await onSave('qris_image', '')
   }
 
   return (
@@ -296,8 +326,8 @@ function PanelQris({ form, setForm }) {
             <div className="relative">
               <img src={getImageUrl(form.qris_image)} alt="QRIS"
                 className="w-36 h-36 object-contain rounded-2xl border-2 border-violet-200 dark:border-violet-700 bg-white dark:bg-gray-800 p-2 shadow-md" />
-              <button type="button" onClick={() => setForm(f => ({ ...f, qris_image: '' }))}
-                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors">
+              <button type="button" onClick={handleRemove} disabled={uploading}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-full flex items-center justify-center shadow-lg transition-colors">
                 <X size={11} />
               </button>
               <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow whitespace-nowrap">
@@ -743,6 +773,19 @@ export default function Settings() {
   const set      = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
   const setCheck = k => e => setForm(f => ({ ...f, [k]: e.target.checked }))
 
+  // Auto-save satu field (untuk upload logo/QRIS)
+  async function saveField(field, value) {
+    const updated = { ...form, [field]: value }
+    setForm(updated)   // update lokal dulu agar UI langsung respons
+    try {
+      const { data } = await updateSettings(updated)
+      setForm({ ...defaultSettings, ...data })
+    } catch (err) {
+      setForm(f => ({ ...f, [field]: form[field] }))   // rollback lokal
+      throw err
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setSaving(true)
@@ -775,9 +818,9 @@ export default function Settings() {
         <DesktopSidebar active={active} onChange={setActive} saving={saving} />
 
         <div className="flex-1 min-w-0 pb-20 lg:pb-0">
-          {active === 'toko'     && <PanelToko     form={form} set={set} setForm={setForm} />}
+          {active === 'toko'     && <PanelToko     form={form} set={set} setForm={setForm} onSave={saveField} />}
           {active === 'kontak'   && <PanelKontak   form={form} set={set} />}
-          {active === 'qris'     && <PanelQris     form={form} setForm={setForm} />}
+          {active === 'qris'     && <PanelQris     form={form} setForm={setForm} onSave={saveField} />}
           {active === 'bank'     && <PanelBank     form={form} set={set} />}
           {active === 'gopay'    && <PanelGopay    form={form} set={set} setForm={setForm} />}
           {active === 'struk'    && <PanelStruk    form={form} set={set} setCheck={setCheck} setForm={setForm} />}

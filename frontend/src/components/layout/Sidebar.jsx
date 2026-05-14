@@ -43,6 +43,11 @@ export default function Sidebar({ onClose }) {
   async function handleAvatarChange(e) {
     const file = e.target.files[0]
     if (!file) return
+    e.target.value = null  // reset agar bisa pilih file yang sama lagi
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('Ukuran foto maks 3 MB')
+      return
+    }
     setUploading(true)
     try {
       const { data } = await uploadProductImage(file)
@@ -52,7 +57,6 @@ export default function Sidebar({ onClose }) {
       toast.error(err.message)
     } finally {
       setUploading(false)
-      e.target.value = ''
     }
   }
 
