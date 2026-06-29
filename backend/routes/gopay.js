@@ -25,6 +25,44 @@ async function postGopaySettlement(adminId, orderId) {
   }
 }
 
+// Pembayaran GoPay gagal (expire/deny/cancel): kembalikan stok & hapus transaksi
+// yang belum lunas. Idempoten — aman dipanggil berkali-kali (poll & webhook).
+async function failGopay(adminId, orderId) {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const { rows } = await client.query(
+      'SELECT * FROM transactions WHERE invoice_number = $1 AND admin_id = $2 FOR UPDATE',
+      [orderId, adminId]
+    )
+    const tx = rows[0]
+    if (tx && tx.payment_method === 'gopay' && tx.gopay_status !== 'settlement') {
+      const posted = await client.query(
+        'SELECT 1 FROM journal_entries WHERE transaction_id = $1 LIMIT 1', [tx.id]
+      )
+      if (posted.rows.length === 0) { // belum dijurnal → boleh dibersihkan
+        const { rows: items } = await client.query(
+          'SELECT * FROM transaction_items WHERE transaction_id = $1', [tx.id]
+        )
+        for (const it of items) {
+          if (it.product_id) {
+            await client.query('UPDATE products SET stock = stock + $1 WHERE id = $2', [it.quantity, it.product_id])
+          }
+        }
+        await client.query('DELETE FROM transactions WHERE id = $1', [tx.id])
+      }
+    }
+    await client.query('COMMIT')
+  } catch (e) {
+    await client.query('ROLLBACK')
+    console.error('[GoPay] Gagal membersihkan transaksi gagal:', e.message)
+  } finally {
+    client.release()
+  }
+}
+
+const FAILED_STATUSES = ['expire', 'deny', 'cancel', 'failure']
+
 function getCoreApi(settings) {
   return new midtransClient.CoreApi({
     isProduction: settings.midtrans_is_production || false,
@@ -215,10 +253,10 @@ router.get('/status/:order_id', authenticate, async (req, res, next) => {
       [txStatus, order_id, tid]
     )
 
-    // Ambil data transaksi lengkap jika sudah settlement
+    // Tangani hasil pembayaran
     let txData = null
     if (txStatus === 'settlement' || txStatus === 'capture') {
-      await postGopaySettlement(tid, order_id) // posting ke Buku Besar
+      await postGopaySettlement(tid, order_id) // sukses → posting ke Buku Besar
       const { rows: txRows } = await pool.query(
         'SELECT * FROM transactions WHERE invoice_number=$1 AND admin_id=$2', [order_id, tid]
       )
@@ -228,6 +266,8 @@ router.get('/status/:order_id', authenticate, async (req, res, next) => {
         )
         txData = { ...txRows[0], items }
       }
+    } else if (FAILED_STATUSES.includes(txStatus)) {
+      await failGopay(tid, order_id) // gagal → kembalikan stok & bersihkan
     }
 
     res.json({ order_id, transaction_status: txStatus, transaction: txData })
@@ -236,24 +276,22 @@ router.get('/status/:order_id', authenticate, async (req, res, next) => {
   }
 })
 
-// POST /api/gopay/cancel/:order_id — batalkan tagihan pending
+// POST /api/gopay/cancel/:order_id — batalkan tagihan pending (manual)
 router.post('/cancel/:order_id', authenticate, async (req, res, next) => {
-  const client = await pool.connect()
   try {
-    const tid      = tenantId(req.user)
+    const tid          = tenantId(req.user)
     const { order_id } = req.params
 
-    const { rows: txRows } = await client.query(
+    const { rows: txRows } = await pool.query(
       'SELECT * FROM transactions WHERE invoice_number=$1 AND admin_id=$2',
       [order_id, tid]
     )
     if (!txRows.length) return res.status(404).json({ error: 'Transaksi tidak ditemukan' })
-    const tx = txRows[0]
-
-    if (tx.gopay_status !== 'pending') {
-      return res.status(400).json({ error: 'Hanya transaksi pending yang bisa dibatalkan' })
+    if (txRows[0].gopay_status === 'settlement') {
+      return res.status(400).json({ error: 'Pembayaran sudah lunas, tidak bisa dibatalkan' })
     }
 
+    // Batalkan di Midtrans (best-effort), lalu kembalikan stok & hapus transaksi
     const { rows: stgRows } = await pool.query('SELECT * FROM store_settings WHERE admin_id=$1', [tid])
     if (stgRows.length && stgRows[0].midtrans_server_key) {
       try {
@@ -262,26 +300,10 @@ router.post('/cancel/:order_id', authenticate, async (req, res, next) => {
       } catch (_) {}
     }
 
-    await client.query('BEGIN')
-    const { rows: items } = await client.query(
-      'SELECT * FROM transaction_items WHERE transaction_id=$1', [tx.id]
-    )
-    for (const item of items) {
-      if (item.product_id) {
-        await client.query(
-          'UPDATE products SET stock=stock+$1 WHERE id=$2', [item.quantity, item.product_id]
-        )
-      }
-    }
-    await client.query('DELETE FROM transactions WHERE id=$1', [tx.id])
-    await client.query('COMMIT')
-
+    await failGopay(tid, order_id)
     res.json({ message: 'Tagihan GoPay dibatalkan dan stok dikembalikan' })
   } catch (err) {
-    await client.query('ROLLBACK')
     next(err)
-  } finally {
-    client.release()
   }
 })
 
@@ -321,9 +343,11 @@ router.post('/notification', async (req, res, next) => {
       [finalStatus, order_id]
     )
 
-    // Posting ke Buku Besar saat pembayaran lunas
+    // Posting ke Buku Besar saat lunas; bersihkan stok saat gagal
     if (finalStatus === 'settlement') {
       await postGopaySettlement(txRows[0].admin_id, order_id)
+    } else if (FAILED_STATUSES.includes(finalStatus)) {
+      await failGopay(txRows[0].admin_id, order_id)
     }
 
     res.json({ ok: true })

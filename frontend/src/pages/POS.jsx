@@ -375,7 +375,7 @@ function GopayModal({ isOpen, gopayData, onSuccess, onCancel }) {
           clearInterval(timerRef.current)
           setStatus('settlement')
           setTimeout(() => onSuccess(data.transaction), 800)
-        } else if (['cancel', 'deny', 'expire'].includes(data.transaction_status)) {
+        } else if (['cancel', 'deny', 'expire', 'failure'].includes(data.transaction_status)) {
           clearInterval(pollRef.current)
           clearInterval(timerRef.current)
           setStatus(data.transaction_status)
@@ -393,6 +393,10 @@ function GopayModal({ isOpen, gopayData, onSuccess, onCancel }) {
 
   const mins = String(Math.floor(elapsed / 60)).padStart(2, '0')
   const secs = String(elapsed % 60).padStart(2, '0')
+
+  const FAILED     = ['cancel', 'deny', 'expire', 'failure']
+  const FAIL_LABEL = { expire: 'Kadaluarsa', deny: 'Ditolak', cancel: 'Dibatalkan', failure: 'Gagal' }
+  const isFailed   = FAILED.includes(status)
 
   async function handleCancel() {
     setCancelling(true)
@@ -433,14 +437,18 @@ function GopayModal({ isOpen, gopayData, onSuccess, onCancel }) {
                 <CheckCircle size={36} className="text-green-500" />
               </div>
               <p className="font-bold text-gray-800 dark:text-gray-100">Pembayaran Berhasil!</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Dana GoPay diterima · struk siap dicetak</p>
             </div>
-          ) : ['cancel', 'deny', 'expire'].includes(status) ? (
+          ) : isFailed ? (
             <div className="text-center py-6">
               <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-3">
                 <XCircle size={36} className="text-red-500" />
               </div>
               <p className="font-bold text-gray-800 dark:text-gray-100">
-                Pembayaran {status === 'expire' ? 'Kadaluarsa' : 'Dibatalkan'}
+                Pembayaran {FAIL_LABEL[status] || 'Gagal'}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Pembayaran tidak selesai. Stok barang dikembalikan otomatis.
               </p>
               <button onClick={onCancel} className="mt-4 btn-secondary text-sm px-6">Tutup</button>
             </div>
