@@ -43,6 +43,23 @@ async function generateInvoiceNumber(client, adminId) {
   return `INV-${date}-${seq}`
 }
 
+// Terjemahkan error Midtrans jadi pesan yang jelas untuk kasir
+function friendlyMidtransError(err) {
+  const code   = String(err.httpStatusCode || err.ApiResponse?.status_code || '')
+  const apiMsg = err.ApiResponse?.status_message
+  if (code === '401') {
+    return 'Server Key GoPay salah. Periksa di Pengaturan → GoPay.'
+  }
+  if (code === '404') {
+    return 'GoPay/merchant tidak ditemukan. Pastikan Mode (Sandbox/Production) cocok dengan Server Key, dan GoPay sudah aktif di akun Midtrans.'
+  }
+  if (code === '402') {
+    return apiMsg || 'Metode pembayaran GoPay belum aktif untuk akun Midtrans ini.'
+  }
+  if (apiMsg) return `Midtrans: ${apiMsg}`
+  return null
+}
+
 // POST /api/gopay/charge — buat tagihan GoPay
 router.post('/charge', authenticate, async (req, res, next) => {
   const client = await pool.connect()
@@ -96,6 +113,17 @@ router.post('/charge', authenticate, async (req, res, next) => {
     const grandTotal    = Math.round(subtotal - Number(discount) + Number(tax))
     const invoiceNumber = await generateInvoiceNumber(client, tid)
 
+    // Midtrans wajib: total item_details == gross_amount. Tambah baris penyesuaian
+    // bila ada diskon/pajak (harga negatif untuk diskon diperbolehkan).
+    if (grandTotal !== subtotal) {
+      midtransItems.push({
+        id:       'ADJ',
+        price:    grandTotal - subtotal,
+        quantity: 1,
+        name:     grandTotal < subtotal ? 'Diskon' : 'Pajak/Biaya',
+      })
+    }
+
     // Simpan transaksi dengan status pending
     const { rows: txRows } = await client.query(
       `INSERT INTO transactions
@@ -121,9 +149,8 @@ router.post('/charge', authenticate, async (req, res, next) => {
       )
     }
 
-    await client.query('COMMIT')
-
-    // Buat charge ke Midtrans
+    // Charge ke Midtrans SEBELUM commit — jika gagal, seluruh transaksi
+    // di-rollback (stok kembali, tidak ada transaksi pending nyangkut).
     const coreApi = getCoreApi(stg)
     const chargeResp = await coreApi.charge({
       payment_type: 'gopay',
@@ -140,10 +167,12 @@ router.post('/charge', authenticate, async (req, res, next) => {
     const qrUrl          = qrAction?.url || null
     const deeplink       = deeplinkAction?.url || null
 
-    await pool.query(
+    await client.query(
       `UPDATE transactions SET gopay_order_id=$1, gopay_qr_url=$2, gopay_deeplink=$3 WHERE id=$4`,
       [invoiceNumber, qrUrl, deeplink, tx.id]
     )
+
+    await client.query('COMMIT')
 
     res.status(201).json({
       transaction: { ...tx, items: savedItems },
@@ -156,6 +185,8 @@ router.post('/charge', authenticate, async (req, res, next) => {
     })
   } catch (err) {
     await client.query('ROLLBACK')
+    const friendly = friendlyMidtransError(err)
+    if (friendly) return res.status(400).json({ error: friendly })
     next(err)
   } finally {
     client.release()

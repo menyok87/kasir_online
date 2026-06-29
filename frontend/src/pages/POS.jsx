@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, Printer, CheckCircle,
   Tag, ArrowLeft, X, FileDown, Wallet, QrCode, Building2, CreditCard,
-  Package, ChevronRight, Sparkles, Smartphone, RefreshCw, XCircle, Clock,
+  Package, ChevronRight, Sparkles, Smartphone, RefreshCw, XCircle, Clock, AlertCircle,
 } from 'lucide-react'
 import { getProducts, getCategories, createTransaction, getSettings, gopayCharge, gopayStatus, gopayCancel } from '../api'
 import { getImageUrl } from '../utils/getImageUrl'
@@ -501,7 +501,7 @@ function GopayModal({ isOpen, gopayData, onSuccess, onCancel }) {
 // ── Panel Keranjang ───────────────────────────────────────────────────────────
 function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMethod,
   amountPaid, setAmountPaid, onIncrease, onDecrease, onRemove, onClear,
-  onCheckout, checkoutLoading, onBack, settings = {} }) {
+  onCheckout, checkoutLoading, onBack, settings = {}, gopayError = '' }) {
 
   const subtotal   = cart.reduce((s, i) => s + i.product.price * i.quantity, 0)
   const grandTotal = Math.max(0, subtotal - Number(discount))
@@ -630,6 +630,12 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
               <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1.5 font-medium">
                 ⚠ Midtrans Key belum diatur di Pengaturan &gt; GoPay.
               </p>
+            )}
+            {gopayError && (
+              <div className="mt-2 flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-2.5 py-2">
+                <AlertCircle size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-red-600 dark:text-red-400 leading-snug">{gopayError}</p>
+              </div>
             )}
           </div>
         )}
@@ -763,6 +769,7 @@ export default function POS() {
   const [receipt, setReceipt]             = useState(null)
   const [settings, setSettings]           = useState({})
   const [gopayModal, setGopayModal]       = useState(null)
+  const [gopayError, setGopayError]       = useState('')
   const [mobileTab, setMobileTab]         = useState('products')
 
   const fetchData = useCallback(async () => {
@@ -824,6 +831,7 @@ export default function POS() {
 
     if (paymentMethod === 'gopay') {
       setCheckoutLoading(true)
+      setGopayError('')
       try {
         const { data } = await gopayCharge({
           items:    cart.map(i => ({ product_id: i.product.id, quantity: i.quantity })),
@@ -835,6 +843,7 @@ export default function POS() {
         fetchData()
         setGopayModal(data.gopay)
       } catch (err) {
+        setGopayError(err.message)
         toast.error(err.message)
       } finally {
         setCheckoutLoading(false)
@@ -879,13 +888,14 @@ export default function POS() {
   if (loading) return <FullPageSpinner />
 
   const cartProps = {
-    cart, discount, setDiscount, paymentMethod, setPaymentMethod,
+    cart, discount, setDiscount, paymentMethod,
+    setPaymentMethod: m => { setGopayError(''); setPaymentMethod(m) },
     amountPaid, setAmountPaid,
     onIncrease: increaseQty, onDecrease: decreaseQty,
     onRemove: removeFromCart, onClear: clearCart,
     onCheckout: handleCheckout, checkoutLoading,
     onBack: () => setMobileTab('products'),
-    settings,
+    settings, gopayError,
   }
 
   return (
