@@ -59,6 +59,7 @@ export function AuthProvider({ children }) {
     users:        isSuperAdmin || role === 'admin',
     settings:     isAdmin,
     accounts:     isAdmin,
+    reports:      isManager,
   }
 
   return (

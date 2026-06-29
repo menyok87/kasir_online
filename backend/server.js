@@ -36,6 +36,7 @@ app.use('/api/users',        authenticate,               require('./routes/users
 app.use('/api/settings',     authenticate, requireAdmin,  require('./routes/settings'));
 app.use('/api/accounts',     authenticate, requireAdmin,  require('./routes/accounts'));
 app.use('/api/ledger',                                    require('./routes/ledger'));
+app.use('/api/reports',                                   require('./routes/reports'));
 // GoPay: webhook /notification publik, sisanya butuh auth
 app.use('/api/gopay', (req, res, next) => {
   if (req.path === '/notification' && req.method === 'POST') return next()

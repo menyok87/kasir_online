@@ -78,6 +78,10 @@ export const gopayCharge     = (data)     => api.post('/gopay/charge', data);
 export const gopayStatus     = (order_id) => api.get(`/gopay/status/${order_id}`);
 export const gopayCancel     = (order_id) => api.post(`/gopay/cancel/${order_id}`);
 
+// Laporan Penjualan
+export const getSalesReport   = (month) => api.get('/reports/sales',   { params: { month } });
+export const getMonthlyReport = (year)  => api.get('/reports/monthly', { params: { year } });
+
 // Buku Besar (General Ledger)
 export const getLedgerMonths  = ()             => api.get('/ledger/months');
 export const getLedger        = (month)        => api.get('/ledger', { params: { month } });
