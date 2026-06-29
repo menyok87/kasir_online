@@ -48,6 +48,18 @@ jobs:
       - name: Capacitor sync
         run: npx cap sync android
 
+      - name: Cek secrets (aman — hanya panjang, bukan isi)
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          AL: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KP: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "ANDROID_KEYSTORE_BASE64   length = ${#KS}"
+          echo "ANDROID_KEYSTORE_PASSWORD length = ${#PW}"
+          echo "ANDROID_KEY_ALIAS         length = ${#AL}"
+          echo "ANDROID_KEY_PASSWORD      length = ${#KP}"
+
       - name: Decode keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
