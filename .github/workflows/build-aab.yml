@@ -80,3 +80,5 @@ jobs:
           path: frontend/android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 30
+
+# trigger build 20260629T173756Z
