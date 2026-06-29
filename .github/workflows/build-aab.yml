@@ -10,6 +10,7 @@ on:
       - claude/build-online-cashier-p4jw2
     paths:
       - '.github/workflows/build-aab.yml'
+      - 'frontend/android/app/build.gradle'
 
 jobs:
   build:
