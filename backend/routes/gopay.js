@@ -4,6 +4,26 @@ const crypto  = require('crypto')
 const midtransClient = require('midtrans-client')
 const pool    = require('../database/db')
 const { authenticate, tenantId } = require('../middleware/authMiddleware')
+const { postSale } = require('../utils/ledger')
+
+// Posting penjualan GoPay ke Buku Besar saat lunas (idempoten — aman dipanggil berkali-kali)
+async function postGopaySettlement(adminId, orderId) {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const { rows } = await client.query(
+      'SELECT * FROM transactions WHERE invoice_number = $1 AND admin_id = $2 FOR UPDATE',
+      [orderId, adminId]
+    )
+    if (rows.length) await postSale(client, adminId, rows[0]) // postSale punya guard anti double-post
+    await client.query('COMMIT')
+  } catch (e) {
+    await client.query('ROLLBACK')
+    console.error('[Ledger] Gagal posting GoPay settlement:', e.message)
+  } finally {
+    client.release()
+  }
+}
 
 function getCoreApi(settings) {
   return new midtransClient.CoreApi({
@@ -167,6 +187,7 @@ router.get('/status/:order_id', authenticate, async (req, res, next) => {
     // Ambil data transaksi lengkap jika sudah settlement
     let txData = null
     if (txStatus === 'settlement' || txStatus === 'capture') {
+      await postGopaySettlement(tid, order_id) // posting ke Buku Besar
       const { rows: txRows } = await pool.query(
         'SELECT * FROM transactions WHERE invoice_number=$1 AND admin_id=$2', [order_id, tid]
       )
@@ -268,6 +289,11 @@ router.post('/notification', async (req, res, next) => {
       'UPDATE transactions SET gopay_status=$1 WHERE invoice_number=$2',
       [finalStatus, order_id]
     )
+
+    // Posting ke Buku Besar saat pembayaran lunas
+    if (finalStatus === 'settlement') {
+      await postGopaySettlement(txRows[0].admin_id, order_id)
+    }
 
     res.json({ ok: true })
   } catch (err) {

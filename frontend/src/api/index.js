@@ -78,4 +78,11 @@ export const gopayCharge     = (data)     => api.post('/gopay/charge', data);
 export const gopayStatus     = (order_id) => api.get(`/gopay/status/${order_id}`);
 export const gopayCancel     = (order_id) => api.post(`/gopay/cancel/${order_id}`);
 
+// Buku Besar (General Ledger)
+export const getLedgerMonths  = ()             => api.get('/ledger/months');
+export const getLedger        = (month)        => api.get('/ledger', { params: { month } });
+export const getLedgerAccount = (id, month)    => api.get(`/ledger/account/${id}`, { params: { month } });
+export const getLedgerSummary = (year)         => api.get('/ledger/summary', { params: { year } });
+export const postManualJournal = (data)        => api.post('/ledger/manual', data);
+
 export default api;

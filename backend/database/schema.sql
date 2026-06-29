@@ -116,6 +116,21 @@ CREATE TABLE IF NOT EXISTS accounts (
   UNIQUE(code, admin_id)
 );
 
+-- Jurnal / Buku Besar — setiap baris = 1 sisi entri (debit atau kredit)
+CREATE TABLE IF NOT EXISTS journal_entries (
+  id             SERIAL PRIMARY KEY,
+  admin_id       INTEGER       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  account_id     INTEGER       NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  transaction_id INTEGER       REFERENCES transactions(id) ON DELETE CASCADE,
+  entry_date     TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  ref            VARCHAR(40),                 -- no. invoice / referensi manual
+  description    TEXT          DEFAULT '',
+  debit          NUMERIC(15,2) NOT NULL DEFAULT 0 CHECK(debit  >= 0),
+  credit         NUMERIC(15,2) NOT NULL DEFAULT 0 CHECK(credit >= 0),
+  source         VARCHAR(20)   NOT NULL DEFAULT 'manual', -- 'sale' | 'manual'
+  created_at     TIMESTAMPTZ   DEFAULT NOW()
+);
+
 -- Index untuk performa
 CREATE INDEX IF NOT EXISTS idx_products_category  ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_products_admin      ON products(admin_id);
@@ -123,3 +138,7 @@ CREATE INDEX IF NOT EXISTS idx_items_transaction   ON transaction_items(transact
 CREATE INDEX IF NOT EXISTS idx_transactions_date   ON transactions(created_at);
 CREATE INDEX IF NOT EXISTS idx_transactions_admin  ON transactions(admin_id);
 CREATE INDEX IF NOT EXISTS idx_products_active     ON products(is_active);
+CREATE INDEX IF NOT EXISTS idx_journal_admin       ON journal_entries(admin_id);
+CREATE INDEX IF NOT EXISTS idx_journal_account     ON journal_entries(account_id);
+CREATE INDEX IF NOT EXISTS idx_journal_date        ON journal_entries(entry_date);
+CREATE INDEX IF NOT EXISTS idx_journal_txn         ON journal_entries(transaction_id);

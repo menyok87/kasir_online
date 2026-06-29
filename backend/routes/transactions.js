@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const pool    = require('../database/db');
 const { authenticate, requireAdmin, tenantId } = require('../middleware/authMiddleware');
+const { postSale, reverseTransaction } = require('../utils/ledger');
 
 async function generateInvoiceNumber(client, adminId) {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -152,6 +153,9 @@ router.post('/', authenticate, async (req, res, next) => {
       );
     }
 
+    // Posting otomatis ke Buku Besar (Dr Kas/Bank, Cr Pendapatan)
+    await postSale(client, tid, txRows[0]);
+
     await client.query('COMMIT');
     res.status(201).json({ ...txRows[0], items: savedItems });
   } catch (err) {
@@ -188,6 +192,9 @@ router.delete('/:id', authenticate, requireAdmin, async (req, res, next) => {
         );
       }
     }
+
+    // Balik jurnal Buku Besar sebelum hapus transaksi
+    await reverseTransaction(client, tid, req.params.id);
 
     await client.query('DELETE FROM transactions WHERE id = $1', [req.params.id]);
     await client.query('COMMIT');

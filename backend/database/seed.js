@@ -223,6 +223,44 @@ async function seed() {
     }
     console.log('✓ Daftar akun default selesai');
 
+    // ── Migrasi Buku Besar (journal_entries) ──────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS journal_entries (
+        id             SERIAL PRIMARY KEY,
+        admin_id       INTEGER       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        account_id     INTEGER       NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+        transaction_id INTEGER       REFERENCES transactions(id) ON DELETE CASCADE,
+        entry_date     TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        ref            VARCHAR(40),
+        description    TEXT          DEFAULT '',
+        debit          NUMERIC(15,2) NOT NULL DEFAULT 0,
+        credit         NUMERIC(15,2) NOT NULL DEFAULT 0,
+        source         VARCHAR(20)   NOT NULL DEFAULT 'manual',
+        created_at     TIMESTAMPTZ   DEFAULT NOW()
+      )
+    `).catch(() => {});
+    for (const sql of [
+      `CREATE INDEX IF NOT EXISTS idx_journal_admin   ON journal_entries(admin_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_journal_account ON journal_entries(account_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_journal_date    ON journal_entries(entry_date)`,
+      `CREATE INDEX IF NOT EXISTS idx_journal_txn     ON journal_entries(transaction_id)`,
+    ]) await client.query(sql).catch(() => {});
+
+    // ── Backfill: posting transaksi lama yang belum masuk Buku Besar ──────────
+    // Idempoten — transaksi yang sudah punya jurnal dilewati.
+    const { postSale } = require('../utils/ledger');
+    const { rows: pending } = await client.query(
+      `SELECT t.* FROM transactions t
+        WHERE NOT EXISTS (SELECT 1 FROM journal_entries je WHERE je.transaction_id = t.id)
+        ORDER BY t.created_at`
+    ).catch(() => ({ rows: [] }));
+    let posted = 0;
+    for (const tx of pending) {
+      try { await postSale(client, tx.admin_id, tx); posted++; } catch (_) {}
+    }
+    if (posted) console.log(`✓ Backfill Buku Besar: ${posted} transaksi diposting`);
+    else        console.log('✓ Buku Besar sudah sinkron (tidak ada transaksi tertinggal)');
+
     console.log('Seed & migrasi selesai!');
   } finally {
     client.release();
