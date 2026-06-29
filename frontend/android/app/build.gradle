@@ -16,17 +16,24 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file("kasir-release.keystore")
-            storePassword System.getenv("STORE_PASSWORD") ?: "kasir123"
-            keyAlias "kasir"
-            keyPassword System.getenv("KEY_PASSWORD") ?: "kasir123"
+            // Diisi dari environment (GitHub Secrets) — tidak ada kredensial di repo.
+            def ksPath = System.getenv("ANDROID_KEYSTORE_PATH")
+            if (ksPath) {
+                storeFile file(ksPath)
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+            }
         }
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            // Tanda tangani hanya bila keystore tersedia (saat build di CI dengan secrets).
+            if (System.getenv("ANDROID_KEYSTORE_PATH")) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
