@@ -24,9 +24,9 @@ export default function VerifyEmail() {
         setMessage(data.message || '')
       })
       .catch(err => {
-        if (err.response?.data?.expired) setStatus('expired')
+        if (err.data?.expired) setStatus('expired')
         else setStatus('error')
-        setMessage(err.response?.data?.error || err.message || 'Terjadi kesalahan')
+        setMessage(err.data?.error || err.message || 'Terjadi kesalahan')
       })
   }, [token])
 

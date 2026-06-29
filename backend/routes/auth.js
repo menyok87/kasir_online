@@ -287,13 +287,14 @@ router.post('/forgot-password', async (req, res, next) => {
       return res.json({ message: 'Jika email terdaftar, kode reset telah dikirim.' })
     }
 
-    const user    = rows[0]
-    const code    = String(crypto.randomInt(100000, 999999))
-    const expires = new Date(Date.now() + 30 * 60 * 1000)
+    const user     = rows[0]
+    const code     = String(crypto.randomInt(100000, 999999))
+    const codeHash = await bcrypt.hash(code, 10)          // kode disimpan ter-hash, bukan plaintext
+    const expires  = new Date(Date.now() + 15 * 60 * 1000) // berlaku 15 menit
 
     await pool.query(
-      'UPDATE users SET reset_token = $1, reset_expires = $2 WHERE id = $3',
-      [code, expires, user.id]
+      'UPDATE users SET reset_token = $1, reset_expires = $2, reset_attempts = 0 WHERE id = $3',
+      [codeHash, expires, user.id]
     )
 
     const smtpReady = isConfigured()
@@ -315,6 +316,8 @@ router.post('/forgot-password', async (req, res, next) => {
 })
 
 // POST /api/auth/reset-password — verifikasi kode & set password baru
+const MAX_RESET_ATTEMPTS = 5
+
 router.post('/reset-password', async (req, res, next) => {
   try {
     const { email, code, newPassword } = req.body
@@ -326,7 +329,7 @@ router.post('/reset-password', async (req, res, next) => {
     }
 
     const { rows } = await pool.query(
-      'SELECT id, reset_token, reset_expires FROM users WHERE email = $1 AND is_active = TRUE',
+      'SELECT id, reset_token, reset_expires, reset_attempts FROM users WHERE email = $1 AND is_active = TRUE',
       [email.trim().toLowerCase()]
     )
 
@@ -339,13 +342,31 @@ router.post('/reset-password', async (req, res, next) => {
     if (new Date() > new Date(user.reset_expires)) {
       return res.status(400).json({ error: 'Kode reset sudah kadaluarsa. Minta kode baru.' })
     }
-    if (user.reset_token !== code.trim()) {
-      return res.status(400).json({ error: 'Kode reset salah' })
+    // Batas percobaan — cegah brute-force kode 6 digit
+    if (user.reset_attempts >= MAX_RESET_ATTEMPTS) {
+      await pool.query(
+        'UPDATE users SET reset_token = NULL, reset_expires = NULL, reset_attempts = 0 WHERE id = $1',
+        [user.id]
+      )
+      return res.status(429).json({ error: 'Terlalu banyak percobaan salah. Minta kode baru.', locked: true })
+    }
+
+    const valid = await bcrypt.compare(code.trim(), user.reset_token)
+    if (!valid) {
+      const attempts     = user.reset_attempts + 1
+      const attemptsLeft = Math.max(0, MAX_RESET_ATTEMPTS - attempts)
+      await pool.query('UPDATE users SET reset_attempts = $1 WHERE id = $2', [attempts, user.id])
+      return res.status(400).json({
+        error: attemptsLeft > 0
+          ? `Kode reset salah. Sisa ${attemptsLeft} percobaan.`
+          : 'Kode reset salah. Percobaan habis — minta kode baru.',
+        attemptsLeft,
+      })
     }
 
     const hash = await bcrypt.hash(newPassword, 10)
     await pool.query(
-      'UPDATE users SET password = $1, reset_token = NULL, reset_expires = NULL WHERE id = $2',
+      'UPDATE users SET password = $1, reset_token = NULL, reset_expires = NULL, reset_attempts = 0 WHERE id = $2',
       [hash, user.id]
     )
 

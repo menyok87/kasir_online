@@ -12,7 +12,12 @@ api.interceptors.response.use(
       window.location.href = '/login';
     }
     const msg = err.response?.data?.error || err.message || 'Terjadi kesalahan';
-    return Promise.reject(new Error(msg));
+    // Pertahankan payload & status agar pemanggil bisa baca flag terstruktur
+    // (mis. { unverified: true }, { attemptsLeft }) — Error standar membuangnya.
+    const e = new Error(msg);
+    e.data   = err.response?.data;
+    e.status = err.response?.status;
+    return Promise.reject(e);
   }
 );
 

@@ -62,4 +62,11 @@ app.use(require('./middleware/errorHandler'));
 
 app.listen(PORT, () => {
   console.log(`Kasir Online berjalan di http://localhost:${PORT} [${process.env.NODE_ENV || 'development'}]`);
+  // Status email — bantu diagnosa kenapa kode reset tidak terkirim
+  const { isConfigured } = require('./utils/mailer');
+  if (isConfigured()) {
+    console.log(`[Mailer] SMTP aktif (${process.env.SMTP_HOST}) — kode reset & verifikasi dikirim via email.`);
+  } else {
+    console.warn('[Mailer] SMTP TIDAK dikonfigurasi — mode offline: kode reset tampil di layar. Isi SMTP_* di .env untuk mengirim email.');
+  }
 });

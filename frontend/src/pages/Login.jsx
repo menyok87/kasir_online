@@ -105,7 +105,7 @@ function LoginForm({ login, navigate, onForgot }) {
       login(data.token, data.user)
       navigate(data.user.role === 'kasir' ? '/pos' : '/dashboard', { replace: true })
     } catch (err) {
-      const res = err.response?.data || {}
+      const res = err.data || {}
       if (res.unverified) {
         setUnverified({ email: res.email })
       } else {
@@ -384,12 +384,35 @@ function ForgotPasswordForm({ onBack }) {
       await api.post('/auth/reset-password', { email, code: inputCode, newPassword: newPass })
       setStep('done')
     } catch (err) {
+      const data = err.data || {}
       setError(err.message || 'Reset password gagal')
-      if (err.message?.includes('salah') || err.message?.includes('kadaluarsa')) {
+      // Kode salah / kadaluarsa / habis percobaan → kosongkan input kode
+      if (data.locked || typeof data.attemptsLeft === 'number'
+          || err.message?.includes('salah') || err.message?.includes('kadaluarsa')) {
         setInputCode('')
+      }
+      // Percobaan habis / terkunci → izinkan minta kode baru segera
+      if (data.locked || data.attemptsLeft === 0) {
+        setCountdown(0)
       }
     } finally { setLoading(false) }
   }
+
+  // Kekuatan password baru (0–5)
+  const passStrength = (() => {
+    const p = newPass
+    if (!p) return 0
+    let s = 0
+    if (p.length >= 6) s++
+    if (p.length >= 10) s++
+    if (/[A-Z]/.test(p) && /[a-z]/.test(p)) s++
+    if (/\d/.test(p)) s++
+    if (/[^A-Za-z0-9]/.test(p)) s++
+    return Math.min(s, 5)
+  })()
+  const strLabel = ['', 'Sangat lemah', 'Lemah', 'Cukup', 'Kuat', 'Sangat kuat'][passStrength]
+  const strColor = ['', 'bg-red-500', 'bg-orange-400', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'][passStrength]
+  const strText  = ['', 'text-red-500', 'text-orange-400', 'text-yellow-500', 'text-blue-500', 'text-green-500'][passStrength]
 
   function copyCode() {
     navigator.clipboard?.writeText(devCode).catch(() => {})
@@ -553,10 +576,22 @@ function ForgotPasswordForm({ onBack }) {
               {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+
+          {/* Indikator kekuatan password */}
+          {newPass && (
+            <div className="space-y-1.5 mt-2">
+              <div className="flex gap-1">
+                {[1,2,3,4,5].map(i => (
+                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= passStrength ? strColor : 'bg-gray-200 dark:bg-gray-700'}`} />
+                ))}
+              </div>
+              <p className={`text-xs font-medium ${strText}`}>Kekuatan: {strLabel}</p>
+            </div>
+          )}
         </div>
 
         <button type="submit" className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2"
-          disabled={loading || inputCode.length !== 6 || !newPass}>
+          disabled={loading || inputCode.length !== 6 || newPass.length < 6}>
           {loading
             ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Memproses...</>
             : <><KeyRound size={15} />Reset Password</>
