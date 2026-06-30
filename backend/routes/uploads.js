@@ -35,15 +35,21 @@ router.post('/', (req, res, next) => {
       const name    = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
       const outPath = path.join(UPLOAD_DIR, name);
 
+      // QRIS butuh ekstra tajam: lossless + dimensi maks lebih besar agar
+      // QR code tetap mudah dipindai (tanpa artefak kompresi).
+      const isQr   = String(req.query.type || '').toLowerCase() === 'qris';
+      const maxDim = isQr ? 1500 : MAX_DIM;
+
       const image = sharp(req.file.buffer, { animated: true }).rotate(); // rotate() = auto-orient EXIF
       const meta  = await image.metadata();
 
-      // Hanya perkecil bila lebih besar dari MAX_DIM (tidak memperbesar gambar kecil)
-      if ((meta.width || 0) > MAX_DIM || (meta.height || 0) > MAX_DIM) {
-        image.resize({ width: MAX_DIM, height: MAX_DIM, fit: 'inside', withoutEnlargement: true });
+      // Hanya perkecil bila lebih besar dari maxDim (tidak memperbesar gambar kecil)
+      if ((meta.width || 0) > maxDim || (meta.height || 0) > maxDim) {
+        image.resize({ width: maxDim, height: maxDim, fit: 'inside', withoutEnlargement: true });
       }
 
-      await image.webp({ quality: QUALITY, effort: 4 }).toFile(outPath);
+      if (isQr) await image.webp({ lossless: true, effort: 5 }).toFile(outPath);
+      else      await image.webp({ quality: QUALITY, effort: 4 }).toFile(outPath);
 
       const before = req.file.size;
       const after  = fs.statSync(outPath).size;

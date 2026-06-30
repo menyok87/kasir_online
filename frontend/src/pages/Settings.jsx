@@ -302,7 +302,7 @@ function PanelQris({ form, setForm, onSave }) {
       if (form.qris_image) {
         deleteProductImage(form.qris_image).catch(() => {})
       }
-      const { data } = await uploadProductImage(file)
+      const { data } = await uploadProductImage(file, 'qris')   // lossless agar QR tetap tajam
       await onSave('qris_image', data.url)
       toast.success('Gambar QRIS berhasil disimpan')
     } catch (err) {

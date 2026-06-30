@@ -45,10 +45,11 @@ export const updateUser    = (id, data)=> api.put(`/users/${id}`, data);
 export const toggleUser    = (id)      => api.patch(`/users/${id}/toggle`);
 
 // Image upload
-export const uploadProductImage = (file) => {
+export const uploadProductImage = (file, type) => {
   const form = new FormData();
   form.append('image', file);
-  return api.post('/uploads', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  const url = type ? `/uploads?type=${encodeURIComponent(type)}` : '/uploads';
+  return api.post(url, form, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
 export const deleteProductImage = (filename) => api.delete('/uploads', { data: { filename } });
 
