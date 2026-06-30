@@ -262,7 +262,7 @@ export default function Products() {
                     <td className="px-4 md:px-6 py-3">
                       <div className="flex items-center gap-2 md:gap-3">
                         {p.image_url ? (
-                          <img src={getImageUrl(p.image_url)} alt={p.name} className="w-9 h-9 md:w-10 md:h-10 rounded-lg object-cover bg-gray-100 dark:bg-gray-800 flex-shrink-0" onError={e => e.target.style.display='none'} />
+                          <img src={getImageUrl(p.image_url)} alt={p.name} loading="lazy" decoding="async" className="w-9 h-9 md:w-10 md:h-10 rounded-lg object-cover bg-gray-100 dark:bg-gray-800 flex-shrink-0" onError={e => e.target.style.display='none'} />
                         ) : (
                           <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs flex-shrink-0">IMG</div>
                         )}

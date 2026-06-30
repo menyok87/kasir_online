@@ -70,6 +70,8 @@ function ProductCard({ product, onAdd }) {
           <img
             src={getImageUrl(product.image_url)}
             alt={product.name}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             onError={e => { e.target.style.display = 'none' }}
           />
@@ -125,7 +127,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
       {/* Thumbnail */}
       <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden bg-gradient-to-br from-blue-50 to-slate-100 dark:from-gray-700 dark:to-gray-800 border border-gray-100 dark:border-gray-700">
         {item.product.image_url ? (
-          <img src={getImageUrl(item.product.image_url)} alt={item.product.name}
+          <img src={getImageUrl(item.product.image_url)} alt={item.product.name} loading="lazy" decoding="async"
             className="w-full h-full object-cover"
             onError={e => { e.target.style.display = 'none' }} />
         ) : (
