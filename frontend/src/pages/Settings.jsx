@@ -17,16 +17,18 @@ const defaultSettings = {
   store_logo: '', qris_image: '', bank_name: '', bank_account_number: '',
   bank_account_name: '', bank_branch: '',
   midtrans_server_key: '', midtrans_client_key: '', midtrans_is_production: false,
+  qris_enabled: true,
 }
 
 const SECTIONS = [
-  { id: 'toko',      label: 'Info Toko', icon: Store,       color: 'blue'   },
-  { id: 'kontak',    label: 'Kontak',    icon: MapPin,      color: 'teal'   },
-  { id: 'qris',      label: 'QRIS',      icon: QrCode,      color: 'violet' },
-  { id: 'bank',      label: 'Bank',      icon: Landmark,    color: 'amber'  },
-  { id: 'gopay',     label: 'GoPay',     icon: Smartphone,  color: 'green'  },
-  { id: 'struk',     label: 'Struk',     icon: FileText,    color: 'rose'   },
-  { id: 'keamanan',  label: 'Keamanan',  icon: Lock,        color: 'slate'  },
+  { id: 'toko',      label: 'Info Toko',  icon: Store,       color: 'blue'   },
+  { id: 'kontak',    label: 'Kontak',     icon: MapPin,      color: 'teal'   },
+  { id: 'qris',      label: 'QRIS',       icon: QrCode,      color: 'violet' },
+  { id: 'qrisdana',  label: 'QRIS/DANA',  icon: QrCode,      color: 'cyan'   },
+  { id: 'bank',      label: 'Bank',       icon: Landmark,    color: 'amber'  },
+  { id: 'gopay',     label: 'GoPay',      icon: Smartphone,  color: 'green'  },
+  { id: 'struk',     label: 'Struk',      icon: FileText,    color: 'rose'   },
+  { id: 'keamanan',  label: 'Keamanan',   icon: Lock,        color: 'slate'  },
 ]
 
 const C = {
@@ -37,6 +39,7 @@ const C = {
   rose:   { bg: 'bg-rose-50 dark:bg-rose-900/20',     icon: 'text-rose-600 dark:text-rose-400',   activePill: 'bg-rose-600 text-white',   activeSide: 'bg-rose-600 text-white shadow-md shadow-rose-200 dark:shadow-rose-900/50'   },
   green:  { bg: 'bg-green-50 dark:bg-green-900/20',   icon: 'text-green-600 dark:text-green-400', activePill: 'bg-green-600 text-white',  activeSide: 'bg-green-600 text-white shadow-md shadow-green-200 dark:shadow-green-900/50' },
   slate:  { bg: 'bg-slate-50 dark:bg-slate-800/60',   icon: 'text-slate-600 dark:text-slate-400', activePill: 'bg-slate-600 text-white',  activeSide: 'bg-slate-600 text-white shadow-md shadow-slate-200 dark:shadow-slate-900/50' },
+  cyan:   { bg: 'bg-cyan-50 dark:bg-cyan-900/20',     icon: 'text-cyan-600 dark:text-cyan-400',   activePill: 'bg-cyan-600 text-white',   activeSide: 'bg-cyan-600 text-white shadow-md shadow-cyan-200 dark:shadow-cyan-900/50'   },
 }
 
 // ── Shared ────────────────────────────────────────────────────────────────────
@@ -756,6 +759,83 @@ function PanelGopay({ form, set, setForm }) {
   )
 }
 
+// ── Panel: QRIS / DANA (QRIS dinamis via Midtrans) ────────────────────────────
+function PanelQrisDana({ form, setForm }) {
+  const enabled   = form.qris_enabled !== false
+  const hasKeys   = !!form.midtrans_server_key
+  const webhookUrl = (import.meta.env.VITE_API_BASE_URL || window.location.origin) + '/api/gopay/notification'
+
+  return (
+    <div className="space-y-4">
+      <SectionCard title="QRIS Otomatis (DANA, OVO, dll)" subtitle="Satu QR dinamis untuk semua e-wallet — nominal & verifikasi otomatis" icon={QrCode} color="cyan">
+        {/* Toggle aktif */}
+        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+          <div className="min-w-0 pr-3">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Aktifkan QRIS Otomatis</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tampilkan metode "QRIS Auto" di halaman Kasir</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+            <input type="checkbox" className="sr-only peer" checked={enabled}
+              onChange={e => setForm(f => ({ ...f, qris_enabled: e.target.checked }))} />
+            <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700
+              peer-checked:after:translate-x-full peer-checked:after:border-white
+              after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+              after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
+              after:transition-all peer-checked:bg-cyan-500" />
+          </label>
+        </div>
+
+        {/* E-wallet yang didukung */}
+        <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-3.5 border border-cyan-100 dark:border-cyan-900/30">
+          <p className="text-xs font-semibold text-cyan-700 dark:text-cyan-300 mb-2">Menerima pembayaran dari:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {['DANA', 'OVO', 'GoPay', 'ShopeePay', 'LinkAja', 'm-banking'].map(w => (
+              <span key={w} className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">{w}</span>
+            ))}
+          </div>
+          <p className="text-xs text-cyan-600 dark:text-cyan-400 mt-2 leading-relaxed">
+            QR dinamis: nominal terisi otomatis sesuai belanja, dan status pembayaran <strong>terverifikasi otomatis</strong> tanpa cek manual.
+          </p>
+        </div>
+
+        {/* Status kredensial Midtrans */}
+        <div className={`rounded-xl px-4 py-3 flex items-start gap-2.5 border ${
+          hasKeys ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30'
+                  : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'}`}>
+          {hasKeys ? <CheckCircle size={15} className="text-green-600 flex-shrink-0 mt-0.5" />
+                   : <AlertTriangle size={15} className="text-amber-600 flex-shrink-0 mt-0.5" />}
+          <p className={`text-xs ${hasKeys ? 'text-green-700 dark:text-green-300' : 'text-amber-700 dark:text-amber-300'}`}>
+            {hasKeys
+              ? <>Terhubung ke Midtrans (mode {form.midtrans_is_production ? 'Production' : 'Sandbox'}). QRIS Otomatis siap dipakai.</>
+              : <>Kredensial Midtrans belum diisi. QRIS Otomatis pakai Midtrans yang sama dengan GoPay — isi <strong>Server Key & Client Key</strong> di tab <strong>GoPay</strong> dulu.</>}
+          </p>
+        </div>
+
+        {/* Info DANA Direct */}
+        <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3.5 border border-gray-100 dark:border-gray-700">
+          <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+            <strong>Catatan:</strong> DANA diterima lewat jalur QRIS ini (paling praktis, tanpa akun DANA terpisah).
+            Integrasi <strong>DANA Direct (API SNAP)</strong> membutuhkan akun merchant DANA + kunci RSA tersendiri —
+            hubungi admin bila ingin mengaktifkannya.
+          </p>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Webhook Notifikasi" subtitle="Verifikasi pembayaran otomatis saat aplikasi tertutup" icon={Settings2} color="cyan">
+        <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3.5 border border-gray-100 dark:border-gray-700">
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1.5">URL Webhook (Midtrans):</p>
+          <code className="text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-lg block font-mono border border-gray-200 dark:border-gray-700 break-all select-all">
+            {webhookUrl}
+          </code>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Satu URL ini menangani GoPay & QRIS. Daftarkan di <strong>Midtrans → Settings → Configuration → Payment Notification URL</strong>.
+          </p>
+        </div>
+      </SectionCard>
+    </div>
+  )
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Settings() {
   const [form, setForm]       = useState(defaultSettings)
@@ -821,6 +901,7 @@ export default function Settings() {
           {active === 'toko'     && <PanelToko     form={form} set={set} setForm={setForm} onSave={saveField} />}
           {active === 'kontak'   && <PanelKontak   form={form} set={set} />}
           {active === 'qris'     && <PanelQris     form={form} setForm={setForm} onSave={saveField} />}
+          {active === 'qrisdana' && <PanelQrisDana form={form} setForm={setForm} />}
           {active === 'bank'     && <PanelBank     form={form} set={set} />}
           {active === 'gopay'    && <PanelGopay    form={form} set={set} setForm={setForm} />}
           {active === 'struk'    && <PanelStruk    form={form} set={set} setCheck={setCheck} setForm={setForm} />}

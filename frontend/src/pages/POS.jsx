@@ -606,7 +606,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
         <div>
           <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">Pembayaran</p>
           <div className="grid grid-cols-4 gap-1.5">
-            {PAYMENT_METHODS.map(({ val, label, Icon, color }) => (
+            {PAYMENT_METHODS.filter(m => m.val !== 'qris_auto' || settings.qris_enabled !== false).map(({ val, label, Icon, color }) => (
               <button key={val} onClick={() => setPaymentMethod(val)}
                 className={`py-2.5 px-1 rounded-xl text-[11px] font-semibold transition-all flex flex-col items-center gap-1
                   ${paymentMethod === val

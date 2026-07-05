@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS store_settings (
   midtrans_server_key     TEXT                  DEFAULT '',
   midtrans_client_key     TEXT                  DEFAULT '',
   midtrans_is_production  BOOLEAN               NOT NULL DEFAULT FALSE,
+  qris_enabled            BOOLEAN               NOT NULL DEFAULT TRUE,
   updated_at              TIMESTAMPTZ           DEFAULT NOW()
 );
 

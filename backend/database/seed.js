@@ -141,6 +141,7 @@ async function seed() {
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS midtrans_server_key TEXT DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS midtrans_client_key TEXT DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS midtrans_is_production BOOLEAN NOT NULL DEFAULT FALSE`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS qris_enabled BOOLEAN NOT NULL DEFAULT TRUE`,
     ];
     for (const sql of settingsCols) await client.query(sql).catch(() => {});
     // Default settings per admin
