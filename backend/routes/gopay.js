@@ -36,7 +36,7 @@ async function failGopay(adminId, orderId) {
       [orderId, adminId]
     )
     const tx = rows[0]
-    if (tx && tx.payment_method === 'gopay' && tx.gopay_status !== 'settlement') {
+    if (tx && ['gopay', 'qris'].includes(tx.payment_method) && tx.gopay_status !== 'settlement') {
       const posted = await client.query(
         'SELECT 1 FROM journal_entries WHERE transaction_id = $1 LIMIT 1', [tx.id]
       )

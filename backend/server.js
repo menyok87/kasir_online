@@ -43,6 +43,12 @@ app.use('/api/gopay', (req, res, next) => {
   return authenticate(req, res, next)
 }, require('./routes/gopay'));
 
+// QRIS dinamis (Midtrans): webhook /notification publik, sisanya butuh auth
+app.use('/api/qris', (req, res, next) => {
+  if (req.path === '/notification' && req.method === 'POST') return next()
+  return authenticate(req, res, next)
+}, require('./routes/qris'));
+
 // ── Static Frontend (production) ────────────────────────────
 // Nginx memproksi semua request ke Express, jadi Express
 // perlu melayani file hasil build Vite (frontend/dist).

@@ -79,6 +79,11 @@ export const gopayCharge     = (data)     => api.post('/gopay/charge', data);
 export const gopayStatus     = (order_id) => api.get(`/gopay/status/${order_id}`);
 export const gopayCancel     = (order_id) => api.post(`/gopay/cancel/${order_id}`);
 
+// QRIS dinamis (Midtrans) — nominal otomatis, terima DANA/OVO/GoPay/ShopeePay
+export const qrisCharge      = (data)     => api.post('/qris/charge', data);
+export const qrisStatus      = (order_id) => api.get(`/qris/status/${order_id}`);
+export const qrisCancel      = (order_id) => api.post(`/qris/cancel/${order_id}`);
+
 // Laporan Penjualan
 export const getSalesReport   = (month) => api.get('/reports/sales',   { params: { month } });
 export const getMonthlyReport = (year)  => api.get('/reports/monthly', { params: { year } });

@@ -5,7 +5,11 @@ import {
   Tag, ArrowLeft, X, FileDown, Wallet, QrCode, Building2, CreditCard,
   Package, ChevronRight, Sparkles, Smartphone, RefreshCw, XCircle, Clock, AlertCircle,
 } from 'lucide-react'
-import { getProducts, getCategories, createTransaction, getSettings, gopayCharge, gopayStatus, gopayCancel } from '../api'
+import {
+  getProducts, getCategories, createTransaction, getSettings,
+  gopayCharge, gopayStatus, gopayCancel,
+  qrisCharge, qrisStatus, qrisCancel,
+} from '../api'
 import { getImageUrl } from '../utils/getImageUrl'
 import Modal from '../components/ui/Modal'
 import { FullPageSpinner } from '../components/ui/Spinner'
@@ -34,17 +38,19 @@ function getQuickAmounts(total) {
 }
 
 const PAYMENT_METHODS = [
-  { val: 'cash',     label: 'Tunai',    Icon: Wallet,     color: 'emerald' },
-  { val: 'gopay',    label: 'GoPay',    Icon: Smartphone, color: 'green' },
-  { val: 'qris',     label: 'QRIS',     Icon: QrCode,     color: 'blue' },
-  { val: 'transfer', label: 'Transfer', Icon: Building2,  color: 'violet' },
-  { val: 'card',     label: 'Kartu',    Icon: CreditCard, color: 'orange' },
+  { val: 'cash',      label: 'Tunai',     Icon: Wallet,     color: 'emerald' },
+  { val: 'gopay',     label: 'GoPay',     Icon: Smartphone, color: 'green' },
+  { val: 'qris',      label: 'QRIS',      Icon: QrCode,     color: 'blue' },
+  { val: 'qris_auto', label: 'QRIS Auto', Icon: QrCode,     color: 'cyan' },
+  { val: 'transfer',  label: 'Transfer',  Icon: Building2,  color: 'violet' },
+  { val: 'card',      label: 'Kartu',     Icon: CreditCard, color: 'orange' },
 ]
 
 const COLOR_ACTIVE = {
   emerald: 'bg-emerald-500 text-white shadow-emerald-200 dark:shadow-emerald-900/40',
   green:   'bg-green-500 text-white shadow-green-200 dark:shadow-green-900/40',
   blue:    'bg-blue-500 text-white shadow-blue-200 dark:shadow-blue-900/40',
+  cyan:    'bg-cyan-500 text-white shadow-cyan-200 dark:shadow-cyan-900/40',
   violet:  'bg-violet-500 text-white shadow-violet-200 dark:shadow-violet-900/40',
   orange:  'bg-orange-500 text-white shadow-orange-200 dark:shadow-orange-900/40',
 }
@@ -352,78 +358,80 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
   )
 }
 
-// ── GoPay QR Modal ────────────────────────────────────────────────────────────
-function GopayModal({ isOpen, gopayData, onSuccess, onCancel }) {
-  const [status, setStatus]       = useState('pending')
-  const [elapsed, setElapsed]     = useState(0)
+// ── QR Payment Modal (dipakai GoPay & QRIS) ──────────────────────────────────
+const PAY_BRANDS = {
+  gopay: {
+    title: 'Pembayaran GoPay', Icon: Smartphone, header: 'from-green-500 to-emerald-600',
+    scanText: 'Scan QR dengan app Gojek / GoPay', successNote: 'Dana GoPay diterima · struk siap dicetak',
+    qrBox: 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30',
+    imgBorder: 'border-green-200', scan: 'text-green-700 dark:text-green-400',
+    spin: 'border-green-400/40 border-t-green-500', amount: 'text-green-600 dark:text-green-400',
+  },
+  qris: {
+    title: 'Pembayaran QRIS', Icon: QrCode, header: 'from-blue-500 to-indigo-600',
+    scanText: 'Scan dengan DANA · OVO · GoPay · ShopeePay · m-banking', successNote: 'Pembayaran diterima · struk siap dicetak',
+    qrBox: 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900/30',
+    imgBorder: 'border-blue-200', scan: 'text-blue-700 dark:text-blue-400',
+    spin: 'border-blue-400/40 border-t-blue-500', amount: 'text-blue-600 dark:text-blue-400',
+  },
+}
+
+function QrPaymentModal({ isOpen, data, brand = 'gopay', statusFn, cancelFn, onSuccess, onCancel }) {
+  const [status, setStatus]         = useState('pending')
+  const [elapsed, setElapsed]       = useState(0)
   const [cancelling, setCancelling] = useState(false)
   const pollRef  = useRef(null)
   const timerRef = useRef(null)
 
   useEffect(() => {
-    if (!isOpen || !gopayData) return
+    if (!isOpen || !data) return
     setStatus('pending')
     setElapsed(0)
-
-    // Countdown timer
     timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
-
-    // Poll status every 3s
     pollRef.current = setInterval(async () => {
       try {
-        const { data } = await gopayStatus(gopayData.order_id)
-        if (data.transaction_status === 'settlement' || data.transaction_status === 'capture') {
-          clearInterval(pollRef.current)
-          clearInterval(timerRef.current)
+        const { data: r } = await statusFn(data.order_id)
+        if (r.transaction_status === 'settlement' || r.transaction_status === 'capture') {
+          clearInterval(pollRef.current); clearInterval(timerRef.current)
           setStatus('settlement')
-          setTimeout(() => onSuccess(data.transaction), 800)
-        } else if (['cancel', 'deny', 'expire', 'failure'].includes(data.transaction_status)) {
-          clearInterval(pollRef.current)
-          clearInterval(timerRef.current)
-          setStatus(data.transaction_status)
+          setTimeout(() => onSuccess(r.transaction), 800)
+        } else if (['cancel', 'deny', 'expire', 'failure'].includes(r.transaction_status)) {
+          clearInterval(pollRef.current); clearInterval(timerRef.current)
+          setStatus(r.transaction_status)
         }
       } catch (_) {}
     }, 3000)
+    return () => { clearInterval(pollRef.current); clearInterval(timerRef.current) }
+  }, [isOpen, data]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    return () => {
-      clearInterval(pollRef.current)
-      clearInterval(timerRef.current)
-    }
-  }, [isOpen, gopayData]) // eslint-disable-line react-hooks/exhaustive-deps
+  if (!isOpen || !data) return null
 
-  if (!isOpen || !gopayData) return null
-
+  const b    = PAY_BRANDS[brand] || PAY_BRANDS.gopay
+  const Icon = b.Icon
   const mins = String(Math.floor(elapsed / 60)).padStart(2, '0')
   const secs = String(elapsed % 60).padStart(2, '0')
-
   const FAILED     = ['cancel', 'deny', 'expire', 'failure']
   const FAIL_LABEL = { expire: 'Kadaluarsa', deny: 'Ditolak', cancel: 'Dibatalkan', failure: 'Gagal' }
   const isFailed   = FAILED.includes(status)
 
   async function handleCancel() {
     setCancelling(true)
-    try {
-      await gopayCancel(gopayData.order_id)
-      onCancel()
-    } catch (err) {
-      toast.error(err.message)
-    } finally {
-      setCancelling(false)
-    }
+    try { await cancelFn(data.order_id); onCancel() }
+    catch (err) { toast.error(err.message) }
+    finally { setCancelling(false) }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-5 py-4 flex items-center justify-between">
+        <div className={`bg-gradient-to-r ${b.header} px-5 py-4 flex items-center justify-between`}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
-              <Smartphone size={17} className="text-white" />
+              <Icon size={17} className="text-white" />
             </div>
             <div>
-              <div className="font-bold text-white text-sm">Pembayaran GoPay</div>
-              <div className="text-[11px] text-white/70">{gopayData.order_id}</div>
+              <div className="font-bold text-white text-sm">{b.title}</div>
+              <div className="text-[11px] text-white/70">{data.order_id}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 bg-black/20 rounded-xl px-2.5 py-1">
@@ -439,61 +447,47 @@ function GopayModal({ isOpen, gopayData, onSuccess, onCancel }) {
                 <CheckCircle size={36} className="text-green-500" />
               </div>
               <p className="font-bold text-gray-800 dark:text-gray-100">Pembayaran Berhasil!</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Dana GoPay diterima · struk siap dicetak</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{b.successNote}</p>
             </div>
           ) : isFailed ? (
             <div className="text-center py-6">
               <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-3">
                 <XCircle size={36} className="text-red-500" />
               </div>
-              <p className="font-bold text-gray-800 dark:text-gray-100">
-                Pembayaran {FAIL_LABEL[status] || 'Gagal'}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Pembayaran tidak selesai. Stok barang dikembalikan otomatis.
-              </p>
+              <p className="font-bold text-gray-800 dark:text-gray-100">Pembayaran {FAIL_LABEL[status] || 'Gagal'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pembayaran tidak selesai. Stok barang dikembalikan otomatis.</p>
               <button onClick={onCancel} className="mt-4 btn-secondary text-sm px-6">Tutup</button>
             </div>
           ) : (
             <>
-              {/* QR Code */}
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 text-center mb-4 border border-green-100 dark:border-green-900/30">
-                {gopayData.qr_url ? (
+              <div className={`${b.qrBox} rounded-2xl p-4 text-center mb-4 border`}>
+                {data.qr_url ? (
                   <>
-                    <img src={gopayData.qr_url} alt="GoPay QR"
-                      className="w-44 h-44 mx-auto rounded-xl bg-white border border-green-200 p-1.5 shadow-sm object-contain" />
-                    <p className="text-xs text-green-700 dark:text-green-400 font-semibold mt-2">
-                      Scan QR dengan app Gojek / GoPay
-                    </p>
+                    <img src={data.qr_url} alt="QR" className={`w-44 h-44 mx-auto rounded-xl bg-white border ${b.imgBorder} p-1.5 shadow-sm object-contain`} />
+                    <p className={`text-xs ${b.scan} font-semibold mt-2`}>{b.scanText}</p>
                   </>
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-6">
-                    <div className="w-10 h-10 border-2 border-green-400/40 border-t-green-500 rounded-full animate-spin" />
+                    <div className={`w-10 h-10 border-2 ${b.spin} rounded-full animate-spin`} />
                     <p className="text-xs text-gray-500">Memuat QR Code...</p>
                   </div>
                 )}
               </div>
 
-              {/* Amount */}
               <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 flex justify-between items-center mb-4 border border-gray-100 dark:border-gray-700">
                 <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Tagihan</span>
-                <span className="font-black text-green-600 dark:text-green-400 text-lg">
-                  {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(gopayData.gross_amount)}
+                <span className={`font-black ${b.amount} text-lg`}>
+                  {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(data.gross_amount)}
                 </span>
               </div>
 
-              {/* Status */}
               <div className="flex items-center justify-center gap-2 text-xs text-gray-400 mb-4">
                 <RefreshCw size={12} className="animate-spin" />
                 <span>Menunggu pembayaran...</span>
               </div>
 
-              {/* Deeplink (mobile) */}
-              {gopayData.deeplink && (
-                <a href={gopayData.deeplink}
-                  className="block text-center text-xs text-green-600 underline mb-3">
-                  Buka di app GoPay →
-                </a>
+              {data.deeplink && (
+                <a href={data.deeplink} className={`block text-center text-xs ${b.scan} underline mb-3`}>Buka di app →</a>
               )}
 
               <button onClick={handleCancel} disabled={cancelling}
@@ -516,9 +510,11 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
   const subtotal   = cart.reduce((s, i) => s + i.product.price * i.quantity, 0)
   const grandTotal = Math.max(0, subtotal - Number(discount))
   const change     = Number(amountPaid) - grandTotal
-  const isGoPay    = paymentMethod === 'gopay'
-  const canCheckout = cart.length > 0 && (isGoPay || Number(amountPaid) >= grandTotal)
-  const isNonCash   = paymentMethod === 'qris' || paymentMethod === 'transfer' || isGoPay
+  const isGoPay     = paymentMethod === 'gopay'
+  const isQrisAuto  = paymentMethod === 'qris_auto'
+  const isCharge    = isGoPay || isQrisAuto   // alur QR Midtrans: nominal & verifikasi otomatis
+  const canCheckout = cart.length > 0 && (isCharge || Number(amountPaid) >= grandTotal)
+  const isNonCash   = paymentMethod === 'qris' || paymentMethod === 'transfer' || isCharge
   const totalQty    = cart.reduce((s, i) => s + i.quantity, 0)
 
   useEffect(() => {
@@ -650,6 +646,31 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           </div>
         )}
 
+        {/* Info QRIS Auto (nominal otomatis via Midtrans) */}
+        {paymentMethod === 'qris_auto' && (
+          <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-3 border border-cyan-100 dark:border-cyan-900/30">
+            <div className="flex items-center gap-2 mb-1.5">
+              <QrCode size={14} className="text-cyan-600" />
+              <p className="text-xs text-cyan-700 dark:text-cyan-400 font-semibold">QRIS Otomatis</p>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              QR dinamis (nominal terisi otomatis) muncul setelah klik <strong>Buat QRIS</strong>.
+              Terima <strong>DANA, OVO, GoPay, ShopeePay</strong> & m-banking — pembayaran <strong>terverifikasi otomatis</strong>.
+            </p>
+            {settings.midtrans_server_key ? null : (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1.5 font-medium">
+                ⚠ Midtrans Key belum diatur di Pengaturan &gt; GoPay.
+              </p>
+            )}
+            {gopayError && (
+              <div className="mt-2 flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-2.5 py-2">
+                <AlertCircle size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-red-600 dark:text-red-400 leading-snug">{gopayError}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Info QRIS */}
         {paymentMethod === 'qris' && (
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center border border-blue-100 dark:border-blue-900/30">
@@ -744,7 +765,9 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
             ${canCheckout && !checkoutLoading
               ? isGoPay
                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-300 dark:shadow-green-900/50 hover:from-green-600 hover:to-green-700 active:scale-[0.98]'
-                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-300 dark:shadow-blue-900/50 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98]'
+                : isQrisAuto
+                  ? 'bg-gradient-to-r from-cyan-500 to-sky-600 text-white shadow-lg shadow-cyan-300 dark:shadow-cyan-900/50 hover:from-cyan-600 hover:to-sky-700 active:scale-[0.98]'
+                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-300 dark:shadow-blue-900/50 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98]'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
             }`}
         >
@@ -755,8 +778,10 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
             </>
           ) : canCheckout ? (
             <>
-              {isGoPay ? <Smartphone size={16} /> : <CheckCircle size={16} />}
-              {isGoPay ? `Buat Tagihan GoPay ${formatRupiah(grandTotal)}` : `Bayar ${formatRupiah(grandTotal)}`}
+              {isCharge ? (isQrisAuto ? <QrCode size={16} /> : <Smartphone size={16} />) : <CheckCircle size={16} />}
+              {isGoPay ? `Buat Tagihan GoPay ${formatRupiah(grandTotal)}`
+                : isQrisAuto ? `Buat QRIS ${formatRupiah(grandTotal)}`
+                : `Bayar ${formatRupiah(grandTotal)}`}
             </>
           ) : (
             <>
@@ -784,7 +809,7 @@ export default function POS() {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [receipt, setReceipt]             = useState(null)
   const [settings, setSettings]           = useState({})
-  const [gopayModal, setGopayModal]       = useState(null)
+  const [qrPay, setQrPay]                 = useState(null) // { data, brand, statusFn, cancelFn }
   const [gopayError, setGopayError]       = useState('')
   const [mobileTab, setMobileTab]         = useState('products')
 
@@ -845,19 +870,24 @@ export default function POS() {
   async function handleCheckout() {
     if (cart.length === 0) { toast.error('Keranjang kosong'); return }
 
-    if (paymentMethod === 'gopay') {
+    // Alur QR Midtrans (GoPay / QRIS dinamis) — nominal & verifikasi otomatis
+    if (paymentMethod === 'gopay' || paymentMethod === 'qris_auto') {
+      const isQris = paymentMethod === 'qris_auto'
       setCheckoutLoading(true)
       setGopayError('')
       try {
-        const { data } = await gopayCharge({
+        const payload = {
           items:    cart.map(i => ({ product_id: i.product.id, quantity: i.quantity })),
           discount: Number(discount),
           tax:      0,
-        })
+        }
+        const { data } = isQris ? await qrisCharge(payload) : await gopayCharge(payload)
         clearCart()
         setMobileTab('products')
         fetchData()
-        setGopayModal(data.gopay)
+        setQrPay(isQris
+          ? { data: data.qris,  brand: 'qris',  statusFn: qrisStatus,  cancelFn: qrisCancel }
+          : { data: data.gopay, brand: 'gopay', statusFn: gopayStatus, cancelFn: gopayCancel })
       } catch (err) {
         setGopayError(err.message)
         toast.error(err.message)
@@ -889,15 +919,15 @@ export default function POS() {
     }
   }
 
-  function handleGopaySuccess(transaction) {
-    setGopayModal(null)
+  function handleQrSuccess(transaction) {
+    setQrPay(null)
     setReceipt(transaction)
     fetchData()
     toast.success(`Transaksi ${transaction?.invoice_number} berhasil!`)
   }
 
-  function handleGopayCancel() {
-    setGopayModal(null)
+  function handleQrCancel() {
+    setQrPay(null)
     fetchData()
   }
 
@@ -944,8 +974,9 @@ export default function POS() {
       </div>
 
       <ReceiptModal isOpen={!!receipt} transaction={receipt} settings={settings} onClose={() => setReceipt(null)} />
-      <GopayModal isOpen={!!gopayModal} gopayData={gopayModal}
-        onSuccess={handleGopaySuccess} onCancel={handleGopayCancel} />
+      <QrPaymentModal isOpen={!!qrPay} data={qrPay?.data} brand={qrPay?.brand}
+        statusFn={qrPay?.statusFn} cancelFn={qrPay?.cancelFn}
+        onSuccess={handleQrSuccess} onCancel={handleQrCancel} />
     </>
   )
 }
