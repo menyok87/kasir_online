@@ -659,6 +659,12 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
                   className="w-36 h-36 object-contain mx-auto rounded-xl bg-white border border-blue-200 p-1 shadow-sm" />
                 <p className="text-xs text-blue-600 mt-2 font-semibold">Scan QRIS untuk membayar</p>
                 <p className="text-sm font-black text-blue-700 mt-0.5">{formatRupiah(grandTotal)}</p>
+                <div className="flex flex-wrap justify-center gap-1 mt-2">
+                  {['DANA', 'OVO', 'GoPay', 'ShopeePay', 'LinkAja'].map(w => (
+                    <span key={w} className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-white/70 dark:bg-gray-800/60 text-blue-600 dark:text-blue-300 border border-blue-100 dark:border-blue-900/40">{w}</span>
+                  ))}
+                </div>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Menerima semua e-wallet & m-banking QRIS</p>
               </>
             ) : (
               <p className="text-xs text-gray-500 dark:text-gray-400 py-2">
