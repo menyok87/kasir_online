@@ -5,6 +5,7 @@ import {
   Wallet, Building2, Users, TrendingUp, TrendingDown,
   ReceiptText, Scale, ChevronDown, ChevronUp, Info,
   BookText, Calendar, ArrowRightLeft, CalendarDays,
+  Package, Landmark, Coins, Banknote, PiggyBank, Truck,
 } from 'lucide-react'
 import {
   getAccounts, createAccount, updateAccount, deleteAccount,
@@ -18,20 +19,55 @@ function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0)
 }
 
+// Daftar akun lengkap. `subgroup` memisah Aset Lancar/Tetap di Neraca.
+// Akun kontra (akum_penyusutan, prive) punya `side` berlawanan dengan sisi normal grupnya.
 const TYPE_CONFIG = {
-  kas:        { label: 'Kas',        group: 'Aset',       side: 'D', color: 'blue',    bg: 'bg-blue-100 dark:bg-blue-900/30',    text: 'text-blue-700 dark:text-blue-300',    icon: Wallet },
-  bank:       { label: 'Bank',       group: 'Aset',       side: 'D', color: 'sky',     bg: 'bg-sky-100 dark:bg-sky-900/30',      text: 'text-sky-700 dark:text-sky-300',      icon: Building2 },
-  piutang:    { label: 'Piutang',    group: 'Aset',       side: 'D', color: 'teal',    bg: 'bg-teal-100 dark:bg-teal-900/30',    text: 'text-teal-700 dark:text-teal-300',    icon: ReceiptText },
-  hutang:     { label: 'Hutang',     group: 'Kewajiban',  side: 'K', color: 'red',     bg: 'bg-red-100 dark:bg-red-900/30',      text: 'text-red-700 dark:text-red-300',      icon: TrendingDown },
-  modal:      { label: 'Modal',      group: 'Ekuitas',    side: 'K', color: 'purple',  bg: 'bg-purple-100 dark:bg-purple-900/30',text: 'text-purple-700 dark:text-purple-300',icon: Users },
-  pendapatan: { label: 'Pendapatan', group: 'Pendapatan', side: 'K', color: 'green',   bg: 'bg-green-100 dark:bg-green-900/30',  text: 'text-green-700 dark:text-green-300',  icon: TrendingUp },
-  beban:      { label: 'Beban',      group: 'Beban',      side: 'D', color: 'orange',  bg: 'bg-orange-100 dark:bg-orange-900/30',text: 'text-orange-700 dark:text-orange-300',icon: TrendingDown },
+  // ── Aset (normal Debit) ──
+  kas:             { label: 'Kas',                   group: 'Aset',       subgroup: 'Aset Lancar', side: 'D', color: 'blue',    bg: 'bg-blue-100 dark:bg-blue-900/30',      text: 'text-blue-700 dark:text-blue-300',    icon: Wallet },
+  bank:            { label: 'Bank',                  group: 'Aset',       subgroup: 'Aset Lancar', side: 'D', color: 'sky',     bg: 'bg-sky-100 dark:bg-sky-900/30',        text: 'text-sky-700 dark:text-sky-300',      icon: Building2 },
+  piutang:         { label: 'Piutang',               group: 'Aset',       subgroup: 'Aset Lancar', side: 'D', color: 'teal',    bg: 'bg-teal-100 dark:bg-teal-900/30',      text: 'text-teal-700 dark:text-teal-300',    icon: ReceiptText },
+  persediaan:      { label: 'Persediaan',            group: 'Aset',       subgroup: 'Aset Lancar', side: 'D', color: 'amber',   bg: 'bg-amber-100 dark:bg-amber-900/30',    text: 'text-amber-700 dark:text-amber-300',  icon: Package },
+  aset_lancar:     { label: 'Aset Lancar Lain',      group: 'Aset',       subgroup: 'Aset Lancar', side: 'D', color: 'cyan',    bg: 'bg-cyan-100 dark:bg-cyan-900/30',      text: 'text-cyan-700 dark:text-cyan-300',    icon: Coins },
+  aset_tetap:      { label: 'Aset Tetap',            group: 'Aset',       subgroup: 'Aset Tetap',  side: 'D', color: 'indigo',  bg: 'bg-indigo-100 dark:bg-indigo-900/30',  text: 'text-indigo-700 dark:text-indigo-300',icon: Truck },
+  akum_penyusutan: { label: 'Akumulasi Penyusutan',  group: 'Aset',       subgroup: 'Aset Tetap',  side: 'K', color: 'slate',   bg: 'bg-slate-100 dark:bg-slate-800/50',    text: 'text-slate-600 dark:text-slate-300',  icon: TrendingDown },
+  // ── Kewajiban (normal Kredit) ──
+  hutang:          { label: 'Hutang Dagang',         group: 'Kewajiban',  subgroup: 'Kewajiban Lancar',        side: 'K', color: 'red',   bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-700 dark:text-red-300',    icon: TrendingDown },
+  hutang_pajak:    { label: 'Hutang Pajak',          group: 'Kewajiban',  subgroup: 'Kewajiban Lancar',        side: 'K', color: 'orange',bg: 'bg-orange-100 dark:bg-orange-900/30',text: 'text-orange-700 dark:text-orange-300',icon: ReceiptText },
+  hutang_bank:     { label: 'Hutang Bank / Jk Panjang', group: 'Kewajiban', subgroup: 'Kewajiban Jangka Panjang', side: 'K', color: 'rose', bg: 'bg-rose-100 dark:bg-rose-900/30',  text: 'text-rose-700 dark:text-rose-300',  icon: Landmark },
+  // ── Ekuitas (normal Kredit) ──
+  modal:           { label: 'Modal',                 group: 'Ekuitas',    side: 'K', color: 'purple',  bg: 'bg-purple-100 dark:bg-purple-900/30',  text: 'text-purple-700 dark:text-purple-300',icon: Users },
+  laba_ditahan:    { label: 'Laba Ditahan',          group: 'Ekuitas',    side: 'K', color: 'violet',  bg: 'bg-violet-100 dark:bg-violet-900/30',  text: 'text-violet-700 dark:text-violet-300',icon: PiggyBank },
+  prive:           { label: 'Prive (Penarikan)',     group: 'Ekuitas',    side: 'D', color: 'pink',    bg: 'bg-pink-100 dark:bg-pink-900/30',      text: 'text-pink-700 dark:text-pink-300',    icon: TrendingDown },
+  // ── Pendapatan (normal Kredit) ──
+  pendapatan:      { label: 'Pendapatan Penjualan',  group: 'Pendapatan', side: 'K', color: 'green',   bg: 'bg-green-100 dark:bg-green-900/30',     text: 'text-green-700 dark:text-green-300',  icon: TrendingUp },
+  pendapatan_lain: { label: 'Pendapatan Lain-lain',  group: 'Pendapatan', side: 'K', color: 'emerald', bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300',icon: TrendingUp },
+  // ── Beban (normal Debit) ──
+  hpp:             { label: 'Harga Pokok Penjualan', group: 'Beban',      subgroup: 'HPP',            side: 'D', color: 'amber',  bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', icon: Package },
+  beban:           { label: 'Beban Operasional',     group: 'Beban',      subgroup: 'Beban Operasional', side: 'D', color: 'orange', bg: 'bg-orange-100 dark:bg-orange-900/30',text: 'text-orange-700 dark:text-orange-300',icon: TrendingDown },
 }
 
 const TYPE_OPTIONS = Object.entries(TYPE_CONFIG).map(([value, { label, group }]) => ({ value, label: `${label} (${group})` }))
 const GROUP_ORDER  = ['Aset', 'Kewajiban', 'Ekuitas', 'Pendapatan', 'Beban']
 
-const CODE_PREFIX = { kas: '1-1', bank: '1-2', piutang: '1-3', hutang: '2-1', modal: '3-1', pendapatan: '4-1', beban: '5-1' }
+// Sisi normal per grup laporan → dipakai menghitung kontribusi (akun kontra otomatis mengurangi)
+const GROUP_NORMAL = { Aset: 'D', Kewajiban: 'K', Ekuitas: 'K', Pendapatan: 'K', Beban: 'D' }
+function contribution(a) {
+  const cfg = TYPE_CONFIG[a.type]; if (!cfg) return 0
+  const sign = cfg.side === GROUP_NORMAL[cfg.group] ? 1 : -1
+  return sign * Number(a.balance || 0)
+}
+function groupTotal(accounts, group) {
+  return accounts.filter(a => TYPE_CONFIG[a.type]?.group === group).reduce((s, a) => s + contribution(a), 0)
+}
+
+const CODE_PREFIX = {
+  kas: '1-1', bank: '1-1', piutang: '1-1', persediaan: '1-1', aset_lancar: '1-1',
+  aset_tetap: '1-2', akum_penyusutan: '1-2',
+  hutang: '2-1', hutang_pajak: '2-1', hutang_bank: '2-2',
+  modal: '3-1', laba_ditahan: '3-1', prive: '3-2',
+  pendapatan: '4-1', pendapatan_lain: '4-2',
+  hpp: '5-1', beban: '6-1',
+}
 
 function groupAccounts(accounts) {
   const map = {}
@@ -317,16 +353,20 @@ function TabDaftar({ accounts, onEdit, onDelete }) {
 
 // ── Tab: Neraca ───────────────────────────────────────────────────────────────
 function TabNeraca({ accounts }) {
-  const aset      = accounts.filter(a => ['kas','bank','piutang'].includes(a.type))
-  const kewajiban = accounts.filter(a => a.type === 'hutang')
-  const ekuitas   = accounts.filter(a => a.type === 'modal')
+  const inGroup   = g => accounts.filter(a => TYPE_CONFIG[a.type]?.group === g)
+  const asetLancar = inGroup('Aset').filter(a => TYPE_CONFIG[a.type]?.subgroup === 'Aset Lancar')
+  const asetTetap  = inGroup('Aset').filter(a => TYPE_CONFIG[a.type]?.subgroup === 'Aset Tetap')
+  const kewajiban  = inGroup('Kewajiban')
+  const ekuitas    = inGroup('Ekuitas')
 
-  const totalAset      = aset.reduce((s, a) => s + Number(a.balance), 0)
-  const totalKewajiban = kewajiban.reduce((s, a) => s + Number(a.balance), 0)
-  const totalEkuitas   = ekuitas.reduce((s, a) => s + Number(a.balance), 0)
+  const totalAsetLancar = asetLancar.reduce((s, a) => s + contribution(a), 0)
+  const totalAsetTetap  = asetTetap.reduce((s, a) => s + contribution(a), 0)
+  const totalAset       = totalAsetLancar + totalAsetTetap
+  const totalKewajiban  = groupTotal(accounts, 'Kewajiban')
+  const totalEkuitas    = groupTotal(accounts, 'Ekuitas')
 
-  const pendapatan = accounts.filter(a => a.type === 'pendapatan').reduce((s, a) => s + Number(a.balance), 0)
-  const beban      = accounts.filter(a => a.type === 'beban').reduce((s, a) => s + Number(a.balance), 0)
+  const pendapatan = groupTotal(accounts, 'Pendapatan')
+  const beban      = groupTotal(accounts, 'Beban')
   const labaBersih = pendapatan - beban
 
   const totalKewEkuitas = totalKewajiban + totalEkuitas + labaBersih
@@ -349,7 +389,7 @@ function TabNeraca({ accounts }) {
                       {a.name}
                     </td>
                     <td className="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-gray-100 tabular-nums">
-                      {formatRupiah(a.balance)}
+                      {formatRupiah(contribution(a))}
                     </td>
                   </tr>
                 ))}
@@ -375,8 +415,12 @@ function TabNeraca({ accounts }) {
           <h3 className="font-bold text-base text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <div className="w-1 h-5 bg-blue-500 rounded-full" /> ASET
           </h3>
-          <NeracaSection title="Aset Lancar" items={aset} total={totalAset}
+          <NeracaSection title="Aset Lancar" items={asetLancar} total={totalAsetLancar}
             colorClass="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" />
+          {asetTetap.length > 0 && (
+            <NeracaSection title="Aset Tetap" items={asetTetap} total={totalAsetTetap}
+              colorClass="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300" />
+          )}
           <div className="flex justify-between items-center bg-blue-600 text-white px-4 py-3 rounded-xl font-bold">
             <span>TOTAL ASET</span>
             <span className="tabular-nums">{formatRupiah(totalAset)}</span>
@@ -433,10 +477,10 @@ function TabNeraca({ accounts }) {
 
 // ── Tab: Laba Rugi ────────────────────────────────────────────────────────────
 function TabLabaRugi({ accounts }) {
-  const pendapatanList = accounts.filter(a => a.type === 'pendapatan')
-  const bebanList      = accounts.filter(a => a.type === 'beban')
-  const totalPendapatan = pendapatanList.reduce((s, a) => s + Number(a.balance), 0)
-  const totalBeban      = bebanList.reduce((s, a) => s + Number(a.balance), 0)
+  const pendapatanList = accounts.filter(a => TYPE_CONFIG[a.type]?.group === 'Pendapatan')
+  const bebanList      = accounts.filter(a => TYPE_CONFIG[a.type]?.group === 'Beban')
+  const totalPendapatan = pendapatanList.reduce((s, a) => s + contribution(a), 0)
+  const totalBeban      = bebanList.reduce((s, a) => s + contribution(a), 0)
   const labaBersih      = totalPendapatan - totalBeban
   const margin          = totalPendapatan > 0 ? ((labaBersih / totalPendapatan) * 100).toFixed(1) : 0
 
@@ -925,11 +969,11 @@ export default function Accounts() {
     } catch (err) { toast.error(err.message) }
   }
 
-  const totalAset       = accounts.filter(a => ['kas','bank','piutang'].includes(a.type)).reduce((s, a) => s + Number(a.balance), 0)
-  const totalKewajiban  = accounts.filter(a => a.type === 'hutang').reduce((s, a) => s + Number(a.balance), 0)
-  const totalModal      = accounts.filter(a => a.type === 'modal').reduce((s, a) => s + Number(a.balance), 0)
-  const totalPendapatan = accounts.filter(a => a.type === 'pendapatan').reduce((s, a) => s + Number(a.balance), 0)
-  const totalBeban      = accounts.filter(a => a.type === 'beban').reduce((s, a) => s + Number(a.balance), 0)
+  const totalAset       = groupTotal(accounts, 'Aset')
+  const totalKewajiban  = groupTotal(accounts, 'Kewajiban')
+  const totalModal      = groupTotal(accounts, 'Ekuitas')
+  const totalPendapatan = groupTotal(accounts, 'Pendapatan')
+  const totalBeban      = groupTotal(accounts, 'Beban')
   const labaBersih      = totalPendapatan - totalBeban
   const modalBersih     = totalAset - totalKewajiban
 

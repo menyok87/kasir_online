@@ -3,7 +3,13 @@ const router  = express.Router();
 const pool    = require('../database/db');
 const { tenantId } = require('../middleware/authMiddleware');
 
-const VALID_TYPES = ['kas', 'bank', 'piutang', 'hutang', 'modal', 'pendapatan', 'beban'];
+const VALID_TYPES = [
+  'kas', 'bank', 'piutang', 'persediaan', 'aset_lancar', 'aset_tetap', 'akum_penyusutan',
+  'hutang', 'hutang_pajak', 'hutang_bank',
+  'modal', 'laba_ditahan', 'prive',
+  'pendapatan', 'pendapatan_lain',
+  'hpp', 'beban',
+];
 
 // GET /api/accounts
 router.get('/', async (req, res, next) => {

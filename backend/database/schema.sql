@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS accounts (
   admin_id    INTEGER        REFERENCES users(id) ON DELETE CASCADE,
   code        VARCHAR(20)    NOT NULL,
   name        VARCHAR(100)   NOT NULL,
-  type        VARCHAR(20)    NOT NULL CHECK(type IN ('kas','bank','piutang','hutang','modal','pendapatan','beban')),
+  type        VARCHAR(20)    NOT NULL CHECK(type IN ('kas','bank','piutang','persediaan','aset_lancar','aset_tetap','akum_penyusutan','hutang','hutang_pajak','hutang_bank','modal','laba_ditahan','prive','pendapatan','pendapatan_lain','hpp','beban')),
   balance     NUMERIC(15,2)  NOT NULL DEFAULT 0,
   description TEXT           DEFAULT '',
   is_active   BOOLEAN        NOT NULL DEFAULT TRUE,

@@ -199,18 +199,49 @@ async function seed() {
       )
     `).catch(() => {});
 
+    // Perluas CHECK type agar mendukung akun akuntansi lengkap
+    await client.query(`ALTER TABLE accounts DROP CONSTRAINT IF EXISTS accounts_type_check`).catch(() => {});
+    await client.query(`ALTER TABLE accounts ADD CONSTRAINT accounts_type_check CHECK(type IN (
+      'kas','bank','piutang','persediaan','aset_lancar','aset_tetap','akum_penyusutan',
+      'hutang','hutang_pajak','hutang_bank','modal','laba_ditahan','prive',
+      'pendapatan','pendapatan_lain','hpp','beban'))`).catch(() => {});
+
     const defaultAccounts = [
-      { code: '1-1001', name: 'Kas Tunai',             type: 'kas',        description: 'Uang tunai di tangan' },
-      { code: '1-1002', name: 'Bank BCA',               type: 'bank',       description: 'Rekening bank BCA' },
-      { code: '1-1003', name: 'Bank BRI',               type: 'bank',       description: 'Rekening bank BRI' },
-      { code: '1-2001', name: 'Piutang Dagang',         type: 'piutang',    description: 'Tagihan kepada pelanggan' },
-      { code: '2-1001', name: 'Hutang Dagang',          type: 'hutang',     description: 'Kewajiban kepada pemasok' },
-      { code: '3-1001', name: 'Modal Usaha',            type: 'modal',      description: 'Modal awal pemilik usaha' },
-      { code: '4-1001', name: 'Pendapatan Penjualan',   type: 'pendapatan', description: 'Penerimaan dari penjualan produk' },
-      { code: '5-1001', name: 'Beban Pembelian Barang', type: 'beban',      description: 'Biaya pembelian barang dagangan' },
-      { code: '5-1002', name: 'Beban Gaji Karyawan',   type: 'beban',      description: 'Pembayaran gaji dan upah' },
-      { code: '5-1003', name: 'Beban Sewa Tempat',      type: 'beban',      description: 'Biaya sewa toko/gudang' },
-      { code: '5-1004', name: 'Beban Operasional',      type: 'beban',      description: 'Biaya listrik, air, internet, dll' },
+      // ── Aset Lancar (1-1xxx) ──
+      { code: '1-1001', name: 'Kas Tunai',             type: 'kas',             description: 'Uang tunai di tangan' },
+      { code: '1-1002', name: 'Kas Kecil',             type: 'kas',             description: 'Dana kas kecil operasional' },
+      { code: '1-1101', name: 'Bank BCA',              type: 'bank',            description: 'Rekening bank BCA' },
+      { code: '1-1102', name: 'Bank BRI',              type: 'bank',            description: 'Rekening bank BRI' },
+      { code: '1-1103', name: 'Saldo E-Wallet',        type: 'bank',            description: 'GoPay/QRIS/e-wallet merchant' },
+      { code: '1-1201', name: 'Piutang Dagang',        type: 'piutang',         description: 'Tagihan kepada pelanggan' },
+      { code: '1-1301', name: 'Persediaan Barang',     type: 'persediaan',      description: 'Nilai stok barang dagangan' },
+      { code: '1-1401', name: 'Perlengkapan Toko',     type: 'aset_lancar',     description: 'Perlengkapan habis pakai' },
+      { code: '1-1402', name: 'Biaya Dibayar Dimuka',  type: 'aset_lancar',     description: 'Sewa/asuransi dibayar dimuka' },
+      // ── Aset Tetap (1-2xxx) ──
+      { code: '1-2001', name: 'Peralatan',             type: 'aset_tetap',      description: 'Peralatan & mesin toko' },
+      { code: '1-2002', name: 'Kendaraan',             type: 'aset_tetap',      description: 'Kendaraan operasional' },
+      { code: '1-2101', name: 'Akumulasi Penyusutan',  type: 'akum_penyusutan', description: 'Akumulasi penyusutan aset tetap (kontra)' },
+      // ── Kewajiban (2-xxxx) ──
+      { code: '2-1001', name: 'Hutang Dagang',         type: 'hutang',          description: 'Kewajiban kepada pemasok' },
+      { code: '2-1002', name: 'Hutang Gaji',           type: 'hutang',          description: 'Gaji karyawan terhutang' },
+      { code: '2-1101', name: 'Hutang Pajak',          type: 'hutang_pajak',    description: 'PPN/PPh terhutang' },
+      { code: '2-2001', name: 'Hutang Bank',           type: 'hutang_bank',     description: 'Pinjaman bank jangka panjang' },
+      // ── Ekuitas (3-xxxx) ──
+      { code: '3-1001', name: 'Modal Usaha',           type: 'modal',           description: 'Modal awal pemilik usaha' },
+      { code: '3-1002', name: 'Laba Ditahan',          type: 'laba_ditahan',    description: 'Akumulasi laba periode lalu' },
+      { code: '3-2001', name: 'Prive',                 type: 'prive',           description: 'Penarikan pribadi pemilik (kontra)' },
+      // ── Pendapatan (4-xxxx) ──
+      { code: '4-1001', name: 'Pendapatan Penjualan',  type: 'pendapatan',      description: 'Penerimaan dari penjualan produk' },
+      { code: '4-2001', name: 'Pendapatan Lain-lain',  type: 'pendapatan_lain', description: 'Bunga, komisi, pendapatan lain' },
+      // ── HPP (5-xxxx) ──
+      { code: '5-1001', name: 'Harga Pokok Penjualan', type: 'hpp',             description: 'Harga pokok barang terjual' },
+      // ── Beban Operasional (6-xxxx) ──
+      { code: '6-1001', name: 'Beban Gaji Karyawan',   type: 'beban',           description: 'Pembayaran gaji dan upah' },
+      { code: '6-1002', name: 'Beban Sewa Tempat',     type: 'beban',           description: 'Biaya sewa toko/gudang' },
+      { code: '6-1003', name: 'Beban Listrik & Air',   type: 'beban',           description: 'Utilitas listrik, air' },
+      { code: '6-1004', name: 'Beban Internet & Telp', type: 'beban',           description: 'Komunikasi & internet' },
+      { code: '6-1005', name: 'Beban Penyusutan',      type: 'beban',           description: 'Penyusutan aset tetap periode' },
+      { code: '6-1006', name: 'Beban Operasional Lain',type: 'beban',           description: 'Biaya operasional lainnya' },
     ];
 
     for (const uid of [superAdminId, adminId].filter(Boolean)) {

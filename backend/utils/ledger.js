@@ -3,9 +3,9 @@
 // Saldo akun (accounts.balance) ikut diperbarui sesuai sisi normal akun, agar
 // Neraca & Laba Rugi yang membaca accounts.balance tetap sinkron.
 
-// Sisi normal akun
-const DEBIT_NORMAL  = ['kas', 'bank', 'piutang', 'beban']      // saldo += debit - kredit
-const CREDIT_NORMAL = ['hutang', 'modal', 'pendapatan']        // saldo += kredit - debit
+// Sisi normal akun (termasuk akun kontra: akum_penyusutan = Kredit, prive = Debit)
+const DEBIT_NORMAL  = ['kas', 'bank', 'piutang', 'persediaan', 'aset_lancar', 'aset_tetap', 'prive', 'hpp', 'beban']       // saldo += debit - kredit
+const CREDIT_NORMAL = ['akum_penyusutan', 'hutang', 'hutang_pajak', 'hutang_bank', 'modal', 'laba_ditahan', 'pendapatan', 'pendapatan_lain'] // saldo += kredit - debit
 
 // Perubahan saldo (signed) untuk satu baris jurnal berdasarkan tipe akun
 function balanceDelta(type, debit, credit) {
