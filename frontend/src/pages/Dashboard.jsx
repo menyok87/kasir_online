@@ -1,12 +1,35 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { TrendingUp, ShoppingBag, Package, AlertTriangle } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { getDashboardSummary, getDashboardChart } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
 
 function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
+}
+
+// Grafik batang ringan (CSS) — pengganti recharts, hemat memori & bundle
+function RevenueChart({ data }) {
+  const max = Math.max(...data.map(d => d.revenue), 1)
+  return (
+    <div className="h-[200px] flex items-end gap-2 md:gap-3 pt-6">
+      {data.map((d, i) => {
+        const pct = Math.max(3, Math.round((d.revenue / max) * 100))
+        return (
+          <div key={i} className="group relative flex-1 h-full flex flex-col items-center justify-end">
+            <div className="pointer-events-none absolute bottom-full mb-1 z-10 hidden group-hover:block whitespace-nowrap
+              bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 px-2.5 py-1.5 text-xs">
+              <div className="font-bold text-gray-800 dark:text-gray-100">{formatRupiah(d.revenue)}</div>
+              <div className="text-gray-400 dark:text-gray-500">{d.orders} transaksi</div>
+            </div>
+            <div className="w-full max-w-[38px] rounded-t-lg bg-gradient-to-t from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 transition-colors"
+              style={{ height: `${pct}%` }} />
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 whitespace-nowrap">{d.date}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 function StatCard({ icon: Icon, label, value, sub, color = 'blue' }) {
@@ -26,17 +49,6 @@ function StatCard({ icon: Icon, label, value, sub, color = 'blue' }) {
         <p className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 mt-0.5 truncate">{value}</p>
         {sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 hidden sm:block">{sub}</p>}
       </div>
-    </div>
-  )
-}
-
-const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 px-3 py-2 text-xs md:text-sm">
-      <p className="text-gray-500 dark:text-gray-400 mb-1">{label}</p>
-      <p className="font-bold text-gray-800 dark:text-gray-100">{formatRupiah(payload[0].value)}</p>
-      <p className="text-gray-400 dark:text-gray-500">{payload[1]?.value || 0} transaksi</p>
     </div>
   )
 }
@@ -93,16 +105,7 @@ export default function Dashboard() {
               Belum ada transaksi
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={chartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="revenue" fill="#3b82f6" radius={[4,4,0,0]} name="Pendapatan" />
-                <Bar dataKey="orders"  fill="#e0e7ff" radius={[4,4,0,0]} name="Transaksi" />
-              </BarChart>
-            </ResponsiveContainer>
+            <RevenueChart data={chartData} />
           )}
         </div>
 
