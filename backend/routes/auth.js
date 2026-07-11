@@ -8,7 +8,7 @@ const { authenticate }                     = require('../middleware/authMiddlewa
 const { isConfigured, maskEmail, sendVerificationEmail, sendResetPasswordEmail } = require('../utils/mailer')
 
 const JWT_SECRET  = process.env.JWT_SECRET || 'kasir-jwt-secret-ganti-di-production'
-const JWT_EXPIRES = '8h'
+const JWT_EXPIRES = '7d'   // sesi login berlaku 1 minggu
 
 function getBaseUrl(req) {
   return process.env.APP_URL ||
