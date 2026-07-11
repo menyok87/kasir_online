@@ -1,21 +1,38 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ── Aturan R8 / ProGuard untuk aplikasi Capacitor ─────────────────────────────
+# Capacitor & plugin dimuat lewat refleksi — WAJIB di-keep agar tidak dihapus /
+# di-rename oleh R8 (kalau tidak, plugin gagal saat runtime).
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Simpan anotasi (dipakai Capacitor untuk menemukan plugin & method)
+-keepattributes *Annotation*
+-keepattributes JavascriptInterface
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ── Capacitor core ────────────────────────────────────────────────────────────
+-keep public class com.getcapacitor.** { *; }
+-keep public class * extends com.getcapacitor.Plugin { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin public class * { *; }
+-keepclassmembers class * {
+  @com.getcapacitor.annotation.PermissionCallback <methods>;
+  @com.getcapacitor.annotation.ActivityCallback <methods>;
+  @com.getcapacitor.PluginMethod <methods>;
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ── Plugin pihak ketiga (biometrik) ──────────────────────────────────────────
+-keep class com.aparajita.capacitor.biometricauth.** { *; }
+
+# ── Cordova (di-bundle Capacitor) ────────────────────────────────────────────
+-keep class org.apache.cordova.** { *; }
+
+# ── WebView JavaScript interface ─────────────────────────────────────────────
+-keepclassmembers class * {
+  @android.webkit.JavascriptInterface <methods>;
+}
+
+# ── Umum: cegah warning yang menghentikan build ──────────────────────────────
+-dontwarn com.getcapacitor.**
+-dontwarn org.apache.cordova.**
+
+# Simpan enum values() / valueOf() (dipakai refleksi)
+-keepclassmembers enum * {
+  public static **[] values();
+  public static ** valueOf(java.lang.String);
+}
