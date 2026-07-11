@@ -892,10 +892,15 @@ export default function Settings() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving]   = useState(false)
   const [active, setActive]   = useState('toko')
+  const savedRef = useRef(null)   // snapshot data terakhir yang tersimpan (untuk cek perubahan)
 
   useEffect(() => {
     getSettings()
-      .then(({ data }) => setForm({ ...defaultSettings, ...data }))
+      .then(({ data }) => {
+        const merged = { ...defaultSettings, ...data }
+        setForm(merged)
+        savedRef.current = merged
+      })
       .catch(err => toast.error(err.message))
       .finally(() => setLoading(false))
   }, [])
@@ -909,7 +914,9 @@ export default function Settings() {
     setForm(updated)   // update lokal dulu agar UI langsung respons
     try {
       const { data } = await updateSettings(updated)
-      setForm({ ...defaultSettings, ...data })
+      const merged = { ...defaultSettings, ...data }
+      setForm(merged)
+      savedRef.current = merged
     } catch (err) {
       setForm(f => ({ ...f, [field]: form[field] }))   // rollback lokal
       throw err
@@ -921,11 +928,33 @@ export default function Settings() {
     setSaving(true)
     try {
       const { data } = await updateSettings(form)
-      setForm({ ...defaultSettings, ...data })
+      const merged = { ...defaultSettings, ...data }
+      setForm(merged)
+      savedRef.current = merged
       toast.success('Pengaturan berhasil disimpan')
     } catch (err) {
       toast.error(err.message)
     } finally { setSaving(false) }
+  }
+
+  // Auto-simpan perubahan saat pindah tab (tanpa perlu tekan Simpan)
+  async function autoSaveOnLeave() {
+    if (!form.store_name?.trim()) return                                  // nama toko wajib
+    if (JSON.stringify(form) === JSON.stringify(savedRef.current)) return // tidak ada perubahan
+    const snapshot = form
+    savedRef.current = snapshot   // optimistis — cegah simpan ganda saat pindah cepat
+    try {
+      await updateSettings(snapshot)
+      toast.success('Perubahan disimpan', { duration: 1200 })
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
+
+  function handleTabChange(next) {
+    if (next === active) return
+    autoSaveOnLeave()   // jalan di latar, tidak memblok perpindahan tab
+    setActive(next)
   }
 
   if (loading) return <FullPageSpinner />
@@ -941,11 +970,11 @@ export default function Settings() {
       </div>
 
       {/* Mobile tab bar */}
-      <MobileTabs active={active} onChange={setActive} />
+      <MobileTabs active={active} onChange={handleTabChange} />
 
       {/* Body */}
       <div className="flex gap-6 items-start">
-        <DesktopSidebar active={active} onChange={setActive} saving={saving} />
+        <DesktopSidebar active={active} onChange={handleTabChange} saving={saving} />
 
         <div className="flex-1 min-w-0 pb-20 lg:pb-0">
           {active === 'toko'     && <PanelToko     form={form} set={set} setForm={setForm} onSave={saveField} />}
