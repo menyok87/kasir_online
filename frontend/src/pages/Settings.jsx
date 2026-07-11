@@ -4,11 +4,12 @@ import {
   Store, Phone, MapPin, Mail, Globe, FileText, Save,
   QrCode, Landmark, ImagePlus, X, CheckCircle,
   Building2, CreditCard, Receipt, Settings2, ChevronRight,
-  Lock, Eye, EyeOff, ShieldCheck, Smartphone, ExternalLink, AlertTriangle
+  Lock, Eye, EyeOff, ShieldCheck, Smartphone, ExternalLink, AlertTriangle, Fingerprint
 } from 'lucide-react'
 import { getSettings, updateSettings, uploadProductImage, deleteProductImage, changePassword } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
 import { getImageUrl } from '../utils/getImageUrl'
+import { biometricAvailable, verifyBiometric, isBiometricEnabled, setBiometricEnabled } from '../utils/biometric'
 
 const defaultSettings = {
   store_name: '', store_tagline: '', store_address: '',
@@ -518,6 +519,44 @@ function PanelStruk({ form, set, setCheck, setForm }) {
 }
 
 // ── Panel: Keamanan (Ganti Password) ─────────────────────────────────────────
+// ── Kunci Sidik Jari (Android) ────────────────────────────────────────────────
+function BiometricSetting() {
+  const [avail, setAvail]     = useState(false)
+  const [enabled, setEnabled] = useState(isBiometricEnabled())
+  const [busy, setBusy]       = useState(false)
+
+  useEffect(() => { biometricAvailable().then(setAvail) }, [])
+  if (!avail) return null   // hanya tampil di app Android dengan biometrik terdaftar
+
+  async function toggle(on) {
+    setBusy(true)
+    try {
+      await verifyBiometric(on ? 'Aktifkan kunci sidik jari' : 'Nonaktifkan kunci sidik jari')
+      setBiometricEnabled(on); setEnabled(on)
+      toast.success(on ? 'Kunci sidik jari diaktifkan' : 'Kunci sidik jari dinonaktifkan')
+    } catch { toast.error('Verifikasi sidik jari gagal atau dibatalkan') }
+    finally { setBusy(false) }
+  }
+
+  return (
+    <SectionCard title="Kunci Sidik Jari" subtitle="Amankan aplikasi dengan biometrik perangkat" icon={Fingerprint} color="slate">
+      <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+        <div className="min-w-0 pr-3">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Kunci saat buka aplikasi</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Minta sidik jari setiap aplikasi dibuka / kembali aktif</p>
+        </div>
+        <button type="button" onClick={() => toggle(!enabled)} disabled={busy}
+          className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-60 ${enabled ? 'bg-slate-700 dark:bg-slate-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
+          <span className={`absolute top-[2px] left-[2px] bg-white w-5 h-5 rounded-full transition-transform ${enabled ? 'translate-x-5' : ''}`} />
+        </button>
+      </div>
+      <p className="text-xs text-gray-400 dark:text-gray-500">
+        Sidik jari memakai keamanan perangkat Anda. Bila gagal, aplikasi menawarkan PIN/pola perangkat sebagai cadangan.
+      </p>
+    </SectionCard>
+  )
+}
+
 function PanelPassword() {
   const [form, setForm]     = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [show, setShow]     = useState({ current: false, new: false, confirm: false })
@@ -905,7 +944,12 @@ export default function Settings() {
           {active === 'bank'     && <PanelBank     form={form} set={set} />}
           {active === 'gopay'    && <PanelGopay    form={form} set={set} setForm={setForm} />}
           {active === 'struk'    && <PanelStruk    form={form} set={set} setCheck={setCheck} setForm={setForm} />}
-          {active === 'keamanan' && <PanelPassword />}
+          {active === 'keamanan' && (
+            <div className="space-y-5">
+              <BiometricSetting />
+              <PanelPassword />
+            </div>
+          )}
         </div>
       </div>
 

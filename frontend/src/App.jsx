@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import Layout from './components/layout/Layout'
+import BiometricLock from './components/BiometricLock'
 import Login from './pages/Login'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import VerifyEmail from './pages/VerifyEmail'
@@ -78,6 +79,7 @@ export default function App() {
     <ThemeProvider>
     <BrowserRouter>
       <AuthProvider>
+        <BiometricLock />
         <Routes>
           {/* Public */}
           <Route path="/login"          element={<PublicOnly><Login /></PublicOnly>} />
