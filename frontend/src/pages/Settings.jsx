@@ -521,14 +521,14 @@ function PanelStruk({ form, set, setCheck, setForm }) {
 // ── Panel: Keamanan (Ganti Password) ─────────────────────────────────────────
 // ── Kunci Sidik Jari (Android) ────────────────────────────────────────────────
 function BiometricSetting() {
-  const [avail, setAvail]     = useState(false)
+  const [avail, setAvail]     = useState(null)  // null = masih dicek
   const [enabled, setEnabled] = useState(isBiometricEnabled())
   const [busy, setBusy]       = useState(false)
 
   useEffect(() => { biometricAvailable().then(setAvail) }, [])
-  if (!avail) return null   // hanya tampil di app Android dengan biometrik terdaftar
 
   async function toggle(on) {
+    if (!avail) return
     setBusy(true)
     try {
       await verifyBiometric(on ? 'Aktifkan kunci sidik jari' : 'Nonaktifkan kunci sidik jari')
@@ -538,18 +538,29 @@ function BiometricSetting() {
     finally { setBusy(false) }
   }
 
+  const canToggle = avail === true
+
   return (
     <SectionCard title="Kunci Sidik Jari" subtitle="Amankan aplikasi dengan biometrik perangkat" icon={Fingerprint} color="slate">
-      <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+      <div className={`flex items-center justify-between rounded-xl px-4 py-3 border ${canToggle ? 'bg-gray-50 dark:bg-gray-800/60 border-gray-100 dark:border-gray-700' : 'bg-gray-50/60 dark:bg-gray-800/40 border-gray-100 dark:border-gray-700 opacity-70'}`}>
         <div className="min-w-0 pr-3">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Kunci saat buka aplikasi</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Minta sidik jari setiap aplikasi dibuka / kembali aktif</p>
         </div>
-        <button type="button" onClick={() => toggle(!enabled)} disabled={busy}
-          className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-60 ${enabled ? 'bg-slate-700 dark:bg-slate-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-          <span className={`absolute top-[2px] left-[2px] bg-white w-5 h-5 rounded-full transition-transform ${enabled ? 'translate-x-5' : ''}`} />
+        <button type="button" onClick={() => toggle(!enabled)} disabled={busy || !canToggle}
+          className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed ${enabled && canToggle ? 'bg-slate-700 dark:bg-slate-500' : 'bg-gray-300 dark:bg-gray-600'} ${!canToggle ? 'opacity-50' : ''}`}>
+          <span className={`absolute top-[2px] left-[2px] bg-white w-5 h-5 rounded-full transition-transform ${enabled && canToggle ? 'translate-x-5' : ''}`} />
         </button>
       </div>
+
+      {avail === false && (
+        <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-3.5 py-2.5">
+          <AlertTriangle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-700 dark:text-amber-300">
+            Hanya tersedia di <strong>aplikasi Android</strong> yang punya sidik jari terdaftar di perangkat. Buka lewat aplikasi (bukan browser) untuk mengaktifkan.
+          </p>
+        </div>
+      )}
       <p className="text-xs text-gray-400 dark:text-gray-500">
         Sidik jari memakai keamanan perangkat Anda. Bila gagal, aplikasi menawarkan PIN/pola perangkat sebagai cadangan.
       </p>
