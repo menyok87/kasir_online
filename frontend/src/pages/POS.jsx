@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, Printer, CheckCircle,
   Tag, ArrowLeft, X, FileDown, Wallet, QrCode, Building2, CreditCard,
-  Package, ChevronRight, Sparkles, Smartphone, RefreshCw, XCircle, Clock, AlertCircle, Share2,
+  Package, ChevronRight, Sparkles, Smartphone, RefreshCw, XCircle, Clock, AlertCircle, Share2, ScanLine,
 } from 'lucide-react'
 import {
   getProducts, getCategories, createTransaction, getSettings,
@@ -15,6 +15,7 @@ import Modal from '../components/ui/Modal'
 import { FullPageSpinner } from '../components/ui/Spinner'
 import { printReceipt, downloadPDF, shareReceipt } from '../utils/printReceipt'
 import { printThermal, isAutoPrint, getSavedPrinter, isNativeApp as printerNative } from '../utils/printer'
+import { scanBarcode } from '../utils/barcode'
 
 function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -251,7 +252,7 @@ function ReceiptModal({ isOpen, transaction, settings, onClose }) {
 }
 
 // ── Panel Produk ──────────────────────────────────────────────────────────────
-function ProductPanel({ products, categories, search, setSearch, activeCatId, setActiveCatId, onAdd, cartCount, cartTotal, onShowCart }) {
+function ProductPanel({ products, categories, search, setSearch, activeCatId, setActiveCatId, onAdd, onScan, cartCount, cartTotal, onShowCart }) {
   const filtered = products.filter(p => {
     const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase())
     const matchCat    = !activeCatId || p.category_id === activeCatId
@@ -260,21 +261,27 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-      {/* Search */}
-      <div className="mb-3 relative">
-        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          className="input pl-10 text-sm bg-white dark:bg-gray-800"
-          placeholder="Cari nama produk..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        {search && (
-          <button onClick={() => setSearch('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-            <X size={14} />
-          </button>
-        )}
+      {/* Search + Scan */}
+      <div className="mb-3 flex gap-2">
+        <div className="relative flex-1">
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            className="input pl-10 text-sm bg-white dark:bg-gray-800"
+            placeholder="Cari / scan produk..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {search && (
+            <button onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        <button onClick={onScan} title="Scan barcode"
+          className="flex-shrink-0 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white flex items-center justify-center gap-1.5 text-sm font-semibold transition-all shadow-sm shadow-blue-300 dark:shadow-blue-900/40">
+          <ScanLine size={17} /> <span className="hidden sm:inline">Scan</span>
+        </button>
       </div>
 
       {/* Category Pills */}
@@ -852,6 +859,25 @@ export default function POS() {
     })
   }
 
+  // Scan barcode → cari produk berdasarkan SKU/barcode → tambah ke keranjang
+  async function handleScan() {
+    try {
+      const code = await scanBarcode()
+      if (!code) return
+      const norm = String(code).trim().toLowerCase()
+      const product = products.find(p => (p.sku || '').trim().toLowerCase() === norm)
+      if (product) {
+        if (product.stock <= 0) { toast.error(`${product.name} stok habis`); return }
+        addToCart(product)
+        toast.success(`+ ${product.name}`)
+      } else {
+        toast.error(`Barcode ${code}: produk tidak ditemukan. Pastikan SKU produk = barcode.`)
+      }
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
+
   function increaseQty(productId) {
     setCart(prev => prev.map(i => {
       if (i.product.id !== productId) return i
@@ -972,7 +998,7 @@ export default function POS() {
           products={products} categories={categories}
           search={search} setSearch={setSearch}
           activeCatId={activeCatId} setActiveCatId={setActiveCatId}
-          onAdd={addToCart} cartCount={cartCount} cartTotal={grandTotal}
+          onAdd={addToCart} onScan={handleScan} cartCount={cartCount} cartTotal={grandTotal}
           onShowCart={() => {}}
         />
         <CartPanel {...cartProps} />
@@ -985,7 +1011,7 @@ export default function POS() {
             products={products} categories={categories}
             search={search} setSearch={setSearch}
             activeCatId={activeCatId} setActiveCatId={setActiveCatId}
-            onAdd={addToCart} cartCount={cartCount} cartTotal={grandTotal}
+            onAdd={addToCart} onScan={handleScan} cartCount={cartCount} cartTotal={grandTotal}
             onShowCart={() => setMobileTab('cart')}
           />
         ) : (
