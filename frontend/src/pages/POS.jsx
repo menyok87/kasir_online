@@ -14,6 +14,7 @@ import { getImageUrl } from '../utils/getImageUrl'
 import Modal from '../components/ui/Modal'
 import { FullPageSpinner } from '../components/ui/Spinner'
 import { printReceipt, downloadPDF, shareReceipt } from '../utils/printReceipt'
+import { printThermal, isAutoPrint, getSavedPrinter, isNativeApp as printerNative } from '../utils/printer'
 
 function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -224,7 +225,13 @@ function ReceiptModal({ isOpen, transaction, settings, onClose }) {
 
       <div className="grid grid-cols-3 gap-2 mt-4">
         <button className="btn-secondary flex items-center justify-center gap-1.5 text-xs"
-          onClick={() => printReceipt(transaction, settings ?? {})}>
+          onClick={() => {
+            if (printerNative() && getSavedPrinter()) {
+              printThermal(transaction, settings ?? {}).catch(e => toast.error('Gagal cetak: ' + e.message))
+            } else {
+              printReceipt(transaction, settings ?? {})
+            }
+          }}>
           <Printer size={13} /> Cetak
         </button>
         <button className="btn-secondary flex items-center justify-center gap-1.5 text-xs"
@@ -916,10 +923,18 @@ export default function POS() {
       setMobileTab('products')
       fetchData()
       toast.success(`Transaksi ${data.invoice_number} berhasil!`)
+      maybeAutoPrint(data)
     } catch (err) {
       toast.error(err.message)
     } finally {
       setCheckoutLoading(false)
+    }
+  }
+
+  // Cetak otomatis ke printer Bluetooth bila diaktifkan & printer terpilih
+  function maybeAutoPrint(tx) {
+    if (printerNative() && isAutoPrint() && getSavedPrinter()) {
+      printThermal(tx, settings).catch(err => toast.error('Gagal cetak otomatis: ' + err.message))
     }
   }
 
@@ -928,6 +943,7 @@ export default function POS() {
     setReceipt(transaction)
     fetchData()
     toast.success(`Transaksi ${transaction?.invoice_number} berhasil!`)
+    maybeAutoPrint(transaction)
   }
 
   function handleQrCancel() {

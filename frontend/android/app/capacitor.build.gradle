@@ -12,6 +12,7 @@ dependencies {
     implementation project(':aparajita-capacitor-biometric-auth')
     implementation project(':capacitor-filesystem')
     implementation project(':capacitor-share')
+    implementation project(':capacitor-thermal-printer')
 
 }
 

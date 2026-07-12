@@ -4,12 +4,17 @@ import {
   Store, Phone, MapPin, Mail, Globe, FileText, Save,
   QrCode, Landmark, ImagePlus, X, CheckCircle,
   Building2, CreditCard, Receipt, Settings2, ChevronRight,
-  Lock, Eye, EyeOff, ShieldCheck, Smartphone, ExternalLink, AlertTriangle, Fingerprint
+  Lock, Eye, EyeOff, ShieldCheck, Smartphone, ExternalLink, AlertTriangle, Fingerprint,
+  Printer, Bluetooth, RefreshCw, Trash2
 } from 'lucide-react'
 import { getSettings, updateSettings, uploadProductImage, deleteProductImage, changePassword } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
 import { getImageUrl } from '../utils/getImageUrl'
 import { biometricAvailable, verifyBiometric, isBiometricEnabled, setBiometricEnabled } from '../utils/biometric'
+import {
+  isNativeApp as printerNative, getSavedPrinter, savePrinter, clearPrinter,
+  isAutoPrint, setAutoPrint, scanPrinters, testPrint,
+} from '../utils/printer'
 
 const defaultSettings = {
   store_name: '', store_tagline: '', store_address: '',
@@ -29,6 +34,7 @@ const SECTIONS = [
   { id: 'bank',      label: 'Bank',       icon: Landmark,    color: 'amber'  },
   { id: 'gopay',     label: 'GoPay',      icon: Smartphone,  color: 'green'  },
   { id: 'struk',     label: 'Struk',      icon: FileText,    color: 'rose'   },
+  { id: 'printer',   label: 'Printer',    icon: Printer,     color: 'slate'  },
   { id: 'keamanan',  label: 'Keamanan',   icon: Lock,        color: 'slate'  },
 ]
 
@@ -886,6 +892,127 @@ function PanelQrisDana({ form, setForm }) {
   )
 }
 
+// ── Panel: Printer Struk (Bluetooth thermal) ──────────────────────────────────
+function PanelPrinter({ form }) {
+  const native = printerNative()
+  const [printer, setPrinter] = useState(getSavedPrinter())
+  const [autoPrint, setAuto]  = useState(isAutoPrint())
+  const [scanning, setScanning] = useState(false)
+  const [devices, setDevices] = useState([])
+  const [busy, setBusy]       = useState(false)
+  const stopRef = useRef(null)
+
+  useEffect(() => () => { stopRef.current?.() }, [])
+
+  async function startScan() {
+    setDevices([]); setScanning(true)
+    try {
+      stopRef.current = await scanPrinters(
+        d => setDevices(list => list.some(x => x.address === d.address) ? list : [...list, d]),
+        () => setScanning(false),
+      )
+    } catch (e) { toast.error('Gagal memindai: ' + e.message); setScanning(false) }
+  }
+  async function stopScan() { try { await stopRef.current?.() } catch {} stopRef.current = null; setScanning(false) }
+
+  async function pick(d) {
+    setBusy(true)
+    try {
+      savePrinter(d.address, d.name)
+      setPrinter({ address: d.address, name: d.name || d.address })
+      await stopScan(); setDevices([])
+      toast.success('Printer dipilih: ' + (d.name || d.address))
+    } catch (e) { toast.error(e.message) } finally { setBusy(false) }
+  }
+
+  async function doTest() {
+    setBusy(true)
+    try { await testPrint(form); toast.success('Struk uji dikirim ke printer') }
+    catch (e) { toast.error('Gagal mencetak: ' + e.message) } finally { setBusy(false) }
+  }
+
+  return (
+    <SectionCard title="Printer Struk (Bluetooth)" subtitle="Cetak struk otomatis ke printer thermal Bluetooth" icon={Printer} color="slate">
+      {!native && (
+        <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-3.5 py-2.5">
+          <AlertTriangle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-700 dark:text-amber-300">
+            Fitur printer Bluetooth hanya tersedia di <strong>aplikasi Android</strong>. Buka lewat aplikasi (bukan browser).
+          </p>
+        </div>
+      )}
+
+      {/* Printer terpilih */}
+      <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Bluetooth size={16} className={printer ? 'text-blue-500' : 'text-gray-400'} />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
+              {printer ? printer.name : 'Belum ada printer'}
+            </p>
+            {printer && <p className="text-xs text-gray-400 truncate font-mono">{printer.address}</p>}
+          </div>
+        </div>
+        {printer && (
+          <button type="button" onClick={() => { clearPrinter(); setPrinter(null) }}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0" title="Hapus">
+            <Trash2 size={14} />
+          </button>
+        )}
+      </div>
+
+      {/* Scan */}
+      <div className="flex gap-2">
+        <button type="button" onClick={scanning ? stopScan : startScan} disabled={!native || busy}
+          className="btn-secondary flex-1 flex items-center justify-center gap-2 text-sm disabled:opacity-50">
+          {scanning
+            ? <><span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />Memindai… (ketuk untuk berhenti)</>
+            : <><RefreshCw size={14} />Cari Printer Bluetooth</>}
+        </button>
+        {printer && (
+          <button type="button" onClick={doTest} disabled={!native || busy}
+            className="btn-secondary flex items-center justify-center gap-1.5 text-sm px-4 disabled:opacity-50">
+            <Printer size={14} />Tes
+          </button>
+        )}
+      </div>
+
+      {/* Daftar perangkat hasil scan */}
+      {devices.length > 0 && (
+        <div className="border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden divide-y divide-gray-100 dark:divide-gray-800">
+          {devices.map(d => (
+            <button type="button" key={d.address} onClick={() => pick(d)} disabled={busy}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors disabled:opacity-50">
+              <Bluetooth size={15} className="text-blue-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{d.name || 'Perangkat'}</p>
+                <p className="text-xs text-gray-400 font-mono truncate">{d.address}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      {native && !scanning && devices.length === 0 && !printer && (
+        <p className="text-xs text-gray-400 dark:text-gray-500">
+          Nyalakan printer & pastikan sudah dipasangkan (paired) di Bluetooth HP, lalu ketuk "Cari Printer".
+        </p>
+      )}
+
+      {/* Auto-print */}
+      <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+        <div className="min-w-0 pr-3">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Cetak otomatis setelah bayar</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Struk langsung dicetak begitu pembayaran berhasil</p>
+        </div>
+        <button type="button" onClick={() => { const v = !autoPrint; setAutoPrint(v); setAuto(v) }}
+          className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${autoPrint ? 'bg-slate-700 dark:bg-slate-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
+          <span className={`absolute top-[2px] left-[2px] bg-white w-5 h-5 rounded-full transition-transform ${autoPrint ? 'translate-x-5' : ''}`} />
+        </button>
+      </div>
+    </SectionCard>
+  )
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Settings() {
   const [form, setForm]       = useState(defaultSettings)
@@ -984,6 +1111,7 @@ export default function Settings() {
           {active === 'bank'     && <PanelBank     form={form} set={set} />}
           {active === 'gopay'    && <PanelGopay    form={form} set={set} setForm={setForm} />}
           {active === 'struk'    && <PanelStruk    form={form} set={set} setCheck={setCheck} setForm={setForm} />}
+          {active === 'printer'  && <PanelPrinter  form={form} />}
           {active === 'keamanan' && (
             <div className="space-y-5">
               <BiometricSetting />
