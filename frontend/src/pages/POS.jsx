@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, Printer, CheckCircle,
   Tag, ArrowLeft, X, FileDown, Wallet, QrCode, Building2, CreditCard,
-  Package, ChevronRight, Sparkles, Smartphone, RefreshCw, XCircle, Clock, AlertCircle,
+  Package, ChevronRight, Sparkles, Smartphone, RefreshCw, XCircle, Clock, AlertCircle, Share2,
 } from 'lucide-react'
 import {
   getProducts, getCategories, createTransaction, getSettings,
@@ -13,7 +13,7 @@ import {
 import { getImageUrl } from '../utils/getImageUrl'
 import Modal from '../components/ui/Modal'
 import { FullPageSpinner } from '../components/ui/Spinner'
-import { printReceipt, downloadPDF } from '../utils/printReceipt'
+import { printReceipt, downloadPDF, shareReceipt } from '../utils/printReceipt'
 
 function formatRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -222,14 +222,18 @@ function ReceiptModal({ isOpen, transaction, settings, onClose }) {
         </div>
       </div>
 
-      <div className="flex gap-2 mt-4">
-        <button className="btn-secondary flex-1 flex items-center justify-center gap-1.5 text-xs"
+      <div className="grid grid-cols-3 gap-2 mt-4">
+        <button className="btn-secondary flex items-center justify-center gap-1.5 text-xs"
           onClick={() => printReceipt(transaction, settings ?? {})}>
           <Printer size={13} /> Cetak
         </button>
-        <button className="btn-secondary flex-1 flex items-center justify-center gap-1.5 text-xs"
+        <button className="btn-secondary flex items-center justify-center gap-1.5 text-xs"
           onClick={() => downloadPDF(transaction, settings ?? {})}>
           <FileDown size={13} /> PDF
+        </button>
+        <button className="btn-secondary flex items-center justify-center gap-1.5 text-xs"
+          onClick={() => shareReceipt(transaction, settings ?? {})}>
+          <Share2 size={13} /> Bagikan
         </button>
       </div>
       <button className="btn-primary w-full mt-2 flex items-center justify-center gap-2" onClick={onClose}>

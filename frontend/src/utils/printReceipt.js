@@ -262,7 +262,12 @@ export function printReceipt(transaction, settings = {}) {
 }
 
 // ── A4 / Faktur PDF ───────────────────────────────────────────────────────────
-export async function downloadPDF(transaction, settings = {}) {
+// Bagikan struk sebagai PDF (share sheet di Android; navigator.share / unduh di web)
+export function shareReceipt(transaction, settings = {}) {
+  return downloadPDF(transaction, settings, { share: true })
+}
+
+export async function downloadPDF(transaction, settings = {}, opts = {}) {
   if (!transaction) return
   const tx = transaction
 
@@ -356,12 +361,20 @@ export async function downloadPDF(transaction, settings = {}) {
     const fileName = `Faktur-${tx.invoice_number}.pdf`
 
     if (isCapacitor()) {
-      // Android/iOS: tulis file PDF lalu buka share sheet (Simpan ke Files/Drive/dll)
+      // Android/iOS: tulis file PDF lalu buka share sheet (Simpan ke Files/Drive/kirim WA/dll)
       const base64 = doc.output('datauristring').split(',')[1]
       const { Filesystem, Directory } = await import('@capacitor/filesystem')
       const { Share } = await import('@capacitor/share')
       const res = await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Cache })
-      await Share.share({ title: fileName, text: `Faktur ${tx.invoice_number}`, url: res.uri })
+      await Share.share({ title: fileName, text: `Struk ${tx.invoice_number}`, url: res.uri })
+    } else if (opts.share && navigator.share) {
+      // Web: bagikan file PDF via Web Share API bila didukung
+      const file = new File([doc.output('blob')], fileName, { type: 'application/pdf' })
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: fileName, text: `Struk ${tx.invoice_number}` })
+      } else {
+        doc.save(fileName)
+      }
     } else {
       // Web/desktop: unduh langsung
       doc.save(fileName)
