@@ -262,7 +262,7 @@ export function printReceipt(transaction, settings = {}) {
 }
 
 // ── A4 / Faktur PDF ───────────────────────────────────────────────────────────
-export function downloadPDF(transaction, settings = {}) {
+export async function downloadPDF(transaction, settings = {}) {
   if (!transaction) return
   const tx = transaction
 
@@ -272,187 +272,103 @@ export function downloadPDF(transaction, settings = {}) {
   const storePhone   = settings.store_phone    || ''
   const storeEmail   = settings.store_email    || ''
   const storeWebsite = settings.store_website  || ''
-  const storeLogo    = settings.store_logo     || ''
   const footerMsg    = settings.footer_msg     || 'Terima kasih telah berbelanja!'
   const showNote     = settings.show_footer_note !== false
 
-  const contactParts = [storeAddress, storePhone ? '📞 ' + storePhone : '', storeEmail, storeWebsite].filter(Boolean)
+  const rp = n => formatRupiah(n).replace(/ /g, ' ')   // hilangkan NBSP agar rapi di PDF
+  const payLabel = paymentLabel[tx.payment_method] || tx.payment_method || '-'
+  const contactParts = [storeAddress, storePhone ? 'Telp: ' + storePhone : '', storeEmail, storeWebsite].filter(Boolean)
 
-  const itemRows = (tx.items || []).map((item, i) => `
-    <tr class="${i % 2 === 1 ? 'row-alt' : ''}">
-      <td class="num">${i + 1}</td>
-      <td class="pname">${item.product_name}</td>
-      <td class="center qty">${item.quantity}</td>
-      <td class="right dim">${formatRupiah(item.price)}</td>
-      <td class="right bold">${formatRupiah(item.subtotal)}</td>
-    </tr>`).join('')
+  try {
+    const { jsPDF } = await import('jspdf')
+    const autoTable = (await import('jspdf-autotable')).default
 
-  const html = `<!DOCTYPE html><html lang="id"><head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Faktur ${tx.invoice_number} — ${storeName}</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-      background:#e8ecf0;min-height:100vh;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+    const W = doc.internal.pageSize.getWidth()
+    const M = 14
+
+    // Header band biru
+    doc.setFillColor(37, 99, 235)
+    doc.rect(0, 0, W, 30, 'F')
+    doc.setTextColor(255)
+    doc.setFont('helvetica', 'bold');   doc.setFontSize(18); doc.text(storeName, M, 14)
+    if (storeTagline) { doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text(storeTagline, M, 20) }
+    doc.setFont('helvetica', 'bold');   doc.setFontSize(13); doc.text('FAKTUR', W - M, 13, { align: 'right' })
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8);  doc.text('LUNAS', W - M, 19, { align: 'right' })
+
+    let y = 38
+    if (contactParts.length) {
+      doc.setTextColor(100); doc.setFontSize(8)
+      doc.text(contactParts.join('  ·  '), M, y); y += 7
     }
-    .action-bar{
-      position:sticky;top:0;z-index:100;
-      background:#1e293b;padding:10px 16px;
-      display:flex;align-items:center;gap:10px;
+
+    // Info faktur
+    doc.setTextColor(15, 23, 42); doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
+    doc.text(`No. Faktur: ${tx.invoice_number}`, M, y); y += 6
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(80)
+    doc.text(`Tanggal    : ${formatDateLong(tx.created_at)}`, M, y); y += 5
+    doc.text(`Pembayaran : ${payLabel}   ·   Item: ${(tx.items || []).reduce((s, i) => s + i.quantity, 0)} pcs`, M, y); y += 2
+
+    // Tabel item
+    autoTable(doc, {
+      startY: y + 3,
+      head: [['#', 'Nama Produk', 'Qty', 'Harga', 'Subtotal']],
+      body: (tx.items || []).map((it, i) => [i + 1, it.product_name, it.quantity, rp(it.price), rp(it.subtotal)]),
+      styles: { fontSize: 9, cellPadding: 2.4 },
+      headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 10, halign: 'center', textColor: [148, 163, 184] },
+        2: { cellWidth: 16, halign: 'center' },
+        3: { cellWidth: 32, halign: 'right' },
+        4: { cellWidth: 34, halign: 'right', fontStyle: 'bold' },
+      },
+      margin: { left: M, right: M },
+    })
+
+    // Ringkasan (kanan)
+    let ty = doc.lastAutoTable.finalY + 8
+    const boxX = W - M - 82
+    const sumRow = (k, v, color = [71, 85, 105]) => {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...color)
+      doc.text(k, boxX, ty); doc.text(v, W - M, ty, { align: 'right' }); ty += 6
     }
-    .action-bar span{color:#94a3b8;font-size:13px;flex:1}
-    .abtn{padding:9px 18px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px}
-    .abtn-blue{background:#2563eb;color:#fff}
-    .abtn-blue:hover{background:#1d4ed8}
-    .abtn-gray{background:#374151;color:#d1d5db}
-    .abtn-gray:hover{background:#4b5563}
-    .wrap{max-width:800px;margin:24px auto;background:#fff;box-shadow:0 8px 40px rgba(0,0,0,.15);border-radius:12px;overflow:hidden}
-    .hdr{background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 60%,#1e40af 100%);color:#fff;padding:36px 40px 32px}
-    .hdr-top{display:flex;justify-content:space-between;align-items:flex-start}
-    .hdr-logo{display:flex;align-items:center;gap:14px}
-    .hdr-icon{width:48px;height:48px;background:rgba(255,255,255,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden}
-    .hdr-icon img{width:100%;height:100%;object-fit:contain;padding:6px}
-    .store-name{font-size:26px;font-weight:800;letter-spacing:-.5px}
-    .store-tagline{font-size:13px;opacity:.75;margin-top:2px}
-    .hdr-badge{background:rgba(255,255,255,.15);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:8px 16px;text-align:right}
-    .hdr-badge .label{font-size:10px;opacity:.7;text-transform:uppercase;font-weight:600;letter-spacing:.5px}
-    .hdr-badge .doc-type{font-size:18px;font-weight:800;margin-top:2px}
-    .contact{margin-top:16px;font-size:12px;opacity:.7;line-height:1.6}
-    .inv-bar{background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:18px 40px;display:flex;justify-content:space-between;align-items:center}
-    .inv-bar .lbl{font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:4px}
-    .inv-bar .inv-num{font-size:20px;font-weight:800;color:#0f172a;letter-spacing:.5px}
-    .status-badge{background:#dcfce7;color:#15803d;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #bbf7d0;display:flex;align-items:center;gap:5px}
-    .body{padding:32px 40px}
-    .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #f1f5f9}
-    .info-item .lbl{font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:5px}
-    .info-item .val{font-size:14px;color:#0f172a;font-weight:600}
-    .section-title{font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:10px}
-    .tbl{width:100%;border-collapse:collapse;margin-bottom:24px}
-    .tbl thead th{background:#f1f5f9;padding:10px 12px;font-size:11px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid #e2e8f0}
-    .tbl tbody td{padding:12px 12px;font-size:13px;color:#1e293b;border-bottom:1px solid #f1f5f9;vertical-align:middle}
-    .row-alt td{background:#fafafa}
-    .num{color:#94a3b8;font-size:12px;width:32px}
-    .pname{font-weight:600}
-    .center{text-align:center}
-    .right{text-align:right}
-    .dim{color:#64748b;font-size:12px}
-    .bold{font-weight:700}
-    .qty{color:#475569}
-    .summary-wrap{display:flex;justify-content:flex-end}
-    .summary-box{min-width:300px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}
-    .sum-row{display:flex;justify-content:space-between;padding:10px 16px;font-size:13px;color:#475569;border-bottom:1px solid #f1f5f9}
-    .sum-row:last-child{border-bottom:none}
-    .sum-row .k{font-weight:500}
-    .sum-row .v{font-weight:600;color:#1e293b}
-    .sum-row.discount .v{color:#16a34a}
-    .sum-row.change .k,.sum-row.change .v{color:#16a34a;font-weight:700}
-    .sum-total{background:linear-gradient(135deg,#2563eb,#1d4ed8);padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
-    .sum-total .k{font-size:14px;font-weight:700;color:#fff}
-    .sum-total .v{font-size:22px;font-weight:900;color:#fff}
-    .ftr{border-top:1px solid #e2e8f0;padding:24px 40px;text-align:center}
-    .ftr .msg{font-size:15px;color:#475569;font-weight:600;margin-bottom:6px}
-    .ftr .note{font-size:11px;color:#94a3b8}
-    .ftr .powered{margin-top:12px;font-size:11px;color:#cbd5e1}
-    @media print{
-      body{background:#fff}
-      .no-print{display:none!important}
-      .wrap{max-width:100%;margin:0;box-shadow:none;border-radius:0}
-      @page{size:A4;margin:10mm}
+    sumRow('Subtotal', rp(tx.subtotal))
+    if (tx.discount > 0) sumRow('Diskon', '- ' + rp(tx.discount), [22, 163, 74])
+    if (tx.tax > 0)      sumRow('Pajak', rp(tx.tax))
+    sumRow(`Dibayar (${payLabel})`, rp(tx.amount_paid))
+    sumRow('Kembalian', rp(tx.change_amount), [22, 163, 74])
+
+    ty += 2
+    doc.setFillColor(37, 99, 235)
+    doc.rect(boxX - 4, ty - 5, (W - M) - (boxX - 4), 10, 'F')
+    doc.setTextColor(255); doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
+    doc.text('TOTAL', boxX, ty + 1.5); doc.text(rp(tx.grand_total), W - M, ty + 1.5, { align: 'right' })
+    ty += 16
+
+    // Footer
+    doc.setTextColor(71, 85, 105); doc.setFont('helvetica', 'bold'); doc.setFontSize(10)
+    doc.text(footerMsg, W / 2, ty, { align: 'center' }); ty += 5
+    if (showNote) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(148, 163, 184)
+      doc.text('Simpan faktur ini sebagai bukti pembelian yang sah', W / 2, ty, { align: 'center' })
     }
-  </style>
-</head><body>
 
-  <div class="action-bar no-print">
-    <span>Faktur — ${tx.invoice_number}</span>
-    <button class="abtn abtn-blue" onclick="window.print()">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
-      Cetak / Simpan PDF
-    </button>
-    <button class="abtn abtn-gray" onclick="window.close()">✕ Tutup</button>
-  </div>
+    const fileName = `Faktur-${tx.invoice_number}.pdf`
 
-  <div class="wrap">
-    <div class="hdr">
-      <div class="hdr-top">
-        <div class="hdr-logo">
-          <div class="hdr-icon">${storeLogo ? `<img src="${storeLogo}" alt="Logo">` : '🏪'}</div>
-          <div>
-            <div class="store-name">${storeName}</div>
-            ${storeTagline ? `<div class="store-tagline">${storeTagline}</div>` : ''}
-          </div>
-        </div>
-        <div class="hdr-badge">
-          <div class="label">Dokumen</div>
-          <div class="doc-type">FAKTUR</div>
-        </div>
-      </div>
-      ${contactParts.length ? `<div class="contact">${contactParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
-    </div>
-
-    <div class="inv-bar">
-      <div>
-        <div class="lbl">Nomor Faktur</div>
-        <div class="inv-num">${tx.invoice_number}</div>
-      </div>
-      <div class="status-badge">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-        LUNAS
-      </div>
-    </div>
-
-    <div class="body">
-      <div class="info-grid">
-        <div class="info-item">
-          <div class="lbl">Tanggal &amp; Waktu</div>
-          <div class="val">${formatDateLong(tx.created_at)}</div>
-        </div>
-        <div class="info-item">
-          <div class="lbl">Metode Pembayaran</div>
-          <div class="val">${paymentLabel[tx.payment_method] || tx.payment_method}</div>
-        </div>
-        <div class="info-item">
-          <div class="lbl">Jumlah Item</div>
-          <div class="val">${(tx.items || []).reduce((s, i) => s + i.quantity, 0)} pcs</div>
-        </div>
-      </div>
-
-      <div class="section-title">Detail Pembelian</div>
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th style="text-align:left;width:32px">#</th>
-            <th style="text-align:left">Nama Produk</th>
-            <th style="text-align:center;width:60px">Qty</th>
-            <th style="text-align:right;width:120px">Harga Satuan</th>
-            <th style="text-align:right;width:120px">Subtotal</th>
-          </tr>
-        </thead>
-        <tbody>${itemRows}</tbody>
-      </table>
-
-      <div class="summary-wrap">
-        <div class="summary-box">
-          <div class="sum-row"><span class="k">Subtotal</span><span class="v">${formatRupiah(tx.subtotal)}</span></div>
-          ${tx.discount > 0 ? `<div class="sum-row discount"><span class="k">Diskon</span><span class="v">− ${formatRupiah(tx.discount)}</span></div>` : ''}
-          ${tx.tax > 0 ? `<div class="sum-row"><span class="k">Pajak</span><span class="v">${formatRupiah(tx.tax)}</span></div>` : ''}
-          <div class="sum-row"><span class="k">Dibayar (${paymentLabel[tx.payment_method] || '-'})</span><span class="v">${formatRupiah(tx.amount_paid)}</span></div>
-          <div class="sum-row change"><span class="k">Kembalian</span><span class="v">${formatRupiah(tx.change_amount)}</span></div>
-          <div class="sum-total"><span class="k">TOTAL</span><span class="v">${formatRupiah(tx.grand_total)}</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="ftr">
-      <div class="msg">${footerMsg}</div>
-      ${showNote ? '<div class="note">Simpan faktur ini sebagai bukti pembelian yang sah</div>' : ''}
-      <div class="powered">Powered by ${storeName}</div>
-    </div>
-  </div>
-
-  <script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script>
-</body></html>`
-
-  showReceipt(html, `Faktur ${tx.invoice_number}`, 860, 720)
+    if (isCapacitor()) {
+      // Android/iOS: tulis file PDF lalu buka share sheet (Simpan ke Files/Drive/dll)
+      const base64 = doc.output('datauristring').split(',')[1]
+      const { Filesystem, Directory } = await import('@capacitor/filesystem')
+      const { Share } = await import('@capacitor/share')
+      const res = await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Cache })
+      await Share.share({ title: fileName, text: `Faktur ${tx.invoice_number}`, url: res.uri })
+    } else {
+      // Web/desktop: unduh langsung
+      doc.save(fileName)
+    }
+  } catch (err) {
+    console.error('[PDF] Gagal membuat PDF:', err)
+    alert('Gagal membuat PDF faktur. Coba lagi.')
+  }
+  return
 }
