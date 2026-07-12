@@ -1,5 +1,27 @@
 # Catatan Rilis — Kasir Online
 
+## Versi 1.2.1 (versionCode 11)
+
+### ✨ Baru
+- **Login Sidik Jari (biometrik)** untuk Android — kunci aplikasi saat dibuka.
+- **Unduh & bagikan struk sebagai PDF** — di Android muncul share sheet (Simpan ke Files/Drive/kirim), di web unduh langsung.
+- **QRIS Otomatis** (DANA, OVO, GoPay, ShopeePay, m-banking) — nominal & verifikasi otomatis, plus tab Pengaturan QRIS/DANA.
+- **Daftar Akun akuntansi lengkap** (17 tipe: Aset Lancar/Tetap, Akumulasi Penyusutan, Persediaan, Hutang Bank/Pajak, Prive, Laba Ditahan, HPP, dll) + Buku Besar & Laporan Penjualan otomatis.
+
+### ⚡ Peningkatan
+- **R8 aktif** (shrink + obfuscate) — ukuran aplikasi jauh lebih kecil (~45%), skor optimasi Play naik.
+- **Kompatibilitas Android 15** edge-to-edge — konten tidak tertutup status/navigation bar.
+- Sesi login diperpanjang jadi **7 hari**.
+- Kompresi gambar otomatis; QRIS disimpan lossless.
+
+### 🐛 Perbaikan
+- Pembayaran GoPay/QRIS: stok kembali otomatis bila gagal/kedaluwarsa; pesan error lebih jelas.
+- Auto-simpan pengaturan saat pindah tab.
+- Berbagai perbaikan kestabilan.
+
+---
+
+
 ## Versi 1.1.7 (versionCode 7)
 
 ### ✨ Baru
