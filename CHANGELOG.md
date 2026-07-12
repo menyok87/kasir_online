@@ -1,5 +1,19 @@
 # Catatan Rilis — Kasir Online
 
+## Versi 1.2.2 (versionCode 12)
+
+### ✨ Baru
+- **Cetak struk ke printer Bluetooth (thermal ESC/POS)** — scan & pilih printer di Pengaturan → Printer, tes cetak, dan **cetak otomatis setelah pembayaran berhasil**.
+- **Unduh struk sebagai PDF** ke folder Dokumen perangkat (Android) / unduh langsung (web).
+- **Bagikan struk** (share sheet: WhatsApp, simpan ke Files, dll).
+
+### 🐛 Perbaikan
+- Tombol struk dipisah jelas: **Cetak · Unduh · Bagikan**.
+- Berbagai perbaikan kestabilan.
+
+---
+
+
 ## Versi 1.2.1 (versionCode 11)
 
 ### ✨ Baru

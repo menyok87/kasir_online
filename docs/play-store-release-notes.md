@@ -5,7 +5,39 @@ Batas: **500 karakter per bahasa**.
 
 ---
 
-## Versi 1.2.1 (versionCode 11) — TERBARU
+## Versi 1.2.2 (versionCode 12) — TERBARU
+
+### 🇮🇩 Indonesia (id-ID) — ± 406 karakter
+```
+Versi 1.2.2 — Cetak & bagikan struk!
+
+• Cetak struk ke printer Bluetooth (thermal) — bisa cetak otomatis setelah pembayaran.
+• Unduh struk sebagai PDF ke perangkat.
+• Bagikan struk via WhatsApp, dll.
+• Login Sidik Jari & QRIS Otomatis (DANA, OVO, GoPay, ShopeePay).
+• Lebih ringan, cepat & tampilan diperbaiki untuk Android 15.
+• Perbaikan pembayaran & kestabilan.
+
+Terima kasih telah memakai Kasir Online!
+```
+
+### 🇬🇧 English (en-US)
+```
+Version 1.2.2 — Print & share receipts!
+
+• Print receipts to a Bluetooth thermal printer — auto-print after payment.
+• Download receipts as PDF to your device.
+• Share receipts via WhatsApp, etc.
+• Fingerprint login & Auto QRIS (DANA, OVO, GoPay, ShopeePay).
+• Lighter, faster & improved layout for Android 15.
+• Payment fixes & stability improvements.
+
+Thank you for using Kasir Online!
+```
+
+---
+
+## Versi 1.2.1 (versionCode 11)
 
 ### 🇮🇩 Indonesia (id-ID) — ± 440 karakter
 ```
