@@ -236,7 +236,7 @@ function ReceiptModal({ isOpen, transaction, settings, onClose }) {
         </button>
         <button className="btn-secondary flex items-center justify-center gap-1.5 text-xs"
           onClick={() => downloadPDF(transaction, settings ?? {})}>
-          <FileDown size={13} /> PDF
+          <FileDown size={13} /> Unduh
         </button>
         <button className="btn-secondary flex items-center justify-center gap-1.5 text-xs"
           onClick={() => shareReceipt(transaction, settings ?? {})}>

@@ -1,3 +1,5 @@
+import toast from 'react-hot-toast'
+
 const paymentLabel = {
   cash: 'Tunai',
   qris: 'QRIS',
@@ -361,12 +363,25 @@ export async function downloadPDF(transaction, settings = {}, opts = {}) {
     const fileName = `Faktur-${tx.invoice_number}.pdf`
 
     if (isCapacitor()) {
-      // Android/iOS: tulis file PDF lalu buka share sheet (Simpan ke Files/Drive/kirim WA/dll)
       const base64 = doc.output('datauristring').split(',')[1]
       const { Filesystem, Directory } = await import('@capacitor/filesystem')
-      const { Share } = await import('@capacitor/share')
-      const res = await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Cache })
-      await Share.share({ title: fileName, text: `Struk ${tx.invoice_number}`, url: res.uri })
+      if (opts.share) {
+        // Bagikan: tulis ke cache lalu buka share sheet (kirim WA/simpan/dll)
+        const { Share } = await import('@capacitor/share')
+        const res = await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Cache })
+        await Share.share({ title: fileName, text: `Struk ${tx.invoice_number}`, url: res.uri })
+      } else {
+        // Unduh: simpan permanen ke folder Dokumen perangkat (terlihat di app Files)
+        let saved
+        try {
+          saved = await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Documents, recursive: true })
+        } catch {
+          // Fallback bila Documents tak bisa ditulis → External app files
+          saved = await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.External, recursive: true })
+        }
+        void saved
+        toast.success(`Struk diunduh: ${fileName} (folder Dokumen)`)
+      }
     } else if (opts.share && navigator.share) {
       // Web: bagikan file PDF via Web Share API bila didukung
       const file = new File([doc.output('blob')], fileName, { type: 'application/pdf' })
@@ -381,7 +396,7 @@ export async function downloadPDF(transaction, settings = {}, opts = {}) {
     }
   } catch (err) {
     console.error('[PDF] Gagal membuat PDF:', err)
-    alert('Gagal membuat PDF faktur. Coba lagi.')
+    toast.error('Gagal membuat PDF struk. Coba lagi.')
   }
   return
 }
