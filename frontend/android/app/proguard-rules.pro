@@ -36,3 +36,8 @@
   public static **[] values();
   public static ** valueOf(java.lang.String);
 }
+
+# ── Kemas ulang kelas (repackaging) ──────────────────────────────────────────
+# Pindahkan kelas non-keep ke package tanpa nama (top-level) → DEX lebih padat &
+# skor obfuscation Play naik. Kelas Capacitor/plugin tetap aman karena di-keep.
+-repackageclasses ''
