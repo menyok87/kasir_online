@@ -1,0 +1,110 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ JUDUL APLIKASI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Kasir Online — Aplikasi POS & Kasir Toko
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ DESKRIPSI SINGKAT (max 80 karakter)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Aplikasi kasir modern untuk warung, kafe, dan toko — cepat, mudah, lengkap.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ DESKRIPSI PANJANG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💼 KASIR ONLINE — Solusi POS Modern untuk Bisnis Anda
+
+Lelah mencatat transaksi manual? Bingung memantau laba rugi usaha? Kasir Online hadir sebagai solusi kasir digital yang simpel, cepat, dan lengkap — cocok untuk warung makan, kafe, toko kelontong, minimarket, hingga usaha retail apapun.
+
+Tidak perlu pelatihan panjang. Cukup buka aplikasi, pilih produk, terima pembayaran — selesai dalam hitungan detik.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 FITUR UTAMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🛒 KASIR (POINT OF SALE)
+• Tampilan produk dengan foto dan harga yang jelas
+• Tambah produk ke keranjang hanya dengan satu ketukan
+• Atur jumlah, hapus item, atau kosongkan keranjang seketika
+• Diskon per transaksi (nominal atau persen)
+• Bayar tunai dengan kembalian otomatis
+• Pembayaran QRIS — QR code muncul langsung di layar
+• Pembayaran Transfer Bank — info rekening tampil otomatis
+
+🧾 STRUK DIGITAL
+• Cetak struk ke printer thermal (80mm)
+• Download struk sebagai PDF berkualitas tinggi
+• Struk berisi nama toko, daftar item, total, kembalian, dan pesan footer kustom
+
+📊 LAPORAN & RIWAYAT TRANSAKSI
+• Ringkasan pendapatan, laba bersih, dan produk terjual bulan ini
+• Riwayat semua transaksi dengan detail lengkap
+• Filter transaksi untuk analisis penjualan
+
+📦 MANAJEMEN PRODUK
+• Tambah produk dengan nama, harga jual, harga modal, kategori, dan foto
+• Pantau margin keuntungan per produk secara langsung
+• Kelompokkan produk dalam kategori
+
+👥 MANAJEMEN PENGGUNA
+• Multi-level akses: Admin, Supervisor, Kasir
+• Tambah dan kelola akun kasir untuk karyawan Anda
+• Setiap kasir hanya mengakses fitur yang sesuai perannya
+
+📒 DAFTAR AKUN KEUANGAN
+• Kelola akun kas, bank, piutang, hutang, modal, pendapatan, dan beban
+• Lihat ringkasan aset, kewajiban, dan laba/rugi usaha
+
+⚙️ PENGATURAN TOKO
+• Konfigurasi nama toko, tagline, alamat, telepon, dan email
+• Upload foto QR code QRIS toko Anda
+• Atur informasi rekening bank transfer
+• Kustomisasi pesan footer struk
+
+🌙 TAMPILAN NYAMAN
+• Mode terang dan mode gelap
+• Antarmuka modern yang responsif di HP maupun tablet
+• Dirancang untuk digunakan di layar sentuh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 COCOK UNTUK
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Warung makan & kafe
+✅ Toko kelontong & minimarket
+✅ Toko fashion & aksesoris
+✅ Apotek & toko kesehatan
+✅ Laundry & jasa
+✅ Usaha kuliner & food court
+✅ Bisnis rumahan & UMKM
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔒 KEAMANAN & PRIVASI
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Data bisnis Anda disimpan aman di server
+• Password dienkripsi dengan teknologi bcrypt
+• Akses dibatasi per peran pengguna
+• Tidak ada iklan, tidak ada pelacakan pihak ketiga
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+📱 CARA MULAI
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Install aplikasi dan buka di HP atau tablet
+2. Daftar akun baru — gratis, tanpa kartu kredit
+3. Tambahkan produk dan atur informasi toko Anda
+4. Mulai bertransaksi!
+
+Kasir Online — Lebih cepat, lebih rapi, lebih menguntungkan. 💪
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌐 INFORMASI TAMBAHAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+Website  : https://kasir.keuangan99.com
+Kebijakan Privasi : https://kasir.keuangan99.com/privacy-policy.html
+Dukungan : support@keuangan99.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ KATA KUNCI (untuk optimasi pencarian Play Store)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+kasir, aplikasi kasir, pos, point of sale, kasir online, kasir toko,
+aplikasi toko, manajemen toko, laporan penjualan, struk digital,
+kasir warung, kasir kafe, kasir android, UMKM, toko kelontong,
+aplikasi jualan, pembukuan toko, kasir gratis, kasir hp

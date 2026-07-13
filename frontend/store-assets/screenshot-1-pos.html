@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{width:1080px;height:1920px;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;}
+
+  /* ── outer wrapper: gradient promo background ── */
+  .bg{
+    width:1080px;height:1920px;
+    background:linear-gradient(160deg,#0f172a 0%,#1e3a8a 50%,#1d4ed8 100%);
+    display:flex;flex-direction:column;align-items:center;
+    padding:72px 52px 56px;gap:40px;position:relative;overflow:hidden;
+  }
+  .bg::before{content:'';position:absolute;top:-160px;right:-120px;width:500px;height:500px;background:rgba(255,255,255,0.04);border-radius:50%;}
+  .bg::after{content:'';position:absolute;bottom:-100px;left:-80px;width:380px;height:380px;background:rgba(255,255,255,0.03);border-radius:50%;}
+
+  /* caption */
+  .caption{text-align:center;z-index:2;}
+  .caption h1{color:#fff;font-size:52px;font-weight:800;letter-spacing:-1px;margin-bottom:10px;}
+  .caption p{color:rgba(255,255,255,0.65);font-size:28px;}
+
+  /* ── phone shell ── */
+  .phone{
+    width:490px;flex-shrink:0;
+    background:#0f172a;
+    border-radius:60px;
+    border:5px solid rgba(255,255,255,0.12);
+    box-shadow:0 40px 100px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.04);
+    overflow:hidden;position:relative;
+  }
+  .notch{width:140px;height:32px;background:#0f172a;border-radius:0 0 22px 22px;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:10;}
+
+  /* ── real app layout inside phone ── */
+  .app{display:flex;height:100%;flex-direction:column;background:#f8fafc;}
+
+  /* topbar — exact match: bg-white border-b border-gray-200 */
+  .topbar{
+    background:#fff;border-bottom:1.5px solid #e2e8f0;
+    padding:38px 20px 12px;
+    display:flex;align-items:center;gap:12px;flex-shrink:0;
+  }
+  .menu-btn{display:flex;flex-direction:column;gap:4px;width:22px;flex-shrink:0;}
+  .menu-btn span{display:block;height:2.5px;background:#64748b;border-radius:2px;}
+  .menu-btn span:nth-child(3){width:14px;}
+  .topbar-body{flex:1;}
+  .topbar-title{font-size:22px;font-weight:700;color:#1e293b;}
+  .topbar-date{font-size:14px;color:#94a3b8;margin-top:2px;}
+  .topbar-user{text-align:right;}
+  .topbar-name{font-size:14px;font-weight:600;color:#374151;}
+  .topbar-role{font-size:12px;color:#94a3b8;}
+
+  /* content area */
+  .content{flex:1;overflow:hidden;padding:14px;display:flex;flex-direction:column;gap:10px;background:#f8fafc;}
+
+  /* search bar */
+  .search{
+    background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;
+    padding:12px 16px;font-size:15px;color:#94a3b8;
+    display:flex;align-items:center;gap:10px;flex-shrink:0;
+  }
+  .search-icon{width:18px;height:18px;border:2px solid #94a3b8;border-radius:50%;flex-shrink:0;position:relative;}
+  .search-icon::after{content:'';position:absolute;bottom:-4px;right:-4px;width:6px;height:2px;background:#94a3b8;border-radius:2px;transform:rotate(45deg);}
+
+  /* category pills */
+  .cats{display:flex;gap:8px;flex-shrink:0;}
+  .cat{padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;}
+  .cat.active{background:#2563eb;color:#fff;}
+  .cat.inactive{background:#fff;border:1.5px solid #e2e8f0;color:#64748b;}
+
+  /* product grid — 3 col */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+
+  /* product card — exact: bg-white rounded-xl border border-gray-200 p-2.5 */
+  .pcard{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;transition:all .2s;}
+  .pthumb{height:80px;display:flex;align-items:center;justify-content:center;font-size:34px;}
+  .pinfo{padding:8px 10px 10px;}
+  .pname{font-size:12px;font-weight:600;color:#1e293b;margin-bottom:3px;line-height:1.3;}
+  .pprice{font-size:13px;font-weight:700;color:#2563eb;margin-bottom:4px;}
+  .pbadge{display:inline-flex;align-items:center;gap:3px;background:#f0fdf4;color:#16a34a;font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;}
+  .pbadge-yellow{background:#fefce8;color:#854d0e;}
+
+  /* ── cart bottom bar — bg-gradient blue ── */
+  .cart{
+    background:linear-gradient(to right,#2563eb,#4f46e5);
+    padding:16px 18px;display:flex;align-items:center;justify-content:space-between;
+    flex-shrink:0;
+    box-shadow:0 -4px 20px rgba(37,99,235,0.35);
+  }
+  .cart-left{color:#fff;}
+  .cart-sub{font-size:12px;opacity:.75;margin-bottom:2px;}
+  .cart-total{font-size:22px;font-weight:800;}
+  .cart-btn{
+    background:#fff;color:#2563eb;
+    font-size:14px;font-weight:700;
+    padding:11px 22px;border-radius:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  /* bottom label */
+  .label{text-align:center;z-index:2;}
+  .label h2{color:#fff;font-size:40px;font-weight:800;margin-bottom:8px;}
+  .label p{color:rgba(255,255,255,0.6);font-size:24px;}
+  .dots{display:flex;gap:8px;justify-content:center;margin-top:28px;}
+  .dot{width:10px;height:10px;background:rgba(255,255,255,0.3);border-radius:50%;}
+  .dot.on{background:#fff;width:28px;border-radius:6px;}
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="caption">
+    <h1>Kasir Online POS</h1>
+    <p>Tambah produk ke keranjang — cepat &amp; mudah</p>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="app">
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="menu-btn"><span></span><span></span><span style="width:14px"></span></div>
+        <div class="topbar-body">
+          <div class="topbar-title">Kasir (POS)</div>
+          <div class="topbar-date">Sabtu, 19 April 2026</div>
+        </div>
+        <div class="topbar-user">
+          <div class="topbar-name">Admin</div>
+          <div class="topbar-role">admin</div>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+        <!-- Search -->
+        <div class="search">
+          <div class="search-icon"></div>
+          <span>Cari nama produk...</span>
+        </div>
+
+        <!-- Category tabs -->
+        <div class="cats">
+          <div class="cat active">Semua</div>
+          <div class="cat inactive">Minuman</div>
+          <div class="cat inactive">Makanan</div>
+          <div class="cat inactive">Kue</div>
+        </div>
+
+        <!-- Product grid -->
+        <div class="grid">
+          <div class="pcard">
+            <div class="pthumb" style="background:#fef9c3">☕</div>
+            <div class="pinfo">
+              <div class="pname">Kopi Susu</div>
+              <div class="pprice">Rp 15.000</div>
+              <div class="pbadge">Stok: 24</div>
+            </div>
+          </div>
+          <div class="pcard" style="border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,0.25)">
+            <div class="pthumb" style="background:#dcfce7">🍵</div>
+            <div class="pinfo">
+              <div class="pname">Teh Manis</div>
+              <div class="pprice">Rp 8.000</div>
+              <div class="pbadge">Stok: 30</div>
+            </div>
+          </div>
+          <div class="pcard">
+            <div class="pthumb" style="background:#fee2e2">🍞</div>
+            <div class="pinfo">
+              <div class="pname">Roti Bakar</div>
+              <div class="pprice">Rp 12.000</div>
+              <div class="pbadge">Stok: 15</div>
+            </div>
+          </div>
+          <div class="pcard">
+            <div class="pthumb" style="background:#ede9fe">🥤</div>
+            <div class="pinfo">
+              <div class="pname">Jus Alpukat</div>
+              <div class="pprice">Rp 18.000</div>
+              <div class="pbadge">Stok: 10</div>
+            </div>
+          </div>
+          <div class="pcard">
+            <div class="pthumb" style="background:#fce7f3">🍰</div>
+            <div class="pinfo">
+              <div class="pname">Kue Brownies</div>
+              <div class="pprice">Rp 22.000</div>
+              <div class="pbadge">Stok: 8</div>
+            </div>
+          </div>
+          <div class="pcard">
+            <div class="pthumb" style="background:#e0f2fe">🧊</div>
+            <div class="pinfo">
+              <div class="pname">Es Krim</div>
+              <div class="pprice">Rp 10.000</div>
+              <div class="pbadge pbadge-yellow">Stok: 4</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cart bar -->
+      <div class="cart">
+        <div class="cart-left">
+          <div class="cart-sub">🛒 3 produk dipilih</div>
+          <div class="cart-total">Rp 43.000</div>
+        </div>
+        <div class="cart-btn">Lihat Keranjang</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="label">
+    <h2>Transaksi Lebih Cepat</h2>
+    <p>Pilih produk, terima bayaran — selesai!</p>
+    <div class="dots">
+      <div class="dot on"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

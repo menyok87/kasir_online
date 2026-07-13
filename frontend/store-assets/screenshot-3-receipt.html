@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{width:1080px;height:1920px;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;}
+
+  .bg{
+    width:1080px;height:1920px;
+    background:linear-gradient(160deg,#2e1065 0%,#4c1d95 45%,#6d28d9 100%);
+    display:flex;flex-direction:column;align-items:center;
+    padding:72px 52px 56px;gap:40px;position:relative;overflow:hidden;
+  }
+  .bg::before{content:'';position:absolute;bottom:-120px;right:-80px;width:400px;height:400px;background:rgba(255,255,255,0.04);border-radius:50%;}
+
+  .caption{text-align:center;z-index:2;}
+  .caption h1{color:#fff;font-size:52px;font-weight:800;letter-spacing:-1px;margin-bottom:10px;}
+  .caption p{color:rgba(255,255,255,0.65);font-size:28px;}
+
+  .phone{
+    width:490px;flex-shrink:0;
+    background:#0f172a;border-radius:60px;
+    border:5px solid rgba(255,255,255,0.12);
+    box-shadow:0 40px 100px rgba(0,0,0,0.7);
+    overflow:hidden;position:relative;
+  }
+  .notch{width:140px;height:32px;background:#0f172a;border-radius:0 0 22px 22px;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:10;}
+
+  .app{display:flex;flex-direction:column;height:100%;background:#f8fafc;}
+
+  .topbar{background:#fff;border-bottom:1.5px solid #e2e8f0;padding:38px 20px 12px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .menu-btn{display:flex;flex-direction:column;gap:4px;width:22px;flex-shrink:0;}
+  .menu-btn span{display:block;height:2.5px;background:#64748b;border-radius:2px;}
+  .topbar-title{font-size:22px;font-weight:700;color:#1e293b;flex:1;}
+  .topbar-sub{font-size:14px;color:#94a3b8;}
+
+  /* POS page dimmed behind modal */
+  .pos-bg{flex:1;background:#f8fafc;padding:14px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;}
+  .pos-bg::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(1px);}
+
+  /* fake product grid peek */
+  .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .mini-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:8px;opacity:.8;}
+  .mini-thumb{height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:5px;}
+  .mini-name{font-size:9px;font-weight:600;color:#1e293b;}
+  .mini-price{font-size:10px;font-weight:700;color:#2563eb;}
+
+  /* ── Receipt Modal sheet ── */
+  .modal{
+    position:absolute;bottom:0;left:0;right:0;z-index:20;
+    background:#fff;border-radius:28px 28px 0 0;
+    box-shadow:0 -8px 40px rgba(0,0,0,0.3);
+    overflow:hidden;
+  }
+
+  /* success header */
+  .modal-head{
+    background:linear-gradient(135deg,#7c3aed,#a855f7);
+    padding:18px 20px 22px;text-align:center;color:#fff;
+  }
+  .success-chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,0.2);border-radius:100px;
+    font-size:12px;font-weight:700;padding:4px 14px;margin-bottom:10px;
+  }
+  .modal-trx-title{font-size:18px;font-weight:800;margin-bottom:3px;}
+  .modal-trx-id{font-size:11px;opacity:.7;}
+
+  /* receipt body */
+  .receipt{
+    padding:14px 18px;
+    font-family:'Courier New',monospace;
+    font-size:11px;color:#374151;
+    border-bottom:1px solid #f1f5f9;
+  }
+  .r-store{text-align:center;margin-bottom:10px;}
+  .r-store-name{font-size:14px;font-weight:700;color:#1e293b;margin-bottom:2px;}
+  .r-store-addr{font-size:10px;color:#94a3b8;}
+
+  .r-divider{border:none;border-top:1.5px dashed #e2e8f0;margin:8px 0;}
+
+  .r-meta{display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:8px;}
+
+  .r-item{margin-bottom:5px;}
+  .r-item-name{font-weight:700;color:#1e293b;font-size:11px;}
+  .r-item-sub{display:flex;justify-content:space-between;color:#64748b;font-size:10px;padding-left:10px;}
+
+  .r-total-row{display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:#1e293b;padding:6px 0;}
+  .r-sub-row{display:flex;justify-content:space-between;font-size:11px;color:#64748b;}
+
+  .r-lunas{
+    text-align:center;background:#f0fdf4;border:2px solid #86efac;
+    border-radius:10px;padding:7px;margin:8px 0;
+    font-size:13px;font-weight:800;color:#16a34a;
+    letter-spacing:1px;
+  }
+
+  .r-paid-row{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:#059669;}
+  .r-change-row{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:#7c3aed;}
+
+  .r-footer{text-align:center;font-size:9px;color:#94a3b8;margin-top:8px;}
+
+  /* action buttons */
+  .actions{padding:12px 18px;display:flex;gap:8px;}
+  .act-btn{flex:1;padding:11px;border-radius:14px;font-size:12px;font-weight:700;text-align:center;}
+  .act-print{background:#eff6ff;color:#2563eb;}
+  .act-pdf{background:#f5f3ff;color:#7c3aed;}
+
+  /* new trx button */
+  .new-btn{
+    margin:0 18px 18px;
+    background:linear-gradient(to right,#7c3aed,#a855f7);
+    color:#fff;font-size:13px;font-weight:700;
+    padding:14px;border-radius:14px;text-align:center;
+    box-shadow:0 4px 16px rgba(124,58,237,0.4);
+  }
+
+  .label{text-align:center;z-index:2;}
+  .label h2{color:#fff;font-size:40px;font-weight:800;margin-bottom:8px;}
+  .label p{color:rgba(255,255,255,0.6);font-size:24px;}
+  .dots{display:flex;gap:8px;justify-content:center;margin-top:28px;}
+  .dot{width:10px;height:10px;background:rgba(255,255,255,0.3);border-radius:50%;}
+  .dot.on{background:#fff;width:28px;border-radius:6px;}
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="caption">
+    <h1>Struk Digital</h1>
+    <p>Cetak atau download PDF setelah bayar</p>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="app">
+      <div class="topbar">
+        <div class="menu-btn"><span></span><span></span><span style="width:14px"></span></div>
+        <div>
+          <div class="topbar-title">Kasir (POS)</div>
+          <div class="topbar-sub">Sabtu, 19 April 2026</div>
+        </div>
+      </div>
+
+      <!-- POS behind modal (dimmed) -->
+      <div class="pos-bg">
+        <div class="mini-grid">
+          <div class="mini-card"><div class="mini-thumb" style="background:#fef9c3">☕</div><div class="mini-name">Kopi Susu</div><div class="mini-price">Rp 15.000</div></div>
+          <div class="mini-card"><div class="mini-thumb" style="background:#dcfce7">🍵</div><div class="mini-name">Teh Manis</div><div class="mini-price">Rp 8.000</div></div>
+          <div class="mini-card"><div class="mini-thumb" style="background:#fee2e2">🍞</div><div class="mini-name">Roti Bakar</div><div class="mini-price">Rp 12.000</div></div>
+        </div>
+
+        <!-- Receipt modal -->
+        <div class="modal">
+          <div class="modal-head">
+            <div class="success-chip">✓ Transaksi Berhasil</div>
+            <div class="modal-trx-title">Struk Pembayaran</div>
+            <div class="modal-trx-id">TRX-20260419-024 · 09:41 WIB</div>
+          </div>
+
+          <div class="receipt">
+            <div class="r-store">
+              <div class="r-store-name">☕ Kafe Berkah Jaya</div>
+              <div class="r-store-addr">Jl. Raya No. 45 · Telp: 0812-3456-789</div>
+            </div>
+            <hr class="r-divider">
+            <div class="r-meta"><span>Kasir: Admin</span><span>09:41 WIB</span></div>
+            <hr class="r-divider">
+
+            <div class="r-item">
+              <div class="r-item-name">Kopi Susu</div>
+              <div class="r-item-sub"><span>2 × Rp 15.000</span><span>Rp 30.000</span></div>
+            </div>
+            <div class="r-item">
+              <div class="r-item-name">Roti Bakar</div>
+              <div class="r-item-sub"><span>1 × Rp 12.000</span><span>Rp 12.000</span></div>
+            </div>
+            <div class="r-item">
+              <div class="r-item-name">Jus Alpukat</div>
+              <div class="r-item-sub"><span>1 × Rp 18.000</span><span>Rp 18.000</span></div>
+            </div>
+
+            <hr class="r-divider">
+            <div class="r-sub-row"><span>Subtotal</span><span>Rp 60.000</span></div>
+            <div class="r-sub-row"><span>Diskon 10%</span><span>-Rp 6.000</span></div>
+            <div class="r-total-row"><span>TOTAL</span><span>Rp 54.000</span></div>
+
+            <div class="r-lunas">✓ LUNAS — TUNAI</div>
+
+            <div class="r-paid-row"><span>Bayar</span><span>Rp 60.000</span></div>
+            <div class="r-change-row"><span>Kembalian</span><span>Rp 6.000</span></div>
+
+            <div class="r-footer">Terima kasih telah berbelanja! 😊</div>
+          </div>
+
+          <div class="actions">
+            <div class="act-btn act-print">🖨 Cetak</div>
+            <div class="act-btn act-pdf">📄 Download PDF</div>
+          </div>
+          <div class="new-btn">+ Transaksi Baru</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="label">
+    <h2>Struk Profesional</h2>
+    <p>Cetak thermal atau kirim PDF</p>
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot on"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

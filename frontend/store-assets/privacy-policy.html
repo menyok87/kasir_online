@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kebijakan Privasi — Kasir Online</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:   #2563eb;
+      --blue-d: #1d4ed8;
+      --gray-1: #f8fafc;
+      --gray-2: #f1f5f9;
+      --gray-3: #e2e8f0;
+      --gray-5: #64748b;
+      --gray-7: #374151;
+      --gray-9: #111827;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+      background: var(--gray-1);
+      color: var(--gray-7);
+      line-height: 1.7;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #4f46e5 100%);
+      color: white;
+      padding: 56px 24px 48px;
+      text-align: center;
+    }
+
+    .logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px; height: 64px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 18px;
+      margin-bottom: 20px;
+    }
+
+    .logo-wrap svg { width: 36px; height: 36px; fill: white; }
+
+    header h1 {
+      font-size: clamp(26px, 5vw, 36px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      font-size: 16px;
+      opacity: 0.75;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 18px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 100px;
+      padding: 5px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── TOC ── */
+    .toc {
+      background: white;
+      border: 1px solid var(--gray-3);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 36px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .toc h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gray-5);
+      margin-bottom: 14px;
+    }
+
+    .toc ol {
+      padding-left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .toc a {
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .toc a:hover { text-decoration: underline; }
+
+    /* ── Section ── */
+    .section {
+      background: white;
+      border: 1px solid var(--gray-3);
+      border-radius: 16px;
+      padding: 32px 36px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      scroll-margin-top: 20px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .section-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gray-9);
+    }
+
+    .section p { margin-bottom: 14px; font-size: 15px; }
+    .section p:last-child { margin-bottom: 0; }
+
+    .section ul, .section ol {
+      padding-left: 20px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .section li { font-size: 15px; }
+
+    .section h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gray-9);
+      margin: 20px 0 10px;
+    }
+
+    /* Info box */
+    .info-box {
+      background: #eff6ff;
+      border-left: 4px solid var(--blue);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 14px;
+      color: #1e40af;
+    }
+
+    .warn-box {
+      background: #fff7ed;
+      border-left: 4px solid #ea580c;
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 14px;
+      color: #9a3412;
+    }
+
+    /* Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 16px 0;
+    }
+
+    .data-table th {
+      background: var(--gray-2);
+      text-align: left;
+      padding: 10px 14px;
+      font-weight: 700;
+      color: var(--gray-7);
+      border: 1px solid var(--gray-3);
+    }
+
+    .data-table td {
+      padding: 10px 14px;
+      border: 1px solid var(--gray-3);
+      vertical-align: top;
+    }
+
+    .data-table tr:nth-child(even) td { background: var(--gray-1); }
+
+    /* Contact card */
+    .contact-card {
+      background: var(--gray-2);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .contact-card a { color: var(--blue); font-weight: 600; text-decoration: none; }
+    .contact-card a:hover { text-decoration: underline; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 28px 24px;
+      font-size: 13px;
+      color: var(--gray-5);
+      border-top: 1px solid var(--gray-3);
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .section { padding: 24px 20px; }
+      .data-table { font-size: 13px; }
+      .data-table th, .data-table td { padding: 8px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <!-- store icon -->
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="11" width="20" height="11" rx="1"/>
+      <path d="M1 7h22l-1.5 4H2.5L1 7z"/>
+      <rect x="9.5" y="14" width="5" height="8" rx="0.5" fill="#2563eb"/>
+      <rect x="3" y="13" width="4" height="3" rx="0.3" fill="rgba(255,255,255,0.4)"/>
+      <rect x="17" y="13" width="4" height="3" rx="0.3" fill="rgba(255,255,255,0.4)"/>
+    </svg>
+  </div>
+  <h1>Kebijakan Privasi</h1>
+  <p>Kasir Online — Aplikasi Point of Sale</p>
+  <div class="badge">Berlaku sejak: 19 April 2026</div>
+</header>
+
+<div class="container">
+
+  <!-- TOC -->
+  <div class="toc">
+    <h2>Daftar Isi</h2>
+    <ol>
+      <li><a href="#s1">Informasi yang Kami Kumpulkan</a></li>
+      <li><a href="#s2">Cara Kami Menggunakan Informasi</a></li>
+      <li><a href="#s3">Penyimpanan & Keamanan Data</a></li>
+      <li><a href="#s4">Berbagi Data dengan Pihak Ketiga</a></li>
+      <li><a href="#s5">Hak Pengguna</a></li>
+      <li><a href="#s6">Data Anak-anak</a></li>
+      <li><a href="#s7">Perubahan Kebijakan Privasi</a></li>
+      <li><a href="#s8">Hubungi Kami</a></li>
+    </ol>
+  </div>
+
+  <div class="section" style="background:#eff6ff;border-color:#bfdbfe;">
+    <p style="font-size:15px;color:#1e40af;">
+      Kasir Online ("kami", "aplikasi") berkomitmen untuk melindungi privasi Anda. Kebijakan ini menjelaskan jenis data yang dikumpulkan, cara penggunaannya, dan hak-hak Anda sebagai pengguna. Dengan menggunakan aplikasi ini, Anda menyetujui kebijakan ini.
+    </p>
+  </div>
+
+  <!-- 1 -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="section-icon" style="background:#eff6ff;">📋</div>
+      <h2>1. Informasi yang Kami Kumpulkan</h2>
+    </div>
+
+    <h3>a. Data Akun</h3>
+    <p>Saat mendaftar atau menggunakan aplikasi, kami mengumpulkan:</p>
+    <ul>
+      <li>Nama lengkap pemilik / pengelola usaha</li>
+      <li>Nama toko / usaha</li>
+      <li>Username (dibuat sendiri oleh pengguna)</li>
+      <li>Password (disimpan dalam bentuk terenkripsi — tidak dapat dibaca)</li>
+      <li>Peran pengguna (Admin, Supervisor, Kasir)</li>
+    </ul>
+
+    <h3>b. Data Bisnis</h3>
+    <p>Data yang diinput pengguna untuk keperluan operasional bisnis:</p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Jenis Data</th>
+          <th>Contoh</th>
+          <th>Tujuan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Data Produk</td>
+          <td>Nama, harga, kategori, foto produk</td>
+          <td>Ditampilkan di kasir (POS)</td>
+        </tr>
+        <tr>
+          <td>Data Transaksi</td>
+          <td>Item terjual, jumlah, metode bayar, waktu</td>
+          <td>Riwayat penjualan & laporan</td>
+        </tr>
+        <tr>
+          <td>Data Pelanggan</td>
+          <td>Nama pelanggan (opsional, jika diinput)</td>
+          <td>Struk & catatan transaksi</td>
+        </tr>
+        <tr>
+          <td>Pengaturan Toko</td>
+          <td>Nama toko, alamat, logo, foto QRIS</td>
+          <td>Ditampilkan di struk</td>
+        </tr>
+        <tr>
+          <td>Data Keuangan</td>
+          <td>Daftar akun (kas, bank, pendapatan, dst.)</td>
+          <td>Laporan keuangan sederhana</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>c. Data Teknis</h3>
+    <p>Data yang dikumpulkan secara otomatis saat menggunakan aplikasi:</p>
+    <ul>
+      <li>Token autentikasi JWT (disimpan di perangkat untuk sesi login)</li>
+      <li>Waktu transaksi (timestamp)</li>
+    </ul>
+
+    <div class="info-box">
+      ℹ️ Kami <strong>tidak</strong> mengumpulkan data lokasi, kontak perangkat, riwayat panggilan, atau data sensor perangkat Anda.
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0fdf4;">🎯</div>
+      <h2>2. Cara Kami Menggunakan Informasi</h2>
+    </div>
+    <p>Data yang dikumpulkan digunakan semata-mata untuk:</p>
+    <ul>
+      <li>Menjalankan fitur aplikasi kasir (POS, manajemen produk, laporan)</li>
+      <li>Memverifikasi identitas pengguna saat login</li>
+      <li>Menyimpan riwayat transaksi dan laporan keuangan</li>
+      <li>Mencetak atau mengunduh struk pembayaran</li>
+      <li>Menampilkan data yang Anda input di berbagai halaman aplikasi</li>
+    </ul>
+    <div class="info-box">
+      ℹ️ Kami <strong>tidak</strong> menggunakan data Anda untuk iklan, profiling, atau keperluan di luar operasional aplikasi kasir.
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="section-icon" style="background:#faf5ff;">🔒</div>
+      <h2>3. Penyimpanan &amp; Keamanan Data</h2>
+    </div>
+
+    <h3>Lokasi Penyimpanan</h3>
+    <p>Seluruh data bisnis Anda (produk, transaksi, akun, pengaturan) disimpan di <strong>server pribadi</strong> yang Anda kontrol. Kasir Online beroperasi dengan model <em>self-hosted</em> atau <em>dedicated server per tenant</em> — data Anda tidak bercampur dengan pengguna lain.</p>
+
+    <h3>Keamanan</h3>
+    <ul>
+      <li>Password dienkripsi menggunakan <strong>bcrypt</strong> (hashing satu arah — tidak dapat didekripsi)</li>
+      <li>Komunikasi antara aplikasi dan server menggunakan protokol <strong>HTTPS</strong></li>
+      <li>Autentikasi menggunakan <strong>JSON Web Token (JWT)</strong> dengan masa berlaku terbatas (8 jam)</li>
+      <li>Akses data dibatasi berdasarkan peran (Admin, Supervisor, Kasir)</li>
+    </ul>
+
+    <h3>Retensi Data</h3>
+    <p>Data Anda disimpan selama akun Anda aktif. Jika Anda menghapus akun atau menghentikan layanan, data dapat dihapus permanen atas permintaan Anda.</p>
+
+    <div class="warn-box">
+      ⚠️ Keamanan data juga bergantung pada kekuatan password yang Anda gunakan. Gunakan password minimal 8 karakter dengan kombinasi huruf dan angka.
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="section-icon" style="background:#fff7ed;">🤝</div>
+      <h2>4. Berbagi Data dengan Pihak Ketiga</h2>
+    </div>
+    <p>Kami <strong>tidak menjual, menyewakan, atau berbagi</strong> data pribadi Anda kepada pihak ketiga untuk tujuan komersial.</p>
+    <p>Data Anda hanya dapat dibagikan dalam situasi berikut:</p>
+    <ul>
+      <li><strong>Atas permintaan Anda sendiri</strong> — misalnya mengekspor laporan atau struk</li>
+      <li><strong>Kewajiban hukum</strong> — jika diwajibkan oleh peraturan perundang-undangan yang berlaku di Indonesia</li>
+    </ul>
+    <div class="info-box">
+      ℹ️ Aplikasi ini <strong>tidak menggunakan</strong> layanan pihak ketiga seperti Google Analytics, Firebase, Facebook SDK, atau jaringan iklan apapun.
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0fdf4;">✅</div>
+      <h2>5. Hak Pengguna</h2>
+    </div>
+    <p>Sebagai pengguna, Anda berhak untuk:</p>
+    <ul>
+      <li><strong>Mengakses data</strong> — melihat semua data yang Anda input melalui antarmuka aplikasi</li>
+      <li><strong>Mengoreksi data</strong> — mengubah informasi akun, produk, atau pengaturan kapan saja</li>
+      <li><strong>Menghapus data</strong> — menghapus produk, transaksi, atau akun pengguna melalui aplikasi atau dengan menghubungi kami</li>
+      <li><strong>Ekspor data</strong> — mengunduh laporan dalam format yang tersedia di aplikasi</li>
+      <li><strong>Menonaktifkan akun</strong> — Admin dapat menonaktifkan akun kasir/supervisor kapan saja</li>
+    </ul>
+    <p>Untuk permintaan penghapusan data secara lengkap (termasuk data server), silakan hubungi kami melalui kontak di bawah.</p>
+  </div>
+
+  <!-- 6 -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <div class="section-icon" style="background:#fef2f2;">🧒</div>
+      <h2>6. Data Anak-anak</h2>
+    </div>
+    <p>Aplikasi Kasir Online ditujukan untuk digunakan oleh pelaku usaha dewasa. Kami tidak secara sengaja mengumpulkan data dari anak-anak di bawah usia 13 tahun.</p>
+    <p>Jika Anda mengetahui bahwa anak di bawah umur telah mendaftarkan akun tanpa izin orang tua, segera hubungi kami untuk menghapus data tersebut.</p>
+  </div>
+
+  <!-- 7 -->
+  <div class="section" id="s7">
+    <div class="section-header">
+      <div class="section-icon" style="background:#eff6ff;">🔄</div>
+      <h2>7. Perubahan Kebijakan Privasi</h2>
+    </div>
+    <p>Kami dapat memperbarui kebijakan privasi ini dari waktu ke waktu. Setiap perubahan akan dicantumkan di halaman ini dengan tanggal pembaruan yang baru.</p>
+    <p>Jika terjadi perubahan yang bersifat signifikan, kami akan memberikan pemberitahuan melalui aplikasi. Kelanjutan penggunaan aplikasi setelah pemberitahuan tersebut berarti Anda menyetujui kebijakan yang diperbarui.</p>
+    <div class="info-box">
+      ℹ️ Terakhir diperbarui: <strong>19 April 2026</strong>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="section" id="s8">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0fdf4;">📬</div>
+      <h2>8. Hubungi Kami</h2>
+    </div>
+    <p>Jika Anda memiliki pertanyaan, kekhawatiran, atau permintaan terkait kebijakan privasi ini atau data Anda, silakan hubungi kami:</p>
+    <div class="contact-card">
+      <div><strong>Aplikasi:</strong> Kasir Online — Point of Sale</div>
+      <div><strong>Website:</strong> <a href="https://kasir.keuangan99.com" target="_blank">kasir.keuangan99.com</a></div>
+      <div><strong>Email:</strong> <a href="mailto:support@keuangan99.com">support@keuangan99.com</a></div>
+    </div>
+    <p style="margin-top:16px;">Kami akan merespons permintaan Anda dalam waktu paling lambat <strong>7 hari kerja</strong>.</p>
+  </div>
+
+</div>
+
+<footer>
+  &copy; 2026 Kasir Online. Seluruh hak dilindungi. &nbsp;|&nbsp; Kebijakan Privasi berlaku sejak 19 April 2026.
+</footer>
+
+</body>
+</html>
