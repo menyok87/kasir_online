@@ -1,5 +1,19 @@
 # Catatan Rilis — Kasir Online
 
+## Versi 1.2.4 (versionCode 14)
+
+### ✨ Baru
+- **Scan barcode produk** — arahkan kamera ke barcode produk untuk langsung menambahkannya ke keranjang; tidak perlu ketik/cari manual. (SKU produk = angka barcode.)
+
+### ⚡ Peningkatan
+- **Optimasi R8** lanjutan — *optimized resource shrinking* & *class repackaging* aktif → ukuran & penggunaan memori lebih efisien, skor optimasi Play naik.
+
+### 🐛 Perbaikan
+- Berbagai perbaikan kestabilan.
+
+---
+
+
 ## Versi 1.2.2 (versionCode 12)
 
 ### ✨ Baru

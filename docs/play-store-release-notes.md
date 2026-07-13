@@ -5,7 +5,37 @@ Batas: **500 karakter per bahasa**.
 
 ---
 
-## Versi 1.2.2 (versionCode 12) — TERBARU
+## Versi 1.2.4 (versionCode 14) — TERBARU
+
+### 🇮🇩 Indonesia (id-ID) — ± 360 karakter
+```
+Versi 1.2.4 — Scan barcode produk!
+
+• Scan barcode produk pakai kamera untuk menambah ke keranjang — tak perlu ketik manual.
+• Cetak/unduh/bagikan struk & cetak otomatis ke printer Bluetooth.
+• Login Sidik Jari & QRIS Otomatis (DANA, OVO, GoPay, ShopeePay).
+• Aplikasi dioptimalkan — lebih ringan & hemat memori.
+• Perbaikan kestabilan.
+
+Terima kasih telah memakai Kasir Online!
+```
+
+### 🇬🇧 English (en-US)
+```
+Version 1.2.4 — Scan product barcodes!
+
+• Scan product barcodes with your camera to add to cart — no manual typing.
+• Print/download/share receipts & auto-print to a Bluetooth printer.
+• Fingerprint login & Auto QRIS (DANA, OVO, GoPay, ShopeePay).
+• App optimized — lighter & more memory-efficient.
+• Stability improvements.
+
+Thank you for using Kasir Online!
+```
+
+---
+
+## Versi 1.2.2 (versionCode 12)
 
 ### 🇮🇩 Indonesia (id-ID) — ± 406 karakter
 ```
