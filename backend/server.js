@@ -24,16 +24,17 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', env: process.env.N
 app.use('/api/auth',  require('./routes/auth'));
 
 // ── Protected API Routes ──────────────────────────────────────
-// superadmin + admin + supervisor: dashboard & transaksi (read)
-// superadmin + admin: produk, kategori, pengaturan, upload
-// superadmin saja: users
-app.use('/api/categories',   authenticate, requireAdmin,  require('./routes/categories'));
-app.use('/api/products',     authenticate, requireAdmin,  require('./routes/products'));
+// Catatan: GET produk/kategori/pengaturan dibutuhkan SEMUA role (kasir di POS),
+// jadi mount hanya pakai `authenticate`. Operasi tulis (POST/PUT/DELETE) sudah
+// dijaga `requireAdmin` DI DALAM masing-masing route. Dashboard & accounts tidak
+// punya guard internal sehingga gate role tetap di level mount.
+app.use('/api/categories',   authenticate,               require('./routes/categories'));
+app.use('/api/products',     authenticate,               require('./routes/products'));
 app.use('/api/transactions', authenticate,               require('./routes/transactions'));
 app.use('/api/dashboard',    authenticate, requireManager, require('./routes/dashboard'));
-app.use('/api/uploads',      authenticate, requireAdmin,  require('./routes/uploads'));
+app.use('/api/uploads',      authenticate,               require('./routes/uploads'));
 app.use('/api/users',        authenticate,               require('./routes/users'));
-app.use('/api/settings',     authenticate, requireAdmin,  require('./routes/settings'));
+app.use('/api/settings',     authenticate,               require('./routes/settings'));
 app.use('/api/accounts',     authenticate, requireAdmin,  require('./routes/accounts'));
 app.use('/api/ledger',                                    require('./routes/ledger'));
 app.use('/api/reports',                                   require('./routes/reports'));
