@@ -13,7 +13,6 @@ on:
       - 'frontend/android/app/build.gradle'
       - 'frontend/capacitor.config.json'
       - 'frontend/android/app/src/main/AndroidManifest.xml'
-      - 'frontend/android/app/build.gradle'
 
 jobs:
   build:
@@ -42,6 +41,10 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # Paket lama 'tools' sudah dihapus Google → jangan diminta.
+          # platform & build-tools diunduh otomatis oleh Gradle saat build.
+          packages: 'platform-tools'
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
