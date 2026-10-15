@@ -1,5 +1,15 @@
 # Catatan Rilis — Kasir Online
 
+## Versi 1.2.5 (versionCode 17)
+
+### 🐛 Perbaikan
+- **Akun kasir kini bisa melihat & menjual produk** — sebelumnya daftar produk, kategori, dan pengaturan tertolak ("akses ditolak") untuk role kasir di layar POS. Kini kasir dapat membuka POS dan bertransaksi normal (operasi kelola produk tetap khusus admin).
+- Foto profil kini bisa diganti oleh semua role.
+- Penyesuaian internal agar aplikasi lebih tahan saat proses rilis/build.
+
+---
+
+
 ## Versi 1.2.4 (versionCode 14)
 
 ### ✨ Baru

@@ -5,7 +5,33 @@ Batas: **500 karakter per bahasa**.
 
 ---
 
-## Versi 1.2.4 (versionCode 14) — TERBARU
+## Versi 1.2.5 (versionCode 17) — TERBARU
+
+### 🇮🇩 Indonesia (id-ID) — ± 290 karakter
+```
+Versi 1.2.5 — Perbaikan penting!
+
+• Akun KASIR kini bisa membuka POS, melihat produk, dan bertransaksi (sebelumnya "akses ditolak").
+• Ganti foto profil untuk semua role.
+• Perbaikan kestabilan.
+
+Terima kasih telah memakai Kasir Online!
+```
+
+### 🇬🇧 English (en-US)
+```
+Version 1.2.5 — Important fixes!
+
+• CASHIER accounts can now open the POS, view products, and check out (previously "access denied").
+• Profile photo change for all roles.
+• Stability improvements.
+
+Thank you for using Kasir Online!
+```
+
+---
+
+## Versi 1.2.4 (versionCode 14)
 
 ### 🇮🇩 Indonesia (id-ID) — ± 360 karakter
 ```

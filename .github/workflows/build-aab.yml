@@ -11,6 +11,9 @@ on:
     paths:
       - '.github/workflows/build-aab.yml'
       - 'frontend/android/app/build.gradle'
+      - 'frontend/capacitor.config.json'
+      - 'frontend/android/app/src/main/AndroidManifest.xml'
+      - 'frontend/android/app/build.gradle'
 
 jobs:
   build:
