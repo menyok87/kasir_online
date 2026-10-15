@@ -5,7 +5,33 @@ Batas: **500 karakter per bahasa**.
 
 ---
 
-## Versi 1.2.6 (versionCode 18) — TERBARU
+## Versi 1.2.7 (versionCode 19) — TERBARU
+
+### 🇮🇩 Indonesia (id-ID)
+```
+Versi 1.2.7 — Tampilan baru!
+
+• Ikon aplikasi baru dengan logo Kasir Online.
+• Notifikasi pembaruan otomatis dari Play Store.
+• Perbaikan kestabilan.
+
+Terima kasih telah memakai Kasir Online!
+```
+
+### 🇬🇧 English (en-US)
+```
+Version 1.2.7 — Fresh look!
+
+• New app icon with the Kasir Online logo.
+• Automatic update prompt from the Play Store.
+• Stability improvements.
+
+Thank you for using Kasir Online!
+```
+
+---
+
+## Versi 1.2.6 (versionCode 18)
 
 ### 🇮🇩 Indonesia (id-ID)
 ```

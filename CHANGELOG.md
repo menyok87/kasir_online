@@ -1,5 +1,13 @@
 # Catatan Rilis — Kasir Online
 
+## Versi 1.2.7 (versionCode 19)
+
+### ✨ Baru
+- **Ikon aplikasi baru** — logo brand Kasir Online (toko, biru) sebagai ikon di layar HP, dengan dukungan adaptive icon (Android 8+) & ikon bulat.
+
+---
+
+
 ## Versi 1.2.6 (versionCode 18)
 
 ### ✨ Baru
