@@ -1,5 +1,13 @@
 # Catatan Rilis — Kasir Online
 
+## Versi 1.2.6 (versionCode 18)
+
+### ✨ Baru
+- **Notifikasi update otomatis** — saat aplikasi dibuka dan ada versi lebih baru di Google Play, muncul layar pembaruan langsung dari Play Store sehingga pengguna selalu memakai versi terbaru.
+
+---
+
+
 ## Versi 1.2.5 (versionCode 17)
 
 ### 🐛 Perbaikan

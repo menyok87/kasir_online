@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -7,6 +7,7 @@ import BiometricLock from './components/BiometricLock'
 import Login from './pages/Login'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import VerifyEmail from './pages/VerifyEmail'
+import { checkForUpdate } from './utils/appUpdate'
 
 const Dashboard    = lazy(() => import('./pages/Dashboard'))
 const Categories   = lazy(() => import('./pages/Categories'))
@@ -75,6 +76,9 @@ function wrap(Component) {
 }
 
 export default function App() {
+  // Cek pembaruan di Play Store setiap aplikasi dibuka (hanya di Android).
+  useEffect(() => { checkForUpdate() }, [])
+
   return (
     <ThemeProvider>
     <BrowserRouter>

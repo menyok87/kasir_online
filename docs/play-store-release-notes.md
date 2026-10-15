@@ -5,7 +5,31 @@ Batas: **500 karakter per bahasa**.
 
 ---
 
-## Versi 1.2.5 (versionCode 17) — TERBARU
+## Versi 1.2.6 (versionCode 18) — TERBARU
+
+### 🇮🇩 Indonesia (id-ID)
+```
+Versi 1.2.6 — Selalu versi terbaru!
+
+• Notifikasi pembaruan otomatis: saat aplikasi dibuka & ada versi baru di Play Store, langsung muncul layar update.
+• Perbaikan kestabilan.
+
+Terima kasih telah memakai Kasir Online!
+```
+
+### 🇬🇧 English (en-US)
+```
+Version 1.2.6 — Always up to date!
+
+• Automatic update prompt: when you open the app and a newer version is on the Play Store, the update screen appears right away.
+• Stability improvements.
+
+Thank you for using Kasir Online!
+```
+
+---
+
+## Versi 1.2.5 (versionCode 17)
 
 ### 🇮🇩 Indonesia (id-ID) — ± 290 karakter
 ```
