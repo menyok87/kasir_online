@@ -9,6 +9,7 @@ import {
   getProducts, getCategories, createTransaction, getSettings,
   gopayCharge, gopayStatus, gopayCancel,
   qrisCharge, qrisStatus, qrisCancel,
+  dokuCharge, dokuStatus, dokuCancel, dokuSendWa,
 } from '../api'
 import { getImageUrl } from '../utils/getImageUrl'
 import Modal from '../components/ui/Modal'
@@ -44,6 +45,7 @@ const PAYMENT_METHODS = [
   { val: 'gopay',     label: 'GoPay',     Icon: Smartphone, color: 'green' },
   { val: 'qris',      label: 'QRIS',      Icon: QrCode,     color: 'blue' },
   { val: 'qris_auto', label: 'QRIS Auto', Icon: QrCode,     color: 'cyan' },
+  { val: 'doku',      label: 'DOKU',      Icon: Smartphone, color: 'rose' },
   { val: 'transfer',  label: 'Transfer',  Icon: Building2,  color: 'violet' },
   { val: 'card',      label: 'Kartu',     Icon: CreditCard, color: 'orange' },
 ]
@@ -55,6 +57,7 @@ const COLOR_ACTIVE = {
   cyan:    'bg-cyan-500 text-white shadow-cyan-200 dark:shadow-cyan-900/40',
   violet:  'bg-violet-500 text-white shadow-violet-200 dark:shadow-violet-900/40',
   orange:  'bg-orange-500 text-white shadow-orange-200 dark:shadow-orange-900/40',
+  rose:    'bg-rose-500 text-white shadow-rose-200 dark:shadow-rose-900/40',
 }
 
 // ── Kartu Produk ──────────────────────────────────────────────────────────────
@@ -520,17 +523,165 @@ function QrPaymentModal({ isOpen, data, brand = 'gopay', statusFn, cancelFn, onS
   )
 }
 
+// ── Modal Pembayaran DOKU (link + kirim WhatsApp) ─────────────────────────────
+function DokuPaymentModal({ isOpen, data, initialPhone = '', onSuccess, onCancel }) {
+  const [status, setStatus]         = useState('pending')
+  const [elapsed, setElapsed]       = useState(0)
+  const [cancelling, setCancelling] = useState(false)
+  const [phone, setPhone]           = useState(initialPhone)
+  const [waBusy, setWaBusy]         = useState(false)
+  const [copied, setCopied]         = useState(false)
+  const pollRef  = useRef(null)
+  const timerRef = useRef(null)
+
+  useEffect(() => {
+    if (!isOpen || !data) return
+    setStatus('pending'); setElapsed(0); setPhone(initialPhone)
+    timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
+    pollRef.current = setInterval(async () => {
+      try {
+        const { data: r } = await dokuStatus(data.order_id)
+        if (r.transaction_status === 'settlement') {
+          clearInterval(pollRef.current); clearInterval(timerRef.current)
+          setStatus('settlement')
+          setTimeout(() => onSuccess(r.transaction), 800)
+        } else if (r.transaction_status && r.transaction_status !== 'pending') {
+          clearInterval(pollRef.current); clearInterval(timerRef.current)
+          setStatus('failed')
+        }
+      } catch (_) {}
+    }, 3000)
+    return () => { clearInterval(pollRef.current); clearInterval(timerRef.current) }
+  }, [isOpen, data]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!isOpen || !data) return null
+
+  const mins = String(Math.floor(elapsed / 60)).padStart(2, '0')
+  const secs = String(elapsed % 60).padStart(2, '0')
+
+  async function handleSendWa() {
+    if (!phone.trim()) { toast.error('Isi nomor WhatsApp pelanggan'); return }
+    setWaBusy(true)
+    try { await dokuSendWa({ order_id: data.order_id, phone }); toast.success('Link dikirim ke WhatsApp pelanggan') }
+    catch (err) { toast.error(err.message) }
+    finally { setWaBusy(false) }
+  }
+
+  function copyLink() {
+    navigator.clipboard?.writeText(data.payment_url).catch(() => {})
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
+  }
+
+  async function handleCancel() {
+    setCancelling(true)
+    try { await dokuCancel(data.order_id); onCancel() }
+    catch (err) { toast.error(err.message) }
+    finally { setCancelling(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-rose-500 to-pink-600 px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+              <Smartphone size={17} className="text-white" />
+            </div>
+            <div>
+              <div className="font-bold text-white text-sm">Pembayaran DOKU</div>
+              <div className="text-[11px] text-white/70">{data.order_id}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 bg-black/20 rounded-xl px-2.5 py-1">
+            <Clock size={11} className="text-white/70" />
+            <span className="text-xs font-mono font-bold text-white">{mins}:{secs}</span>
+          </div>
+        </div>
+
+        <div className="p-5">
+          {status === 'settlement' ? (
+            <div className="text-center py-6">
+              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle size={36} className="text-green-500" />
+              </div>
+              <p className="font-bold text-gray-800 dark:text-gray-100">Pembayaran Berhasil!</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Dana diterima · struk siap dicetak</p>
+            </div>
+          ) : status === 'failed' ? (
+            <div className="text-center py-6">
+              <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-3">
+                <XCircle size={36} className="text-red-500" />
+              </div>
+              <p className="font-bold text-gray-800 dark:text-gray-100">Pembayaran Gagal / Kedaluwarsa</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Stok barang dikembalikan otomatis.</p>
+              <button onClick={onCancel} className="mt-4 btn-secondary text-sm px-6">Tutup</button>
+            </div>
+          ) : (
+            <>
+              <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 flex justify-between items-center mb-4 border border-gray-100 dark:border-gray-700">
+                <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Tagihan</span>
+                <span className="font-black text-rose-600 dark:text-rose-400 text-lg">
+                  {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(data.gross_amount)}
+                </span>
+              </div>
+
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Pelanggan membayar lewat e-wallet (OVO/DANA/ShopeePay/dll) atau Virtual Account bank di link berikut:
+              </p>
+
+              {/* Aksi link */}
+              <div className="flex gap-2 mb-3">
+                <a href={data.payment_url} target="_blank" rel="noopener noreferrer"
+                  className="flex-1 text-center bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 font-semibold text-sm py-2.5 rounded-xl">
+                  Buka Link
+                </a>
+                <button onClick={copyLink}
+                  className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold text-sm py-2.5 rounded-xl">
+                  {copied ? 'Tersalin ✓' : 'Salin Link'}
+                </button>
+              </div>
+
+              {/* Kirim ke WhatsApp */}
+              <div className="flex gap-2 mb-4">
+                <input value={phone} onChange={e => setPhone(e.target.value)} inputMode="tel"
+                  placeholder="No. WhatsApp pelanggan (08…)"
+                  className="input flex-1 text-sm" />
+                <button onClick={handleSendWa} disabled={waBusy}
+                  className="flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white font-semibold text-sm px-3 rounded-xl disabled:opacity-60 whitespace-nowrap">
+                  <Share2 size={15} /> {waBusy ? '...' : 'Kirim WA'}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-400 mb-4">
+                <RefreshCw size={12} className="animate-spin" />
+                <span>Menunggu pembayaran...</span>
+              </div>
+
+              <button onClick={handleCancel} disabled={cancelling}
+                className="w-full py-2.5 rounded-xl text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all disabled:opacity-50">
+                {cancelling ? 'Membatalkan...' : 'Batalkan Tagihan'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Panel Keranjang ───────────────────────────────────────────────────────────
 function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMethod,
   amountPaid, setAmountPaid, onIncrease, onDecrease, onRemove, onClear,
-  onCheckout, checkoutLoading, onBack, settings = {}, gopayError = '' }) {
+  onCheckout, checkoutLoading, onBack, settings = {}, gopayError = '',
+  custName = '', setCustName = () => {}, custPhone = '', setCustPhone = () => {} }) {
 
   const subtotal   = cart.reduce((s, i) => s + i.product.price * i.quantity, 0)
   const grandTotal = Math.max(0, subtotal - Number(discount))
   const change     = Number(amountPaid) - grandTotal
   const isGoPay     = paymentMethod === 'gopay'
   const isQrisAuto  = paymentMethod === 'qris_auto'
-  const isCharge    = isGoPay || isQrisAuto   // alur QR Midtrans: nominal & verifikasi otomatis
+  const isDoku      = paymentMethod === 'doku'
+  const isCharge    = isGoPay || isQrisAuto || isDoku   // gateway: nominal & verifikasi otomatis
   const canCheckout = cart.length > 0 && (isCharge || Number(amountPaid) >= grandTotal)
   const isNonCash   = paymentMethod === 'qris' || paymentMethod === 'transfer' || isCharge
   const totalQty    = cart.reduce((s, i) => s + i.quantity, 0)
@@ -689,6 +840,36 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           </div>
         )}
 
+        {/* DOKU — e-wallet & Virtual Account via link, kirim ke WhatsApp */}
+        {paymentMethod === 'doku' && (
+          <div className="bg-rose-50 dark:bg-rose-900/20 rounded-xl p-3 border border-rose-100 dark:border-rose-900/30 space-y-2">
+            <div className="flex items-center gap-2">
+              <Smartphone size={14} className="text-rose-600" />
+              <p className="text-xs text-rose-700 dark:text-rose-400 font-semibold">DOKU — e-wallet & Virtual Account</p>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Link pembayaran dibuat setelah klik <strong>Buat Pembayaran DOKU</strong>. Pelanggan pilih
+              sendiri <strong>e-wallet</strong> (OVO/DANA/ShopeePay/dll) atau <strong>VA bank</strong>.
+              Isi No. WhatsApp untuk mengirim link otomatis.
+            </p>
+            <input value={custName} onChange={e => setCustName(e.target.value)}
+              placeholder="Nama pelanggan (opsional)" className="input text-sm" />
+            <input value={custPhone} onChange={e => setCustPhone(e.target.value)} inputMode="tel"
+              placeholder="No. WhatsApp pelanggan (08…)" className="input text-sm" />
+            {settings.doku_client_id ? null : (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                ⚠ DOKU belum diatur di Pengaturan &gt; DOKU.
+              </p>
+            )}
+            {gopayError && (
+              <div className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-2.5 py-2">
+                <AlertCircle size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-red-600 dark:text-red-400 leading-snug">{gopayError}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Info QRIS */}
         {paymentMethod === 'qris' && (
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center border border-blue-100 dark:border-blue-900/30">
@@ -799,6 +980,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
               {isCharge ? (isQrisAuto ? <QrCode size={16} /> : <Smartphone size={16} />) : <CheckCircle size={16} />}
               {isGoPay ? `Buat Tagihan GoPay ${formatRupiah(grandTotal)}`
                 : isQrisAuto ? `Buat QRIS ${formatRupiah(grandTotal)}`
+                : isDoku ? `Buat Pembayaran DOKU ${formatRupiah(grandTotal)}`
                 : `Bayar ${formatRupiah(grandTotal)}`}
             </>
           ) : (
@@ -828,6 +1010,9 @@ export default function POS() {
   const [receipt, setReceipt]             = useState(null)
   const [settings, setSettings]           = useState({})
   const [qrPay, setQrPay]                 = useState(null) // { data, brand, statusFn, cancelFn }
+  const [dokuPay, setDokuPay]             = useState(null) // { order_id, payment_url, gross_amount }
+  const [custName, setCustName]           = useState('')
+  const [custPhone, setCustPhone]         = useState('')
   const [gopayError, setGopayError]       = useState('')
   const [mobileTab, setMobileTab]         = useState('products')
 
@@ -934,6 +1119,34 @@ export default function POS() {
       return
     }
 
+    // Alur DOKU Checkout — link pembayaran (e-wallet + VA), kirim via WhatsApp
+    if (paymentMethod === 'doku') {
+      setCheckoutLoading(true)
+      setGopayError('')
+      try {
+        const { data } = await dokuCharge({
+          items:    cart.map(i => ({ product_id: i.product.id, quantity: i.quantity })),
+          discount: Number(discount),
+          tax:      0,
+          customer_name:  custName,
+          customer_phone: custPhone,
+          send_wa:        !!custPhone,
+        })
+        clearCart()
+        setMobileTab('products')
+        fetchData()
+        if (data.wa && data.wa.sent === false) toast.error('Link dibuat, tapi gagal kirim WA: ' + data.wa.error)
+        else if (data.wa && data.wa.sent) toast.success('Link pembayaran dikirim ke WhatsApp pelanggan')
+        setDokuPay({ ...data.doku, phone: custPhone })
+      } catch (err) {
+        setGopayError(err.message)
+        toast.error(err.message)
+      } finally {
+        setCheckoutLoading(false)
+      }
+      return
+    }
+
     if (Number(amountPaid) < grandTotal) { toast.error('Pembayaran kurang'); return }
     setCheckoutLoading(true)
     try {
@@ -977,6 +1190,19 @@ export default function POS() {
     fetchData()
   }
 
+  function handleDokuSuccess(transaction) {
+    setDokuPay(null); setCustName(''); setCustPhone('')
+    setReceipt(transaction)
+    fetchData()
+    toast.success(`Transaksi ${transaction?.invoice_number} berhasil!`)
+    maybeAutoPrint(transaction)
+  }
+
+  function handleDokuCancel() {
+    setDokuPay(null)
+    fetchData()
+  }
+
   if (loading) return <FullPageSpinner />
 
   const cartProps = {
@@ -988,6 +1214,7 @@ export default function POS() {
     onCheckout: handleCheckout, checkoutLoading,
     onBack: () => setMobileTab('products'),
     settings, gopayError,
+    custName, setCustName, custPhone, setCustPhone,
   }
 
   return (
@@ -1023,6 +1250,8 @@ export default function POS() {
       <QrPaymentModal isOpen={!!qrPay} data={qrPay?.data} brand={qrPay?.brand}
         statusFn={qrPay?.statusFn} cancelFn={qrPay?.cancelFn}
         onSuccess={handleQrSuccess} onCancel={handleQrCancel} />
+      <DokuPaymentModal isOpen={!!dokuPay} data={dokuPay} initialPhone={dokuPay?.phone || ''}
+        onSuccess={handleDokuSuccess} onCancel={handleDokuCancel} />
     </>
   )
 }

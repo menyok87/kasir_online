@@ -100,6 +100,12 @@ CREATE TABLE IF NOT EXISTS store_settings (
   midtrans_client_key     TEXT                  DEFAULT '',
   midtrans_is_production  BOOLEAN               NOT NULL DEFAULT FALSE,
   qris_enabled            BOOLEAN               NOT NULL DEFAULT TRUE,
+  doku_client_id          TEXT                  DEFAULT '',
+  doku_secret_key         TEXT                  DEFAULT '',
+  doku_is_production      BOOLEAN               NOT NULL DEFAULT FALSE,
+  doku_enabled            BOOLEAN               NOT NULL DEFAULT FALSE,
+  whacenter_device_id     TEXT                  DEFAULT '',
+  whacenter_enabled       BOOLEAN               NOT NULL DEFAULT FALSE,
   updated_at              TIMESTAMPTZ           DEFAULT NOW()
 );
 

@@ -24,6 +24,8 @@ const defaultSettings = {
   bank_account_name: '', bank_branch: '',
   midtrans_server_key: '', midtrans_client_key: '', midtrans_is_production: false,
   qris_enabled: true,
+  doku_client_id: '', doku_secret_key: '', doku_is_production: false, doku_enabled: false,
+  whacenter_device_id: '', whacenter_enabled: false,
 }
 
 const SECTIONS = [
@@ -33,6 +35,7 @@ const SECTIONS = [
   { id: 'qrisdana',  label: 'QRIS/DANA',  icon: QrCode,      color: 'cyan'   },
   { id: 'bank',      label: 'Bank',       icon: Landmark,    color: 'amber'  },
   { id: 'gopay',     label: 'GoPay',      icon: Smartphone,  color: 'green'  },
+  { id: 'doku',      label: 'DOKU & WA',  icon: Smartphone,  color: 'rose'   },
   { id: 'struk',     label: 'Struk',      icon: FileText,    color: 'rose'   },
   { id: 'printer',   label: 'Printer',    icon: Printer,     color: 'slate'  },
   { id: 'keamanan',  label: 'Keamanan',   icon: Lock,        color: 'slate'  },
@@ -847,6 +850,127 @@ function PanelGopay({ form, set, setForm }) {
   )
 }
 
+// ── Panel: DOKU (Checkout) + WhatsApp (WhaCenter) ─────────────────────────────
+function PanelDoku({ form, set, setForm }) {
+  const [showSecret, setShowSecret] = useState(false)
+  const hasDoku  = form.doku_client_id && form.doku_secret_key
+  const webhook  = (import.meta.env.VITE_API_BASE_URL || window.location.origin) + '/api/doku/notification'
+
+  return (
+    <div className="space-y-4">
+      <SectionCard title="Konfigurasi DOKU" subtitle="E-wallet & semua Virtual Account dalam satu link pembayaran" icon={Smartphone} color="rose">
+        <div className="bg-rose-50 dark:bg-rose-900/20 rounded-xl p-3.5 border border-rose-100 dark:border-rose-900/30">
+          <p className="text-xs font-semibold text-rose-700 dark:text-rose-300 mb-1.5">Cara Setup DOKU:</p>
+          <ol className="text-xs text-rose-600 dark:text-rose-400 space-y-1 list-decimal list-inside leading-relaxed">
+            <li>Daftar/masuk di <strong>dashboard.doku.com</strong></li>
+            <li>Buka <strong>Integration → API Keys</strong></li>
+            <li>Salin <em>Client ID</em> dan <em>Secret Key</em></li>
+            <li>Aktifkan channel e-wallet & Virtual Account yang diinginkan</li>
+          </ol>
+          <a href="https://dashboard.doku.com" target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-rose-700 dark:text-rose-300 font-semibold mt-2 hover:underline">
+            Buka DOKU Dashboard <ExternalLink size={10} />
+          </a>
+        </div>
+
+        {/* Aktifkan DOKU */}
+        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+          <div>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Aktifkan DOKU</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tampilkan metode "DOKU" di halaman POS</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" checked={!!form.doku_enabled}
+              onChange={e => setForm(f => ({ ...f, doku_enabled: e.target.checked }))} />
+            <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700
+              peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+              after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
+              after:transition-all peer-checked:bg-rose-500" />
+          </label>
+        </div>
+
+        {/* Mode */}
+        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+          <div>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Mode</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {form.doku_is_production ? 'Production — transaksi nyata' : 'Sandbox — uji coba'}
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" checked={!!form.doku_is_production}
+              onChange={e => setForm(f => ({ ...f, doku_is_production: e.target.checked }))} />
+            <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700
+              peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+              after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
+              after:transition-all peer-checked:bg-rose-500" />
+          </label>
+        </div>
+
+        <Field label="Client ID" required>
+          <input className="input font-mono text-sm" value={form.doku_client_id || ''}
+            onChange={set('doku_client_id')} placeholder="BRN-xxxx / MCH-xxxx" />
+        </Field>
+
+        <Field label="Secret Key" required hint="Dipakai menandatangani request (HMAC-SHA256)">
+          <div className="relative">
+            <input type={showSecret ? 'text' : 'password'} className="input pr-10 font-mono text-sm"
+              value={form.doku_secret_key || ''} onChange={set('doku_secret_key')} placeholder="SK-xxxx" />
+            <button type="button" onClick={() => setShowSecret(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showSecret ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+        </Field>
+
+        <div className={`rounded-xl px-4 py-3 flex items-center gap-2.5 border ${hasDoku ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30' : 'bg-gray-50 dark:bg-gray-800/60 border-gray-100 dark:border-gray-700'}`}>
+          {hasDoku ? <CheckCircle size={15} className="text-green-600 flex-shrink-0" /> : <Smartphone size={15} className="text-gray-400 flex-shrink-0" />}
+          <p className={`text-xs font-semibold ${hasDoku ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'}`}>
+            {hasDoku ? `DOKU siap (mode ${form.doku_is_production ? 'Production' : 'Sandbox'}).` : 'Isi Client ID & Secret Key untuk mengaktifkan DOKU.'}
+          </p>
+        </div>
+
+        <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3.5 border border-gray-100 dark:border-gray-700">
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1.5">URL Notification (Webhook):</p>
+          <code className="text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-lg block font-mono border border-gray-200 dark:border-gray-700 break-all select-all">
+            {webhook}
+          </code>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Daftarkan URL ini di <strong>DOKU Dashboard → Integration → Notification URL</strong> agar status pembayaran otomatis.
+          </p>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="WhatsApp (WhaCenter)" subtitle="Kirim link pembayaran ke WhatsApp pelanggan otomatis" icon={Smartphone} color="green">
+        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+          <div>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Aktifkan kirim WhatsApp</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kirim link pembayaran via WhaCenter</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" checked={!!form.whacenter_enabled}
+              onChange={e => setForm(f => ({ ...f, whacenter_enabled: e.target.checked }))} />
+            <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700
+              peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+              after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
+              after:transition-all peer-checked:bg-green-500" />
+          </label>
+        </div>
+
+        <Field label="Device ID" hint="Token perangkat dari app.whacenter.com">
+          <input className="input font-mono text-sm" value={form.whacenter_device_id || ''}
+            onChange={set('whacenter_device_id')} placeholder="device id WhaCenter" />
+        </Field>
+
+        <a href="https://app.whacenter.com" target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-300 font-semibold hover:underline">
+          Buka WhaCenter <ExternalLink size={10} />
+        </a>
+      </SectionCard>
+    </div>
+  )
+}
+
 // ── Panel: QRIS / DANA (QRIS dinamis via Midtrans) ────────────────────────────
 function PanelQrisDana({ form, setForm }) {
   const enabled   = form.qris_enabled !== false
@@ -1142,6 +1266,7 @@ export default function Settings() {
           {active === 'qrisdana' && <PanelQrisDana form={form} setForm={setForm} />}
           {active === 'bank'     && <PanelBank     form={form} set={set} />}
           {active === 'gopay'    && <PanelGopay    form={form} set={set} setForm={setForm} />}
+          {active === 'doku'     && <PanelDoku     form={form} set={set} setForm={setForm} />}
           {active === 'struk'    && <PanelStruk    form={form} set={set} setCheck={setCheck} setForm={setForm} />}
           {active === 'printer'  && <PanelPrinter  form={form} />}
           {active === 'keamanan' && (

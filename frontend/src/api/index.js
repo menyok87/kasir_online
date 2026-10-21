@@ -84,6 +84,12 @@ export const qrisCharge      = (data)     => api.post('/qris/charge', data);
 export const qrisStatus      = (order_id) => api.get(`/qris/status/${order_id}`);
 export const qrisCancel      = (order_id) => api.post(`/qris/cancel/${order_id}`);
 
+// DOKU Checkout — e-wallet & semua Virtual Account dalam satu link; kirim via WA
+export const dokuCharge      = (data)     => api.post('/doku/charge', data);
+export const dokuStatus      = (order_id) => api.get(`/doku/status/${order_id}`);
+export const dokuCancel      = (order_id) => api.post(`/doku/cancel/${order_id}`);
+export const dokuSendWa      = (data)     => api.post('/doku/send-wa', data);
+
 // Laporan Penjualan
 export const getSalesReport   = (month) => api.get('/reports/sales',   { params: { month } });
 export const getMonthlyReport = (year)  => api.get('/reports/monthly', { params: { year } });

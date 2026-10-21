@@ -9,7 +9,8 @@ const PORT = process.env.PORT || 3002;
 const isProd = process.env.NODE_ENV === 'production';
 
 app.use(cors());
-app.use(bodyParser.json());
+// Simpan raw body (dipakai verifikasi tanda tangan webhook DOKU)
+app.use(bodyParser.json({ verify: (req, _res, buf) => { req.rawBody = buf.toString('utf8') } }));
 
 const { authenticate, requireAdmin, requireManager } = require('./middleware/authMiddleware');
 
@@ -49,6 +50,12 @@ app.use('/api/qris', (req, res, next) => {
   if (req.path === '/notification' && req.method === 'POST') return next()
   return authenticate(req, res, next)
 }, require('./routes/qris'));
+
+// DOKU (Checkout): webhook /notification publik, sisanya butuh auth
+app.use('/api/doku', (req, res, next) => {
+  if (req.path === '/notification' && req.method === 'POST') return next()
+  return authenticate(req, res, next)
+}, require('./routes/doku'));
 
 // ── Static Frontend (production) ────────────────────────────
 // Nginx memproksi semua request ke Express, jadi Express

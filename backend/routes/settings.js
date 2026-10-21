@@ -10,6 +10,8 @@ const DEFAULT_SETTINGS = {
   store_logo: '', qris_image: '', bank_name: '', bank_account_number: '', bank_account_name: '', bank_branch: '',
   midtrans_server_key: '', midtrans_client_key: '', midtrans_is_production: false,
   qris_enabled: true,
+  doku_client_id: '', doku_secret_key: '', doku_is_production: false, doku_enabled: false,
+  whacenter_device_id: '', whacenter_enabled: false,
 };
 
 // GET /api/settings — pengaturan toko milik tenant
@@ -31,6 +33,8 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
       footer_msg, show_footer_note,
       store_logo, qris_image, bank_name, bank_account_number, bank_account_name, bank_branch,
       midtrans_server_key, midtrans_client_key, midtrans_is_production, qris_enabled,
+      doku_client_id, doku_secret_key, doku_is_production, doku_enabled,
+      whacenter_device_id, whacenter_enabled,
     } = req.body;
 
     if (!store_name?.trim()) return res.status(400).json({ error: 'Nama toko wajib diisi' });
@@ -41,6 +45,22 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
       [tid]
     );
 
+    // Nilai bersama (urutan kolom sama untuk UPDATE & INSERT)
+    const vals = [
+      store_name.trim(), store_tagline?.trim() || '', store_address?.trim() || '',
+      store_phone?.trim() || '', store_email?.trim() || '', store_website?.trim() || '',
+      footer_msg?.trim() || '', show_footer_note !== false,
+      store_logo?.trim() || '', qris_image?.trim() || '', bank_name?.trim() || '',
+      bank_account_number?.trim() || '', bank_account_name?.trim() || '',
+      bank_branch?.trim() || '',
+      midtrans_server_key?.trim() || '', midtrans_client_key?.trim() || '',
+      midtrans_is_production === true,
+      qris_enabled !== false,
+      doku_client_id?.trim() || '', doku_secret_key?.trim() || '',
+      doku_is_production === true, doku_enabled === true,
+      whacenter_device_id?.trim() || '', whacenter_enabled === true,
+    ];
+
     let rows;
     if (existing.length > 0) {
       const result = await pool.query(`
@@ -50,41 +70,25 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
           store_logo=$9, qris_image=$10, bank_name=$11, bank_account_number=$12,
           bank_account_name=$13, bank_branch=$14,
           midtrans_server_key=$15, midtrans_client_key=$16, midtrans_is_production=$17,
-          qris_enabled=$18, updated_at=NOW()
-        WHERE admin_id=$19 RETURNING *`,
-        [
-          store_name.trim(), store_tagline?.trim() || '', store_address?.trim() || '',
-          store_phone?.trim() || '', store_email?.trim() || '', store_website?.trim() || '',
-          footer_msg?.trim() || '', show_footer_note !== false,
-          store_logo?.trim() || '', qris_image?.trim() || '', bank_name?.trim() || '',
-          bank_account_number?.trim() || '', bank_account_name?.trim() || '',
-          bank_branch?.trim() || '',
-          midtrans_server_key?.trim() || '', midtrans_client_key?.trim() || '',
-          midtrans_is_production === true,
-          qris_enabled !== false,
-          tid,
-        ]
+          qris_enabled=$18,
+          doku_client_id=$19, doku_secret_key=$20, doku_is_production=$21, doku_enabled=$22,
+          whacenter_device_id=$23, whacenter_enabled=$24,
+          updated_at=NOW()
+        WHERE admin_id=$25 RETURNING *`,
+        [...vals, tid]
       );
       rows = result.rows;
     } else {
       const result = await pool.query(`
         INSERT INTO store_settings
-          (admin_id, store_name, store_tagline, store_address, store_phone, store_email,
+          (store_name, store_tagline, store_address, store_phone, store_email,
            store_website, footer_msg, show_footer_note, store_logo, qris_image, bank_name,
            bank_account_number, bank_account_name, bank_branch,
-           midtrans_server_key, midtrans_client_key, midtrans_is_production, qris_enabled)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *`,
-        [
-          tid, store_name.trim(), store_tagline?.trim() || '', store_address?.trim() || '',
-          store_phone?.trim() || '', store_email?.trim() || '', store_website?.trim() || '',
-          footer_msg?.trim() || '', show_footer_note !== false,
-          store_logo?.trim() || '', qris_image?.trim() || '', bank_name?.trim() || '',
-          bank_account_number?.trim() || '', bank_account_name?.trim() || '',
-          bank_branch?.trim() || '',
-          midtrans_server_key?.trim() || '', midtrans_client_key?.trim() || '',
-          midtrans_is_production === true,
-          qris_enabled !== false,
-        ]
+           midtrans_server_key, midtrans_client_key, midtrans_is_production, qris_enabled,
+           doku_client_id, doku_secret_key, doku_is_production, doku_enabled,
+           whacenter_device_id, whacenter_enabled, admin_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25) RETURNING *`,
+        [...vals, tid]
       );
       rows = result.rows;
     }

@@ -142,6 +142,13 @@ async function seed() {
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS midtrans_client_key TEXT DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS midtrans_is_production BOOLEAN NOT NULL DEFAULT FALSE`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS qris_enabled BOOLEAN NOT NULL DEFAULT TRUE`,
+      // DOKU (Checkout) + WhaCenter (WhatsApp)
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS doku_client_id TEXT DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS doku_secret_key TEXT DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS doku_is_production BOOLEAN NOT NULL DEFAULT FALSE`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS doku_enabled BOOLEAN NOT NULL DEFAULT FALSE`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS whacenter_device_id TEXT DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS whacenter_enabled BOOLEAN NOT NULL DEFAULT FALSE`,
     ];
     for (const sql of settingsCols) await client.query(sql).catch(() => {});
     // Default settings per admin
