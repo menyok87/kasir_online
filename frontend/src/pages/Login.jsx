@@ -2,11 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   Store, Eye, EyeOff, AlertCircle, Moon, Sun,
-  UserPlus, LogIn, KeyRound, ArrowLeft, CheckCircle2, Copy, Mail, RefreshCw, Timer,
+  UserPlus, LogIn, KeyRound, ArrowLeft, CheckCircle2, Copy, Mail, RefreshCw, Timer, Fingerprint,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import api from '../api'
+import {
+  isNativeApp, biometricAvailable, verifyBiometric,
+  isBiometricLoginEnabled, enableBiometricLogin, disableBiometricLogin, refreshBiometricLogin, getBiometricLogin,
+} from '../utils/biometric'
 
 export default function Login() {
   const [tab, setTab]     = useState('login')  // 'login' | 'register' | 'forgot'
@@ -92,7 +96,47 @@ function LoginForm({ login, navigate, onForgot }) {
   const [resendLoading, setResendLoading] = useState(false)
   const [resendDone, setResendDone]       = useState(false)
 
+  // Biometrik (sidik jari)
+  const [bioAvail, setBioAvail]     = useState(false)          // perangkat punya sidik jari
+  const [bioBusy, setBioBusy]       = useState(false)
+  const [pendingBio, setPendingBio] = useState(null)           // { token, user } menunggu konfirmasi aktivasi
+  const bioLoginReady = isNativeApp() && isBiometricLoginEnabled() && !!getBiometricLogin()
+
+  useEffect(() => { if (isNativeApp()) biometricAvailable().then(setBioAvail) }, [])
+
+  const goHome = user => navigate(user.role === 'kasir' ? '/pos' : '/dashboard', { replace: true })
+
   const set = k => e => { setError(''); setUnverified(null); setForm(f => ({ ...f, [k]: e.target.value })) }
+
+  // Masuk dengan sidik jari (pulihkan sesi tersimpan)
+  async function handleBiometricLogin() {
+    setError(''); setBioBusy(true)
+    try {
+      await verifyBiometric('Masuk ke Kasir Online')
+      const saved = getBiometricLogin()
+      if (!saved) { setError('Data login sidik jari tidak ditemukan. Masuk dengan sandi.'); return }
+
+      // Validasi token (lewat fetch, agar interceptor 401 tidak memicu redirect).
+      const base = api.defaults.baseURL || '/api'
+      let ok = false
+      try {
+        const res = await fetch(`${base}/auth/me`, { headers: { Authorization: `Bearer ${saved.token}` } })
+        ok = res.ok
+      } catch { ok = false }
+
+      if (!ok) {
+        // Sesi tersimpan kedaluwarsa → hentikan login sidik jari, minta sandi.
+        disableBiometricLogin()
+        setError('Sesi tersimpan sudah kedaluwarsa. Masuk dengan sandi, lalu aktifkan lagi.')
+        return
+      }
+
+      login(saved.token, saved.user)
+      goHome(saved.user)
+    } catch {
+      setError('Verifikasi sidik jari gagal atau dibatalkan.')
+    } finally { setBioBusy(false) }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -103,7 +147,14 @@ function LoginForm({ login, navigate, onForgot }) {
     try {
       const { data } = await api.post('/auth/login', form)
       login(data.token, data.user)
-      navigate(data.user.role === 'kasir' ? '/pos' : '/dashboard', { replace: true })
+      // Jika login sidik jari sudah aktif → segarkan token tersimpan.
+      refreshBiometricLogin(data.token, data.user)
+      // Belum aktif + perangkat mendukung → tawarkan aktivasi sebelum lanjut.
+      if (isNativeApp() && bioAvail && !isBiometricLoginEnabled()) {
+        setPendingBio({ token: data.token, user: data.user })
+        return
+      }
+      goHome(data.user)
     } catch (err) {
       const res = err.data || {}
       if (res.unverified) {
@@ -152,8 +203,57 @@ function LoginForm({ login, navigate, onForgot }) {
     />
   }
 
+  // Tawarkan aktivasi login sidik jari setelah login sandi pertama
+  if (pendingBio) {
+    return (
+      <div className="text-center space-y-4 py-2">
+        <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto">
+          <Fingerprint size={32} className="text-blue-600 dark:text-blue-400" />
+        </div>
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Aktifkan Login Sidik Jari?</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Lain kali Anda cukup menempelkan sidik jari untuk masuk — tanpa mengetik sandi.
+          </p>
+        </div>
+        <div className="space-y-2.5">
+          <button type="button"
+            onClick={() => { enableBiometricLogin(pendingBio.token, pendingBio.user); const u = pendingBio.user; setPendingBio(null); goHome(u) }}
+            className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2">
+            <Fingerprint size={16} /> Aktifkan
+          </button>
+          <button type="button"
+            onClick={() => { const u = pendingBio.user; setPendingBio(null); goHome(u) }}
+            className="w-full py-2.5 text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+            Nanti saja
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 dark:text-gray-500">
+          Bisa diaktifkan/dinonaktifkan kapan saja di Pengaturan → Keamanan.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Masuk dengan sidik jari */}
+      {bioLoginReady && (
+        <div className="space-y-3">
+          <button type="button" onClick={handleBiometricLogin} disabled={bioBusy}
+            className="w-full flex items-center justify-center gap-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 font-bold py-3 rounded-2xl active:scale-[0.98] transition-all disabled:opacity-60">
+            {bioBusy
+              ? <><span className="w-5 h-5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />Memverifikasi...</>
+              : <><Fingerprint size={20} /> Masuk dengan Sidik Jari</>}
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+            <span className="text-xs text-gray-400 dark:text-gray-500">atau pakai sandi</span>
+            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+          </div>
+        </div>
+      )}
+
       {/* Email belum diverifikasi */}
       {unverified && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-3.5 py-3">

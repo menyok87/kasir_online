@@ -10,7 +10,7 @@ import {
 import { getSettings, updateSettings, uploadProductImage, deleteProductImage, changePassword } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
 import { getImageUrl } from '../utils/getImageUrl'
-import { biometricAvailable, verifyBiometric, isBiometricEnabled, setBiometricEnabled } from '../utils/biometric'
+import { biometricAvailable, verifyBiometric, isBiometricEnabled, setBiometricEnabled, isBiometricLoginEnabled, enableBiometricLogin, disableBiometricLogin } from '../utils/biometric'
 import {
   isNativeApp as printerNative, getSavedPrinter, savePrinter, clearPrinter,
   isAutoPrint, setAutoPrint, scanPrinters, testPrint,
@@ -529,6 +529,7 @@ function PanelStruk({ form, set, setCheck, setForm }) {
 function BiometricSetting() {
   const [avail, setAvail]     = useState(null)  // null = masih dicek
   const [enabled, setEnabled] = useState(isBiometricEnabled())
+  const [loginOn, setLoginOn] = useState(isBiometricLoginEnabled())
   const [busy, setBusy]       = useState(false)
 
   useEffect(() => { biometricAvailable().then(setAvail) }, [])
@@ -544,10 +545,41 @@ function BiometricSetting() {
     finally { setBusy(false) }
   }
 
+  async function toggleLogin(on) {
+    if (!avail) return
+    setBusy(true)
+    try {
+      await verifyBiometric(on ? 'Aktifkan login sidik jari' : 'Nonaktifkan login sidik jari')
+      if (on) {
+        const token = localStorage.getItem('token')
+        const user  = JSON.parse(localStorage.getItem('user') || 'null')
+        if (!token || !user) { toast.error('Sesi tidak ditemukan, login ulang.'); return }
+        enableBiometricLogin(token, user)
+      } else {
+        disableBiometricLogin()
+      }
+      setLoginOn(on)
+      toast.success(on ? 'Login sidik jari diaktifkan' : 'Login sidik jari dinonaktifkan')
+    } catch { toast.error('Verifikasi sidik jari gagal atau dibatalkan') }
+    finally { setBusy(false) }
+  }
+
   const canToggle = avail === true
 
   return (
-    <SectionCard title="Kunci Sidik Jari" subtitle="Amankan aplikasi dengan biometrik perangkat" icon={Fingerprint} color="slate">
+    <SectionCard title="Keamanan Sidik Jari" subtitle="Login & kunci aplikasi dengan biometrik perangkat" icon={Fingerprint} color="slate">
+      {/* Login dengan sidik jari */}
+      <div className={`flex items-center justify-between rounded-xl px-4 py-3 border ${canToggle ? 'bg-gray-50 dark:bg-gray-800/60 border-gray-100 dark:border-gray-700' : 'bg-gray-50/60 dark:bg-gray-800/40 border-gray-100 dark:border-gray-700 opacity-70'}`}>
+        <div className="min-w-0 pr-3">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Login dengan sidik jari</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Masuk cukup dengan sidik jari, tanpa mengetik sandi</p>
+        </div>
+        <button type="button" onClick={() => toggleLogin(!loginOn)} disabled={busy || !canToggle}
+          className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed ${loginOn && canToggle ? 'bg-slate-700 dark:bg-slate-500' : 'bg-gray-300 dark:bg-gray-600'} ${!canToggle ? 'opacity-50' : ''}`}>
+          <span className={`absolute top-[2px] left-[2px] bg-white w-5 h-5 rounded-full transition-transform ${loginOn && canToggle ? 'translate-x-5' : ''}`} />
+        </button>
+      </div>
+
       <div className={`flex items-center justify-between rounded-xl px-4 py-3 border ${canToggle ? 'bg-gray-50 dark:bg-gray-800/60 border-gray-100 dark:border-gray-700' : 'bg-gray-50/60 dark:bg-gray-800/40 border-gray-100 dark:border-gray-700 opacity-70'}`}>
         <div className="min-w-0 pr-3">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Kunci saat buka aplikasi</p>
