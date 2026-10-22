@@ -5,7 +5,35 @@ Batas: **500 karakter per bahasa**.
 
 ---
 
-## Versi 1.2.7 (versionCode 19) — TERBARU
+## Versi 1.2.8 (versionCode 20) — TERBARU
+
+### 🇮🇩 Indonesia (id-ID)
+```
+Versi 1.2.8 — Lebih lengkap & praktis!
+
+• Login sidik jari — masuk tanpa ketik sandi.
+• Pembayaran DOKU: e-wallet & semua Virtual Account bank dalam 1 link, kirim ke WhatsApp pelanggan.
+• Update aplikasi otomatis di latar belakang.
+• Perbaikan kestabilan.
+
+Terima kasih telah memakai Kasir Online!
+```
+
+### 🇬🇧 English (en-US)
+```
+Version 1.2.8 — More complete & convenient!
+
+• Fingerprint login — sign in without typing your password.
+• DOKU payments: e-wallets & all bank Virtual Accounts in one link, sent to the customer's WhatsApp.
+• Automatic background app updates.
+• Stability improvements.
+
+Thank you for using Kasir Online!
+```
+
+---
+
+## Versi 1.2.7 (versionCode 19)
 
 ### 🇮🇩 Indonesia (id-ID)
 ```

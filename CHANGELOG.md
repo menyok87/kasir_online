@@ -1,5 +1,18 @@
 # Catatan Rilis — Kasir Online
 
+## Versi 1.2.8 (versionCode 20)
+
+### ✨ Baru
+- **Login sidik jari** di halaman login — masuk cukup dengan sidik jari, tanpa mengetik sandi.
+- **Pembayaran DOKU** — e-wallet (OVO/DANA/ShopeePay/dll) & semua Virtual Account bank dalam satu link, dengan **kirim link pembayaran ke WhatsApp pelanggan** otomatis.
+- **Update otomatis** — pembaruan aplikasi diunduh di latar belakang & dipasang otomatis, tanpa membuka Play Store.
+
+### 🐛 Perbaikan
+- Berbagai perbaikan kestabilan.
+
+---
+
+
 ## Versi 1.2.7 (versionCode 19)
 
 ### ✨ Baru
