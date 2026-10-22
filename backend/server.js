@@ -1,0 +1,88 @@
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+const express = require('express');
+const cors    = require('cors');
+const bodyParser = require('body-parser');
+const path    = require('path');
+
+const app  = express();
+const PORT = process.env.PORT || 3002;
+const isProd = process.env.NODE_ENV === 'production';
+
+app.use(cors());
+// Simpan raw body (dipakai verifikasi tanda tangan webhook DOKU)
+app.use(bodyParser.json({ verify: (req, _res, buf) => { req.rawBody = buf.toString('utf8') } }));
+
+const { authenticate, requireAdmin, requireManager } = require('./middleware/authMiddleware');
+
+// ── Uploaded images (harus sebelum static frontend) ─────────
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '30d',
+  etag: true,
+}));
+
+// ── Public routes ────────────────────────────────────────────
+app.get('/api/health', (req, res) => res.json({ status: 'ok', env: process.env.NODE_ENV }));
+app.use('/api/auth',  require('./routes/auth'));
+
+// ── Protected API Routes ──────────────────────────────────────
+// Catatan: GET produk/kategori/pengaturan dibutuhkan SEMUA role (kasir di POS),
+// jadi mount hanya pakai `authenticate`. Operasi tulis (POST/PUT/DELETE) sudah
+// dijaga `requireAdmin` DI DALAM masing-masing route. Dashboard & accounts tidak
+// punya guard internal sehingga gate role tetap di level mount.
+app.use('/api/categories',   authenticate,               require('./routes/categories'));
+app.use('/api/products',     authenticate,               require('./routes/products'));
+app.use('/api/transactions', authenticate,               require('./routes/transactions'));
+app.use('/api/dashboard',    authenticate, requireManager, require('./routes/dashboard'));
+app.use('/api/uploads',      authenticate,               require('./routes/uploads'));
+app.use('/api/users',        authenticate,               require('./routes/users'));
+app.use('/api/settings',     authenticate,               require('./routes/settings'));
+app.use('/api/accounts',     authenticate, requireAdmin,  require('./routes/accounts'));
+app.use('/api/ledger',                                    require('./routes/ledger'));
+app.use('/api/reports',                                   require('./routes/reports'));
+// GoPay: webhook /notification publik, sisanya butuh auth
+app.use('/api/gopay', (req, res, next) => {
+  if (req.path === '/notification' && req.method === 'POST') return next()
+  return authenticate(req, res, next)
+}, require('./routes/gopay'));
+
+// QRIS dinamis (Midtrans): webhook /notification publik, sisanya butuh auth
+app.use('/api/qris', (req, res, next) => {
+  if (req.path === '/notification' && req.method === 'POST') return next()
+  return authenticate(req, res, next)
+}, require('./routes/qris'));
+
+// DOKU (Checkout): webhook /notification publik, sisanya butuh auth
+app.use('/api/doku', (req, res, next) => {
+  if (req.path === '/notification' && req.method === 'POST') return next()
+  return authenticate(req, res, next)
+}, require('./routes/doku'));
+
+// ── Static Frontend (production) ────────────────────────────
+// Nginx memproksi semua request ke Express, jadi Express
+// perlu melayani file hasil build Vite (frontend/dist).
+if (isProd) {
+  const distPath = path.join(__dirname, '../frontend/dist');
+  app.use(express.static(distPath, {
+    maxAge: '1y',            // cache asset statis 1 tahun
+    etag: true,
+  }));
+
+  // SPA fallback — semua route non-API dikembalikan ke index.html
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
+
+// ── Error Handler ────────────────────────────────────────────
+app.use(require('./middleware/errorHandler'));
+
+app.listen(PORT, () => {
+  console.log(`Kasir Online berjalan di http://localhost:${PORT} [${process.env.NODE_ENV || 'development'}]`);
+  // Status email — bantu diagnosa kenapa kode reset tidak terkirim
+  const { isConfigured } = require('./utils/mailer');
+  if (isConfigured()) {
+    console.log(`[Mailer] SMTP aktif (${process.env.SMTP_HOST}) — kode reset & verifikasi dikirim via email.`);
+  } else {
+    console.warn('[Mailer] SMTP TIDAK dikonfigurasi — mode offline: kode reset tampil di layar. Isi SMTP_* di .env untuk mengirim email.');
+  }
+});
