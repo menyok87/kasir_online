@@ -7,7 +7,7 @@ import BiometricLock from './components/BiometricLock'
 import Login from './pages/Login'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import VerifyEmail from './pages/VerifyEmail'
-import { checkForUpdate } from './utils/appUpdate'
+import { watchForUpdates } from './utils/appUpdate'
 
 const Dashboard    = lazy(() => import('./pages/Dashboard'))
 const Categories   = lazy(() => import('./pages/Categories'))
@@ -76,8 +76,9 @@ function wrap(Component) {
 }
 
 export default function App() {
-  // Cek pembaruan di Play Store setiap aplikasi dibuka (hanya di Android).
-  useEffect(() => { checkForUpdate() }, [])
+  // Pembaruan otomatis (unduh di latar + pasang saat buka ulang); cek saat
+  // dibuka & setiap kembali aktif. Hanya aktif di aplikasi Android.
+  useEffect(() => { watchForUpdates() }, [])
 
   return (
     <ThemeProvider>
