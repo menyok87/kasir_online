@@ -4,7 +4,7 @@ const crypto  = require('crypto')
 const pool    = require('../database/db')
 const { authenticate, tenantId } = require('../middleware/authMiddleware')
 const { postSale } = require('../utils/ledger')
-const { createCheckout, queryStatus, testInvalidSignature, verifySignature, extractOrderRef, extractStatus, mapStatus } = require('../utils/dana')
+const { createCheckout, queryStatus, testInvalidSignature, testInconsistentRequest, verifySignature, extractOrderRef, extractStatus, mapStatus } = require('../utils/dana')
 const { sendWhatsApp } = require('../utils/whacenter')
 
 const NOTIFICATION_PATH = '/api/dana/notification'
@@ -244,6 +244,23 @@ router.post('/test-invalid-signature', authenticate, async (req, res, next) => {
     const notifyUrl = (process.env.PUBLIC_BASE_URL || `https://${host}`).replace(/\/$/, '') + NOTIFICATION_PATH
     const result = await testInvalidSignature(stg, { notifyUrl })
     const pass = String(result.responseCode) === '4015400'
+    res.json({ ...result, pass })
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message })
+    next(err)
+  }
+})
+
+// POST /api/dana/test-inconsistent — skenario: ref sama, amount beda → 4045418.
+router.post('/test-inconsistent', authenticate, async (req, res, next) => {
+  try {
+    const tid = tenantId(req.user)
+    const { rows: stgRows } = await pool.query('SELECT * FROM store_settings WHERE admin_id = $1', [tid])
+    const stg = stgRows[0] || {}
+    const host = (req.get('host') || '').replace(/^https?:\/\//, '')
+    const notifyUrl = (process.env.PUBLIC_BASE_URL || `https://${host}`).replace(/\/$/, '') + NOTIFICATION_PATH
+    const result = await testInconsistentRequest(stg, { notifyUrl })
+    const pass = String(result.responseCode) === '4045418'
     res.json({ ...result, pass })
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message })

@@ -182,6 +182,42 @@ async function testInvalidSignature(settings, { notifyUrl }) {
   return { httpStatus: resp.status, responseCode: data?.responseCode || null, responseMessage: data?.responseMessage || (text || '').slice(0, 200) }
 }
 
+// Body checkout untuk uji (ref & amount dapat diatur).
+function buildTestBody(settings, { ref, value, notifyUrl }) {
+  const b = {
+    partnerReferenceNo: ref,
+    merchantId: settings.dana_merchant_id,
+    amount: { value, currency: 'IDR' },
+    validUpTo: danaTimestamp(new Date(Date.now() + 60 * 60 * 1000)),
+    urlParams: [
+      { url: notifyUrl, type: 'PAY_RETURN',   isDeeplink: 'N' },
+      { url: notifyUrl, type: 'NOTIFICATION', isDeeplink: 'N' },
+    ],
+    additionalInfo: {
+      order: { orderTitle: (settings.store_name || 'Kasir Online').slice(0, 64), scenario: 'REDIRECT' },
+      envInfo: { sourcePlatform: 'IPG', terminalType: 'SYSTEM' },
+    },
+  }
+  if (settings.dana_mcc) b.additionalInfo.mcc = settings.dana_mcc
+  return b
+}
+
+// Skenario uji: order kedua dengan partnerReferenceNo sama tapi amount beda.
+// Harus mendapat 4045418 "Inconsistent Request".
+async function testInconsistentRequest(settings, { notifyUrl }) {
+  assertConfigured(settings)
+  const path = '/payment-gateway/v1.0/debit/payment-host-to-host.htm'
+  const ref  = crypto.randomUUID()
+  const first  = await danaPost(settings, path, buildTestBody(settings, { ref, value: '100000.00', notifyUrl }))
+  const second = await danaPost(settings, path, buildTestBody(settings, { ref, value: '200000.00', notifyUrl }))
+  return {
+    firstResponseCode: first.data?.responseCode || null,
+    httpStatus: second.resp.status,
+    responseCode: second.data?.responseCode || null,
+    responseMessage: second.data?.responseMessage || (second.text || '').slice(0, 200),
+  }
+}
+
 // ── Webhook (DANA → kita) ─────────────────────────────────────────────────────
 // Verifikasi X-SIGNATURE asymmetric (public key DANA).
 function verifySignature(publicKeyPem, { method, path, rawBody, timestamp, signature }) {
@@ -224,4 +260,4 @@ function mapStatus(danaStatus) {
   return 'pending'
 }
 
-module.exports = { createCheckout, queryStatus, testInvalidSignature, verifySignature, extractOrderRef, extractStatus, mapStatus }
+module.exports = { createCheckout, queryStatus, testInvalidSignature, testInconsistentRequest, verifySignature, extractOrderRef, extractStatus, mapStatus }
