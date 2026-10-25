@@ -149,6 +149,12 @@ async function seed() {
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS doku_enabled BOOLEAN NOT NULL DEFAULT FALSE`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS whacenter_device_id TEXT DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS whacenter_enabled BOOLEAN NOT NULL DEFAULT FALSE`,
+      // DANA (SNAP) — webhook notifikasi pembayaran
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_partner_id TEXT DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_client_id TEXT DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_public_key TEXT DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_is_production BOOLEAN NOT NULL DEFAULT FALSE`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_enabled BOOLEAN NOT NULL DEFAULT FALSE`,
     ];
     for (const sql of settingsCols) await client.query(sql).catch(() => {});
     // Default settings per admin

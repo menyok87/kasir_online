@@ -57,6 +57,9 @@ app.use('/api/doku', (req, res, next) => {
   return authenticate(req, res, next)
 }, require('./routes/doku'));
 
+// DANA (SNAP): webhook /notification publik (dipanggil server DANA)
+app.use('/api/dana', require('./routes/dana'));
+
 // ── Static Frontend (production) ────────────────────────────
 // Nginx memproksi semua request ke Express, jadi Express
 // perlu melayani file hasil build Vite (frontend/dist).

@@ -106,6 +106,11 @@ CREATE TABLE IF NOT EXISTS store_settings (
   doku_enabled            BOOLEAN               NOT NULL DEFAULT FALSE,
   whacenter_device_id     TEXT                  DEFAULT '',
   whacenter_enabled       BOOLEAN               NOT NULL DEFAULT FALSE,
+  dana_partner_id         TEXT                  DEFAULT '',
+  dana_client_id          TEXT                  DEFAULT '',
+  dana_public_key         TEXT                  DEFAULT '',
+  dana_is_production      BOOLEAN               NOT NULL DEFAULT FALSE,
+  dana_enabled            BOOLEAN               NOT NULL DEFAULT FALSE,
   updated_at              TIMESTAMPTZ           DEFAULT NOW()
 );
 

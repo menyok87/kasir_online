@@ -26,6 +26,7 @@ const defaultSettings = {
   qris_enabled: true,
   doku_client_id: '', doku_secret_key: '', doku_is_production: false, doku_enabled: false,
   whacenter_device_id: '', whacenter_enabled: false,
+  dana_partner_id: '', dana_client_id: '', dana_public_key: '', dana_is_production: false, dana_enabled: false,
 }
 
 const SECTIONS = [
@@ -36,6 +37,7 @@ const SECTIONS = [
   { id: 'bank',      label: 'Bank',       icon: Landmark,    color: 'amber'  },
   { id: 'gopay',     label: 'GoPay',      icon: Smartphone,  color: 'green'  },
   { id: 'doku',      label: 'DOKU & WA',  icon: Smartphone,  color: 'rose'   },
+  { id: 'dana',      label: 'DANA',       icon: QrCode,      color: 'cyan'   },
   { id: 'struk',     label: 'Struk',      icon: FileText,    color: 'rose'   },
   { id: 'printer',   label: 'Printer',    icon: Printer,     color: 'slate'  },
   { id: 'keamanan',  label: 'Keamanan',   icon: Lock,        color: 'slate'  },
@@ -971,6 +973,96 @@ function PanelDoku({ form, set, setForm }) {
   )
 }
 
+// ── Panel: DANA (webhook SNAP) ────────────────────────────────────────────────
+function PanelDana({ form, set, setForm }) {
+  const origin  = import.meta.env.VITE_API_BASE_URL || window.location.origin
+  const webhook = origin + '/api/dana/notification'
+
+  return (
+    <div className="space-y-4">
+      <SectionCard title="Webhook DANA" subtitle="URL notifikasi pembayaran untuk didaftarkan di dashboard DANA" icon={QrCode} color="cyan">
+        <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-3.5 border border-cyan-100 dark:border-cyan-900/30">
+          <p className="text-xs text-cyan-700 dark:text-cyan-300 leading-relaxed">
+            Daftarkan URL di bawah sebagai <strong>Payment Notification / Finish Notify URL</strong> di DANA Dashboard.
+            Server kita menerima notifikasi (SNAP finish-notify), menandai transaksi lunas, dan posting ke Buku Besar otomatis.
+          </p>
+        </div>
+
+        <Field label="URL Webhook — Produksi">
+          <code className="text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-3 py-2.5 rounded-lg block font-mono border border-gray-200 dark:border-gray-700 break-all select-all">
+            {webhook}
+          </code>
+        </Field>
+        <Field label="URL Webhook — Sandbox" hint="Sama dengan produksi — lingkungan ditentukan oleh akun/kredensial DANA di dashboard">
+          <code className="text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-3 py-2.5 rounded-lg block font-mono border border-gray-200 dark:border-gray-700 break-all select-all">
+            {webhook}
+          </code>
+        </Field>
+      </SectionCard>
+
+      <SectionCard title="Kredensial DANA" subtitle="Identitas & kunci untuk verifikasi notifikasi" icon={Settings2} color="cyan">
+        {/* Aktifkan */}
+        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+          <div>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Aktifkan DANA</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Terima notifikasi pembayaran DANA</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" checked={!!form.dana_enabled}
+              onChange={e => setForm(f => ({ ...f, dana_enabled: e.target.checked }))} />
+            <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700
+              peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+              after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
+              after:transition-all peer-checked:bg-cyan-500" />
+          </label>
+        </div>
+
+        {/* Mode */}
+        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+          <div>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Mode</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {form.dana_is_production ? 'Production — transaksi nyata' : 'Sandbox — uji coba'}
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" checked={!!form.dana_is_production}
+              onChange={e => setForm(f => ({ ...f, dana_is_production: e.target.checked }))} />
+            <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700
+              peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+              after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
+              after:transition-all peer-checked:bg-cyan-500" />
+          </label>
+        </div>
+
+        <Field label="Partner ID (X-PARTNER-ID)">
+          <input className="input font-mono text-sm" value={form.dana_partner_id || ''}
+            onChange={set('dana_partner_id')} placeholder="mis. 2021XXXXXXXXXXX" />
+        </Field>
+
+        <Field label="Client ID">
+          <input className="input font-mono text-sm" value={form.dana_client_id || ''}
+            onChange={set('dana_client_id')} placeholder="Client ID DANA" />
+        </Field>
+
+        <Field label="Public Key DANA" hint="Opsional — bila diisi, tanda tangan X-SIGNATURE webhook diverifikasi (disarankan)">
+          <textarea className="input font-mono text-xs min-h-[90px]" value={form.dana_public_key || ''}
+            onChange={set('dana_public_key')}
+            placeholder="-----BEGIN PUBLIC KEY-----&#10;...&#10;-----END PUBLIC KEY-----" />
+        </Field>
+
+        <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 border border-amber-200 dark:border-amber-800">
+          <AlertTriangle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-700 dark:text-amber-300">
+            Kosongkan Public Key hanya untuk uji awal. Untuk produksi, <strong>isi Public Key DANA</strong> agar
+            notifikasi palsu ditolak.
+          </p>
+        </div>
+      </SectionCard>
+    </div>
+  )
+}
+
 // ── Panel: QRIS / DANA (QRIS dinamis via Midtrans) ────────────────────────────
 function PanelQrisDana({ form, setForm }) {
   const enabled   = form.qris_enabled !== false
@@ -1267,6 +1359,7 @@ export default function Settings() {
           {active === 'bank'     && <PanelBank     form={form} set={set} />}
           {active === 'gopay'    && <PanelGopay    form={form} set={set} setForm={setForm} />}
           {active === 'doku'     && <PanelDoku     form={form} set={set} setForm={setForm} />}
+          {active === 'dana'     && <PanelDana     form={form} set={set} setForm={setForm} />}
           {active === 'struk'    && <PanelStruk    form={form} set={set} setCheck={setCheck} setForm={setForm} />}
           {active === 'printer'  && <PanelPrinter  form={form} />}
           {active === 'keamanan' && (
