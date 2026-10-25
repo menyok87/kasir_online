@@ -131,8 +131,9 @@ router.post('/charge', authenticate, async (req, res, next) => {
       await client.query('UPDATE products SET stock = stock - $1, updated_at = NOW() WHERE id = $2', [quantity, product.id])
     }
 
-    // URL notifikasi & return → endpoint webhook kita
-    const origin    = process.env.PUBLIC_BASE_URL || (`${req.protocol}://${req.get('host')}`)
+    // URL notifikasi & return → endpoint webhook kita (WAJIB https untuk DANA)
+    const host      = (req.get('host') || '').replace(/^https?:\/\//, '')
+    const origin    = (process.env.PUBLIC_BASE_URL || `https://${host}`).replace(/\/$/, '')
     const notifyUrl = origin + NOTIFICATION_PATH
 
     // Buat order DANA SEBELUM commit — gagal → rollback (stok kembali)
