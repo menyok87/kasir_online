@@ -75,22 +75,22 @@ async function danaPost(settings, path, body) {
   const timestamp  = danaTimestamp()
   const signature  = signRequest(settings.dana_private_key, { method: 'POST', path, bodyString, timestamp })
 
-  const resp = await fetch(baseUrl(settings) + path, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-TIMESTAMP': timestamp,
-      'X-SIGNATURE': signature,
-      // DANA PG: X-PARTNER-ID = Client ID (dashboard tak punya Partner ID terpisah)
-      'X-PARTNER-ID': settings.dana_partner_id || settings.dana_client_id,
-      'X-EXTERNAL-ID': crypto.randomUUID(),
-      'CHANNEL-ID': settings.dana_channel_id || '95221',
-      'ORIGIN': settings.dana_origin || '',
-    },
-    body: bodyString,
-  })
-  const data = await resp.json().catch(() => ({}))
-  return { resp, data }
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-TIMESTAMP': timestamp,
+    'X-SIGNATURE': signature,
+    // DANA PG: X-PARTNER-ID = Client ID (dashboard tak punya Partner ID terpisah)
+    'X-PARTNER-ID': settings.dana_partner_id || settings.dana_client_id,
+    'X-EXTERNAL-ID': crypto.randomUUID(),
+    'CHANNEL-ID': settings.dana_channel_id || '95221',
+  }
+  if (settings.dana_origin) headers['ORIGIN'] = settings.dana_origin
+
+  const resp = await fetch(baseUrl(settings) + path, { method: 'POST', headers, body: bodyString })
+  const text = await resp.text()
+  let data = {}
+  try { data = JSON.parse(text) } catch { /* respons bukan JSON (mis. HTML error WAF) */ }
+  return { resp, data, text }
 }
 
 // Buat pembayaran (Hosted Checkout). Mengembalikan { url, referenceNo, raw }.
@@ -119,7 +119,7 @@ async function createCheckout(settings, { invoiceNumber, amount, returnUrl, noti
   if (settings.dana_sub_merchant_id)  body.subMerchantId  = settings.dana_sub_merchant_id
   if (settings.dana_external_store_id) body.externalStoreId = settings.dana_external_store_id
 
-  const { resp, data } = await danaPost(settings, path, body)
+  const { resp, data, text } = await danaPost(settings, path, body)
   const url = data?.webRedirectUrl || data?.redirectUrl
     || data?.additionalInfo?.webRedirectUrl
     || data?.actions?.find?.(a => /redirect|checkout|pay/i.test(a?.name || ''))?.url
@@ -127,8 +127,14 @@ async function createCheckout(settings, { invoiceNumber, amount, returnUrl, noti
 
   const okCode = String(data?.responseCode || '').startsWith('200')
   if (!resp.ok || !okCode || !url) {
-    const msg = data?.responseMessage || data?.message || `DANA gagal (HTTP ${resp.status}, code ${data?.responseCode || '-'})`
-    throw Object.assign(new Error(msg), { status: 400, dana: data })
+    console.error('[DANA] createCheckout gagal:', resp.status, (text || '').slice(0, 500))
+    const snippet = (text || '').replace(/\s+/g, ' ').trim().slice(0, 200)
+    const base = data?.responseMessage || data?.message
+      || `DANA menolak (HTTP ${resp.status}${data?.responseCode ? ', code ' + data.responseCode : ''})`
+    const hint = resp.status === 403
+      ? ' — kemungkinan kredensial belum aktif (tunggu ~30 menit) atau IP server belum di-allowlist di dashboard DANA.'
+      : ''
+    throw Object.assign(new Error(base + hint + (snippet ? ` [${snippet}]` : '')), { status: 400, dana: data })
   }
   return { url, referenceNo: data?.referenceNo || null, raw: data }
 }
