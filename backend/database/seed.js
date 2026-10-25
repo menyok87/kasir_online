@@ -152,6 +152,9 @@ async function seed() {
       // DANA (SNAP) — webhook notifikasi pembayaran
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_partner_id TEXT DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_client_id TEXT DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_merchant_id TEXT DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_channel_id TEXT DEFAULT ''`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_private_key TEXT DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_public_key TEXT DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_is_production BOOLEAN NOT NULL DEFAULT FALSE`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_enabled BOOLEAN NOT NULL DEFAULT FALSE`,

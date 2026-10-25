@@ -10,6 +10,7 @@ import {
   gopayCharge, gopayStatus, gopayCancel,
   qrisCharge, qrisStatus, qrisCancel,
   dokuCharge, dokuStatus, dokuCancel, dokuSendWa,
+  danaCharge, danaStatus, danaCancel, danaSendWa,
 } from '../api'
 import { getImageUrl } from '../utils/getImageUrl'
 import Modal from '../components/ui/Modal'
@@ -46,6 +47,7 @@ const PAYMENT_METHODS = [
   { val: 'qris',      label: 'QRIS',      Icon: QrCode,     color: 'blue' },
   { val: 'qris_auto', label: 'QRIS Auto', Icon: QrCode,     color: 'cyan' },
   { val: 'doku',      label: 'DOKU',      Icon: Smartphone, color: 'rose' },
+  { val: 'dana',      label: 'DANA',      Icon: Smartphone, color: 'blue' },
   { val: 'transfer',  label: 'Transfer',  Icon: Building2,  color: 'violet' },
   { val: 'card',      label: 'Kartu',     Icon: CreditCard, color: 'orange' },
 ]
@@ -523,8 +525,9 @@ function QrPaymentModal({ isOpen, data, brand = 'gopay', statusFn, cancelFn, onS
   )
 }
 
-// ── Modal Pembayaran DOKU (link + kirim WhatsApp) ─────────────────────────────
-function DokuPaymentModal({ isOpen, data, initialPhone = '', onSuccess, onCancel }) {
+// ── Modal Pembayaran berbasis link (DOKU / DANA) + kirim WhatsApp ─────────────
+function DokuPaymentModal({ isOpen, data, initialPhone = '', title = 'Pembayaran DOKU',
+  statusFn = dokuStatus, cancelFn = dokuCancel, sendWaFn = dokuSendWa, onSuccess, onCancel }) {
   const [status, setStatus]         = useState('pending')
   const [elapsed, setElapsed]       = useState(0)
   const [cancelling, setCancelling] = useState(false)
@@ -540,7 +543,7 @@ function DokuPaymentModal({ isOpen, data, initialPhone = '', onSuccess, onCancel
     timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
     pollRef.current = setInterval(async () => {
       try {
-        const { data: r } = await dokuStatus(data.order_id)
+        const { data: r } = await statusFn(data.order_id)
         if (r.transaction_status === 'settlement') {
           clearInterval(pollRef.current); clearInterval(timerRef.current)
           setStatus('settlement')
@@ -562,7 +565,7 @@ function DokuPaymentModal({ isOpen, data, initialPhone = '', onSuccess, onCancel
   async function handleSendWa() {
     if (!phone.trim()) { toast.error('Isi nomor WhatsApp pelanggan'); return }
     setWaBusy(true)
-    try { await dokuSendWa({ order_id: data.order_id, phone }); toast.success('Link dikirim ke WhatsApp pelanggan') }
+    try { await sendWaFn({ order_id: data.order_id, phone }); toast.success('Link dikirim ke WhatsApp pelanggan') }
     catch (err) { toast.error(err.message) }
     finally { setWaBusy(false) }
   }
@@ -574,7 +577,7 @@ function DokuPaymentModal({ isOpen, data, initialPhone = '', onSuccess, onCancel
 
   async function handleCancel() {
     setCancelling(true)
-    try { await dokuCancel(data.order_id); onCancel() }
+    try { await cancelFn(data.order_id); onCancel() }
     catch (err) { toast.error(err.message) }
     finally { setCancelling(false) }
   }
@@ -588,7 +591,7 @@ function DokuPaymentModal({ isOpen, data, initialPhone = '', onSuccess, onCancel
               <Smartphone size={17} className="text-white" />
             </div>
             <div>
-              <div className="font-bold text-white text-sm">Pembayaran DOKU</div>
+              <div className="font-bold text-white text-sm">{title}</div>
               <div className="text-[11px] text-white/70">{data.order_id}</div>
             </div>
           </div>
@@ -681,7 +684,8 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
   const isGoPay     = paymentMethod === 'gopay'
   const isQrisAuto  = paymentMethod === 'qris_auto'
   const isDoku      = paymentMethod === 'doku'
-  const isCharge    = isGoPay || isQrisAuto || isDoku   // gateway: nominal & verifikasi otomatis
+  const isDana      = paymentMethod === 'dana'
+  const isCharge    = isGoPay || isQrisAuto || isDoku || isDana   // gateway: nominal & verifikasi otomatis
   const canCheckout = cart.length > 0 && (isCharge || Number(amountPaid) >= grandTotal)
   const isNonCash   = paymentMethod === 'qris' || paymentMethod === 'transfer' || isCharge
   const totalQty    = cart.reduce((s, i) => s + i.quantity, 0)
@@ -870,6 +874,35 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
           </div>
         )}
 
+        {/* DANA — Hosted Checkout via link, kirim ke WhatsApp */}
+        {paymentMethod === 'dana' && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-100 dark:border-blue-900/30 space-y-2">
+            <div className="flex items-center gap-2">
+              <Smartphone size={14} className="text-blue-600" />
+              <p className="text-xs text-blue-700 dark:text-blue-400 font-semibold">DANA — Hosted Checkout</p>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Link pembayaran DANA/QRIS dibuat setelah klik <strong>Buat Pembayaran DANA</strong>.
+              Isi No. WhatsApp untuk mengirim link otomatis ke pelanggan.
+            </p>
+            <input value={custName} onChange={e => setCustName(e.target.value)}
+              placeholder="Nama pelanggan (opsional)" className="input text-sm" />
+            <input value={custPhone} onChange={e => setCustPhone(e.target.value)} inputMode="tel"
+              placeholder="No. WhatsApp pelanggan (08…)" className="input text-sm" />
+            {settings.dana_private_key || settings.dana_partner_id ? null : (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                ⚠ DANA belum diatur di Pengaturan &gt; DANA.
+              </p>
+            )}
+            {gopayError && (
+              <div className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-2.5 py-2">
+                <AlertCircle size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-red-600 dark:text-red-400 leading-snug">{gopayError}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Info QRIS */}
         {paymentMethod === 'qris' && (
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center border border-blue-100 dark:border-blue-900/30">
@@ -981,6 +1014,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
               {isGoPay ? `Buat Tagihan GoPay ${formatRupiah(grandTotal)}`
                 : isQrisAuto ? `Buat QRIS ${formatRupiah(grandTotal)}`
                 : isDoku ? `Buat Pembayaran DOKU ${formatRupiah(grandTotal)}`
+                : isDana ? `Buat Pembayaran DANA ${formatRupiah(grandTotal)}`
                 : `Bayar ${formatRupiah(grandTotal)}`}
             </>
           ) : (
@@ -1137,7 +1171,35 @@ export default function POS() {
         fetchData()
         if (data.wa && data.wa.sent === false) toast.error('Link dibuat, tapi gagal kirim WA: ' + data.wa.error)
         else if (data.wa && data.wa.sent) toast.success('Link pembayaran dikirim ke WhatsApp pelanggan')
-        setDokuPay({ ...data.doku, phone: custPhone })
+        setDokuPay({ ...data.doku, phone: custPhone, kind: 'doku' })
+      } catch (err) {
+        setGopayError(err.message)
+        toast.error(err.message)
+      } finally {
+        setCheckoutLoading(false)
+      }
+      return
+    }
+
+    // Alur DANA Hosted Checkout — link pembayaran DANA/QRIS, kirim via WhatsApp
+    if (paymentMethod === 'dana') {
+      setCheckoutLoading(true)
+      setGopayError('')
+      try {
+        const { data } = await danaCharge({
+          items:    cart.map(i => ({ product_id: i.product.id, quantity: i.quantity })),
+          discount: Number(discount),
+          tax:      0,
+          customer_name:  custName,
+          customer_phone: custPhone,
+          send_wa:        !!custPhone,
+        })
+        clearCart()
+        setMobileTab('products')
+        fetchData()
+        if (data.wa && data.wa.sent === false) toast.error('Link dibuat, tapi gagal kirim WA: ' + data.wa.error)
+        else if (data.wa && data.wa.sent) toast.success('Link pembayaran dikirim ke WhatsApp pelanggan')
+        setDokuPay({ ...data.dana, phone: custPhone, kind: 'dana' })
       } catch (err) {
         setGopayError(err.message)
         toast.error(err.message)
@@ -1251,6 +1313,10 @@ export default function POS() {
         statusFn={qrPay?.statusFn} cancelFn={qrPay?.cancelFn}
         onSuccess={handleQrSuccess} onCancel={handleQrCancel} />
       <DokuPaymentModal isOpen={!!dokuPay} data={dokuPay} initialPhone={dokuPay?.phone || ''}
+        title={dokuPay?.kind === 'dana' ? 'Pembayaran DANA' : 'Pembayaran DOKU'}
+        statusFn={dokuPay?.kind === 'dana' ? danaStatus : dokuStatus}
+        cancelFn={dokuPay?.kind === 'dana' ? danaCancel : dokuCancel}
+        sendWaFn={dokuPay?.kind === 'dana' ? danaSendWa : dokuSendWa}
         onSuccess={handleDokuSuccess} onCancel={handleDokuCancel} />
     </>
   )

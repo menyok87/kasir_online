@@ -90,6 +90,12 @@ export const dokuStatus      = (order_id) => api.get(`/doku/status/${order_id}`)
 export const dokuCancel      = (order_id) => api.post(`/doku/cancel/${order_id}`);
 export const dokuSendWa      = (data)     => api.post('/doku/send-wa', data);
 
+// DANA Hosted Checkout (SNAP) — link pembayaran DANA/QRIS; kirim via WA
+export const danaCharge      = (data)     => api.post('/dana/charge', data);
+export const danaStatus      = (order_id) => api.get(`/dana/status/${order_id}`);
+export const danaCancel      = (order_id) => api.post(`/dana/cancel/${order_id}`);
+export const danaSendWa      = (data)     => api.post('/dana/send-wa', data);
+
 // Laporan Penjualan
 export const getSalesReport   = (month) => api.get('/reports/sales',   { params: { month } });
 export const getMonthlyReport = (year)  => api.get('/reports/monthly', { params: { year } });

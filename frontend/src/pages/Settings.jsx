@@ -1045,6 +1045,22 @@ function PanelDana({ form, set, setForm }) {
             onChange={set('dana_client_id')} placeholder="Client ID DANA" />
         </Field>
 
+        <Field label="Merchant ID" hint="Wajib untuk membuat pembayaran (field merchantId)">
+          <input className="input font-mono text-sm" value={form.dana_merchant_id || ''}
+            onChange={set('dana_merchant_id')} placeholder="mis. 216620070006049705942" />
+        </Field>
+
+        <Field label="Channel ID" hint="Header CHANNEL-ID (mis. 95221)">
+          <input className="input font-mono text-sm" value={form.dana_channel_id || ''}
+            onChange={set('dana_channel_id')} placeholder="95221" />
+        </Field>
+
+        <Field label="Private Key Merchant" hint="Wajib untuk menandatangani request ke DANA (RSA, SHA256withRSA)">
+          <textarea className="input font-mono text-xs min-h-[90px]" value={form.dana_private_key || ''}
+            onChange={set('dana_private_key')}
+            placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" />
+        </Field>
+
         <Field label="Public Key DANA" hint="Opsional — bila diisi, tanda tangan X-SIGNATURE webhook diverifikasi (disarankan)">
           <textarea className="input font-mono text-xs min-h-[90px]" value={form.dana_public_key || ''}
             onChange={set('dana_public_key')}

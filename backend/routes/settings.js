@@ -12,7 +12,8 @@ const DEFAULT_SETTINGS = {
   qris_enabled: true,
   doku_client_id: '', doku_secret_key: '', doku_is_production: false, doku_enabled: false,
   whacenter_device_id: '', whacenter_enabled: false,
-  dana_partner_id: '', dana_client_id: '', dana_public_key: '', dana_is_production: false, dana_enabled: false,
+  dana_partner_id: '', dana_client_id: '', dana_merchant_id: '', dana_channel_id: '',
+  dana_private_key: '', dana_public_key: '', dana_is_production: false, dana_enabled: false,
 };
 
 // GET /api/settings — pengaturan toko milik tenant
@@ -36,7 +37,8 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
       midtrans_server_key, midtrans_client_key, midtrans_is_production, qris_enabled,
       doku_client_id, doku_secret_key, doku_is_production, doku_enabled,
       whacenter_device_id, whacenter_enabled,
-      dana_partner_id, dana_client_id, dana_public_key, dana_is_production, dana_enabled,
+      dana_partner_id, dana_client_id, dana_merchant_id, dana_channel_id,
+      dana_private_key, dana_public_key, dana_is_production, dana_enabled,
     } = req.body;
 
     if (!store_name?.trim()) return res.status(400).json({ error: 'Nama toko wajib diisi' });
@@ -61,7 +63,9 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
       doku_client_id?.trim() || '', doku_secret_key?.trim() || '',
       doku_is_production === true, doku_enabled === true,
       whacenter_device_id?.trim() || '', whacenter_enabled === true,
-      dana_partner_id?.trim() || '', dana_client_id?.trim() || '', dana_public_key?.trim() || '',
+      dana_partner_id?.trim() || '', dana_client_id?.trim() || '',
+      dana_merchant_id?.trim() || '', dana_channel_id?.trim() || '',
+      dana_private_key?.trim() || '', dana_public_key?.trim() || '',
       dana_is_production === true, dana_enabled === true,
     ];
 
@@ -77,10 +81,10 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
           qris_enabled=$18,
           doku_client_id=$19, doku_secret_key=$20, doku_is_production=$21, doku_enabled=$22,
           whacenter_device_id=$23, whacenter_enabled=$24,
-          dana_partner_id=$25, dana_client_id=$26, dana_public_key=$27,
-          dana_is_production=$28, dana_enabled=$29,
+          dana_partner_id=$25, dana_client_id=$26, dana_merchant_id=$27, dana_channel_id=$28,
+          dana_private_key=$29, dana_public_key=$30, dana_is_production=$31, dana_enabled=$32,
           updated_at=NOW()
-        WHERE admin_id=$30 RETURNING *`,
+        WHERE admin_id=$33 RETURNING *`,
         [...vals, tid]
       );
       rows = result.rows;
@@ -93,8 +97,9 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
            midtrans_server_key, midtrans_client_key, midtrans_is_production, qris_enabled,
            doku_client_id, doku_secret_key, doku_is_production, doku_enabled,
            whacenter_device_id, whacenter_enabled,
-           dana_partner_id, dana_client_id, dana_public_key, dana_is_production, dana_enabled, admin_id)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30) RETURNING *`,
+           dana_partner_id, dana_client_id, dana_merchant_id, dana_channel_id,
+           dana_private_key, dana_public_key, dana_is_production, dana_enabled, admin_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33) RETURNING *`,
         [...vals, tid]
       );
       rows = result.rows;
