@@ -268,8 +268,9 @@ router.post('/test-inconsistent', authenticate, async (req, res, next) => {
   }
 })
 
-// POST /api/dana/notification — webhook pembayaran DANA (SNAP finish-notify). Publik.
-router.post('/notification', async (req, res) => {
+// Webhook Finish Notify DANA (SNAP). Publik. Dipasang di /api/dana/notification
+// DAN /v1.0/debit/notify (path standar SNAP) agar cocok apa pun yang dipakai DANA.
+async function notifyHandler(req, res) {
   try {
     const body    = req.body || {}
     const orderId = extractOrderRef(body)
@@ -278,15 +279,25 @@ router.post('/notification', async (req, res) => {
     const { rows: txRows } = await pool.query('SELECT id, admin_id FROM transactions WHERE gopay_order_id = $1', [orderId])
     if (!txRows.length) return res.status(200).json({ responseCode: '2005600', responseMessage: 'Successful' })
     const adminId = txRows[0].admin_id
-    const { rows: stgRows } = await pool.query('SELECT dana_public_key FROM store_settings WHERE admin_id = $1', [adminId])
+    const { rows: stgRows } = await pool.query(
+      'SELECT dana_public_key, dana_sim_notify_error FROM store_settings WHERE admin_id = $1', [adminId]
+    )
     const stg = stgRows[0] || {}
 
+    // Verifikasi tanda tangan — coba beberapa kandidat Request-Target.
     if (stg.dana_public_key) {
-      const ok = verifySignature(stg.dana_public_key, {
-        method: 'POST', path: NOTIFICATION_PATH, rawBody: req.rawBody,
+      const reqPath    = (req.originalUrl || '').split('?')[0]
+      const candidates = [...new Set([reqPath, NOTIFICATION_PATH, '/v1.0/debit/notify'].filter(Boolean))]
+      const ok = candidates.some(p => verifySignature(stg.dana_public_key, {
+        method: 'POST', path: p, rawBody: req.rawBody,
         timestamp: req.get('X-TIMESTAMP'), signature: req.get('X-SIGNATURE'),
-      })
+      }))
       if (!ok) return res.status(401).json({ responseCode: '4015600', responseMessage: 'Unauthorized. Invalid Signature' })
+    }
+
+    // Skenario uji sertifikasi: simulasikan Internal Server Error → DANA retry (≤7 hari).
+    if (stg.dana_sim_notify_error) {
+      return res.status(500).json({ responseCode: '5005601', responseMessage: 'Internal Server Error' })
     }
 
     const mapped = mapStatus(extractStatus(body))
@@ -299,6 +310,9 @@ router.post('/notification', async (req, res) => {
     console.error('[DANA] Webhook error:', err.message)
     res.status(500).json({ responseCode: '5005600', responseMessage: 'General Error' })
   }
-})
+}
+
+router.post('/notification', notifyHandler)
 
 module.exports = router
+module.exports.notifyHandler = notifyHandler

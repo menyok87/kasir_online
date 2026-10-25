@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS store_settings (
   dana_mcc                TEXT                  DEFAULT '',
   dana_external_store_id  TEXT                  DEFAULT '',
   dana_sub_merchant_id    TEXT                  DEFAULT '',
+  dana_sim_notify_error   BOOLEAN               NOT NULL DEFAULT FALSE,
   updated_at              TIMESTAMPTZ           DEFAULT NOW()
 );
 

@@ -28,7 +28,7 @@ const defaultSettings = {
   whacenter_device_id: '', whacenter_enabled: false,
   dana_partner_id: '', dana_client_id: '', dana_client_secret: '', dana_merchant_id: '', dana_channel_id: '',
   dana_private_key: '', dana_public_key: '', dana_is_production: false, dana_enabled: false,
-  dana_mcc: '', dana_external_store_id: '', dana_sub_merchant_id: '',
+  dana_mcc: '', dana_external_store_id: '', dana_sub_merchant_id: '', dana_sim_notify_error: false,
 }
 
 const SECTIONS = [
@@ -1133,6 +1133,25 @@ function PanelDana({ form, set, setForm }) {
             </p>
           </div>
         )}
+
+        {/* Simulasi Internal Server Error untuk uji webhook */}
+        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700 mt-1">
+          <div className="min-w-0 pr-3">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Simulasi webhook error (5005601)</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Saat aktif, webhook membalas <code>5005601</code> ke DANA (DANA akan retry). Untuk uji skenario
+              "Internal Server Error". <strong>Nonaktifkan</strong> setelah selesai agar pembayaran normal.
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+            <input type="checkbox" className="sr-only peer" checked={!!form.dana_sim_notify_error}
+              onChange={e => setForm(f => ({ ...f, dana_sim_notify_error: e.target.checked }))} />
+            <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700
+              peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+              after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
+              after:transition-all peer-checked:bg-amber-500" />
+          </label>
+        </div>
       </SectionCard>
     </div>
   )

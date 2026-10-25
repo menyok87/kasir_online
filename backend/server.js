@@ -58,10 +58,13 @@ app.use('/api/doku', (req, res, next) => {
 }, require('./routes/doku'));
 
 // DANA (SNAP): webhook /notification publik, sisanya butuh auth
+const danaRoutes = require('./routes/dana');
 app.use('/api/dana', (req, res, next) => {
   if (req.path === '/notification' && req.method === 'POST') return next()
   return authenticate(req, res, next)
-}, require('./routes/dana'));
+}, danaRoutes);
+// Finish Notify path standar SNAP (publik, dipanggil server DANA)
+app.post('/v1.0/debit/notify', danaRoutes.notifyHandler);
 
 // ── Static Frontend (production) ────────────────────────────
 // Nginx memproksi semua request ke Express, jadi Express
