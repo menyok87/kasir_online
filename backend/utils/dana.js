@@ -70,10 +70,11 @@ function assertConfigured(settings) {
   }
 }
 
-async function danaPost(settings, path, body) {
+async function danaPost(settings, path, body, opts = {}) {
   const bodyString = JSON.stringify(body)
   const timestamp  = danaTimestamp()
-  const signature  = signRequest(settings.dana_private_key, { method: 'POST', path, bodyString, timestamp })
+  // forceSignature dipakai untuk skenario uji "invalid signature".
+  const signature  = opts.forceSignature || signRequest(settings.dana_private_key, { method: 'POST', path, bodyString, timestamp })
 
   const headers = {
     'Content-Type': 'application/json',
@@ -153,6 +154,34 @@ async function queryStatus(settings, invoiceNumber) {
   return { status: extractStatus(data), raw: data }
 }
 
+// Skenario uji sertifikasi: kirim request dengan X-SIGNATURE tidak valid.
+// Harus mendapat 4015400 "Unauthorized. Invalid Signature" dari DANA.
+async function testInvalidSignature(settings, { notifyUrl }) {
+  const partner = settings.dana_partner_id || settings.dana_client_id
+  if (!partner || !settings.dana_merchant_id) {
+    throw Object.assign(new Error('Isi Client ID & Merchant ID dulu di Pengaturan → DANA.'), { status: 400 })
+  }
+  const path = '/payment-gateway/v1.0/debit/payment-host-to-host.htm'
+  const body = {
+    partnerReferenceNo: crypto.randomUUID(),
+    merchantId: settings.dana_merchant_id,
+    amount: { value: '10000.00', currency: 'IDR' },
+    validUpTo: danaTimestamp(new Date(Date.now() + 60 * 60 * 1000)),
+    urlParams: [
+      { url: notifyUrl, type: 'PAY_RETURN',   isDeeplink: 'N' },
+      { url: notifyUrl, type: 'NOTIFICATION', isDeeplink: 'N' },
+    ],
+    additionalInfo: {
+      order: { orderTitle: (settings.store_name || 'Kasir Online').slice(0, 64), scenario: 'REDIRECT' },
+      envInfo: { sourcePlatform: 'IPG', terminalType: 'SYSTEM' },
+    },
+  }
+  if (settings.dana_mcc) body.additionalInfo.mcc = settings.dana_mcc
+
+  const { resp, data, text } = await danaPost(settings, path, body, { forceSignature: 'invalid_signature' })
+  return { httpStatus: resp.status, responseCode: data?.responseCode || null, responseMessage: data?.responseMessage || (text || '').slice(0, 200) }
+}
+
 // ── Webhook (DANA → kita) ─────────────────────────────────────────────────────
 // Verifikasi X-SIGNATURE asymmetric (public key DANA).
 function verifySignature(publicKeyPem, { method, path, rawBody, timestamp, signature }) {
@@ -195,4 +224,4 @@ function mapStatus(danaStatus) {
   return 'pending'
 }
 
-module.exports = { createCheckout, queryStatus, verifySignature, extractOrderRef, extractStatus, mapStatus }
+module.exports = { createCheckout, queryStatus, testInvalidSignature, verifySignature, extractOrderRef, extractStatus, mapStatus }

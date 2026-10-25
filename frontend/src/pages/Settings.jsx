@@ -7,7 +7,7 @@ import {
   Lock, Eye, EyeOff, ShieldCheck, Smartphone, ExternalLink, AlertTriangle, Fingerprint,
   Printer, Bluetooth, RefreshCw, Trash2
 } from 'lucide-react'
-import { getSettings, updateSettings, uploadProductImage, deleteProductImage, changePassword } from '../api'
+import { getSettings, updateSettings, uploadProductImage, deleteProductImage, changePassword, danaTestInvalidSig } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
 import { getImageUrl } from '../utils/getImageUrl'
 import { biometricAvailable, verifyBiometric, isBiometricEnabled, setBiometricEnabled, isBiometricLoginEnabled, enableBiometricLogin, disableBiometricLogin } from '../utils/biometric'
@@ -979,6 +979,19 @@ function PanelDoku({ form, set, setForm }) {
 function PanelDana({ form, set, setForm }) {
   const origin  = import.meta.env.VITE_API_BASE_URL || window.location.origin
   const webhook = origin + '/api/dana/notification'
+  const [sigBusy, setSigBusy]     = useState(false)
+  const [sigResult, setSigResult] = useState(null)
+
+  async function runInvalidSigTest() {
+    setSigBusy(true); setSigResult(null)
+    try {
+      const { data } = await danaTestInvalidSig()
+      setSigResult(data)
+      if (data.pass) toast.success('Lulus: DANA mengembalikan 4015400')
+      else toast.error(`Respons: ${data.responseCode || data.httpStatus} — ${data.responseMessage || ''}`)
+    } catch (err) { toast.error(err.message) }
+    finally { setSigBusy(false) }
+  }
 
   return (
     <div className="space-y-4">
@@ -1096,6 +1109,27 @@ function PanelDana({ form, set, setForm }) {
             notifikasi palsu ditolak.
           </p>
         </div>
+      </SectionCard>
+
+      <SectionCard title="Uji Sertifikasi Sandbox" subtitle="Skenario tanda tangan tidak valid" icon={ShieldCheck} color="cyan">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Kirim request ke DANA dengan <code>X-SIGNATURE: invalid_signature</code>. Hasil benar:
+          <strong> responseCode 4015400</strong> (Unauthorized. Invalid Signature). Simpan dulu kredensial sebelum menguji.
+        </p>
+        <button type="button" onClick={runInvalidSigTest} disabled={sigBusy}
+          className="w-full flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm py-2.5 rounded-xl disabled:opacity-60">
+          {sigBusy ? 'Menguji…' : 'Uji Tanda Tangan Invalid'}
+        </button>
+        {sigResult && (
+          <div className={`rounded-xl px-4 py-3 border text-xs ${sigResult.pass
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30 text-green-700 dark:text-green-300'
+            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'}`}>
+            <p className="font-semibold">{sigResult.pass ? '✔ Lulus (4015400)' : '✗ Belum sesuai'}</p>
+            <p className="mt-1 font-mono break-all">
+              HTTP {sigResult.httpStatus} · code {sigResult.responseCode || '-'} · {sigResult.responseMessage}
+            </p>
+          </div>
+        )}
       </SectionCard>
     </div>
   )
