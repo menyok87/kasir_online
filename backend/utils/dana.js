@@ -98,6 +98,8 @@ async function createCheckout(settings, { invoiceNumber, amount, returnUrl, noti
   assertConfigured(settings)
   const path   = '/payment-gateway/v1.0/debit/payment-host-to-host.htm'
   const val    = Number(amount).toFixed(2)
+  // Hosted Checkout (scenario REDIRECT): DANA menampilkan halaman cashier &
+  // mengembalikan webRedirectUrl. TANPA payOptionDetails (pelanggan pilih sendiri).
   const body = {
     partnerReferenceNo: invoiceNumber,
     merchantId: settings.dana_merchant_id,
@@ -107,12 +109,8 @@ async function createCheckout(settings, { invoiceNumber, amount, returnUrl, noti
       { url: returnUrl, type: 'PAY_RETURN',   isDeeplink: 'N' },
       { url: notifyUrl, type: 'NOTIFICATION', isDeeplink: 'N' },
     ],
-    payOptionDetails: [
-      { payMethod: 'NETWORK_PAY', payOption: settings.dana_pay_option || 'NETWORK_PAY_PG_QRIS',
-        transAmount: { value: val, currency: 'IDR' } },
-    ],
     additionalInfo: {
-      order: { orderTitle: (settings.store_name || 'Kasir Online').slice(0, 64), scenario: 'API' },
+      order: { orderTitle: (settings.store_name || 'Kasir Online').slice(0, 64), scenario: 'REDIRECT' },
       envInfo: { sourcePlatform: 'IPG', terminalType: 'SYSTEM' },
     },
   }
