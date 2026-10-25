@@ -1,5 +1,6 @@
 const express = require('express')
 const router  = express.Router()
+const crypto  = require('crypto')
 const pool    = require('../database/db')
 const { authenticate, tenantId } = require('../middleware/authMiddleware')
 const { postSale } = require('../utils/ledger')
@@ -38,7 +39,7 @@ async function settleDana(adminId, orderId) {
   try {
     await client.query('BEGIN')
     const { rows } = await client.query(
-      'SELECT * FROM transactions WHERE invoice_number = $1 AND admin_id = $2 FOR UPDATE',
+      'SELECT * FROM transactions WHERE gopay_order_id = $1 AND admin_id = $2 FOR UPDATE',
       [orderId, adminId]
     )
     if (rows.length) await postSale(client, adminId, rows[0])
@@ -55,7 +56,7 @@ async function failDana(adminId, orderId) {
   try {
     await client.query('BEGIN')
     const { rows } = await client.query(
-      'SELECT * FROM transactions WHERE invoice_number = $1 AND admin_id = $2 FOR UPDATE',
+      'SELECT * FROM transactions WHERE gopay_order_id = $1 AND admin_id = $2 FOR UPDATE',
       [orderId, adminId]
     )
     const tx = rows[0]
@@ -136,14 +137,18 @@ router.post('/charge', authenticate, async (req, res, next) => {
     const origin    = (process.env.PUBLIC_BASE_URL || `https://${host}`).replace(/\/$/, '')
     const notifyUrl = origin + NOTIFICATION_PATH
 
+    // partnerReferenceNo UUID (format yang dipakai DANA) & unik per transaksi.
+    // Disimpan di gopay_order_id → dipakai mencocokkan status & webhook.
+    const danaRef = crypto.randomUUID()
+
     // Buat order DANA SEBELUM commit — gagal → rollback (stok kembali)
     const checkout = await createCheckout(stg, {
-      invoiceNumber, amount: grandTotal, returnUrl: notifyUrl, notifyUrl,
+      invoiceNumber: danaRef, amount: grandTotal, returnUrl: notifyUrl, notifyUrl,
     })
 
     await client.query(
       `UPDATE transactions SET gopay_order_id=$1, gopay_qr_url=$2, gopay_deeplink=$2 WHERE id=$3`,
-      [invoiceNumber, checkout.url, tx.id]
+      [danaRef, checkout.url, tx.id]
     )
     await client.query('COMMIT')
 
@@ -157,7 +162,7 @@ router.post('/charge', authenticate, async (req, res, next) => {
 
     res.status(201).json({
       transaction: { ...tx, items: savedItems },
-      dana: { order_id: invoiceNumber, payment_url: checkout.url, gross_amount: grandTotal },
+      dana: { order_id: danaRef, payment_url: checkout.url, gross_amount: grandTotal },
       wa: waResult,
     })
   } catch (err) {
@@ -177,12 +182,12 @@ router.get('/status/:order_id', authenticate, async (req, res, next) => {
 
     const { status } = await queryStatus(stgRows[0], order_id)
     const mapped = mapStatus(status)
-    await pool.query('UPDATE transactions SET gopay_status=$1 WHERE invoice_number=$2 AND admin_id=$3', [mapped, order_id, tid])
+    await pool.query('UPDATE transactions SET gopay_status=$1 WHERE gopay_order_id=$2 AND admin_id=$3', [mapped, order_id, tid])
 
     let txData = null
     if (mapped === 'settlement') {
       await settleDana(tid, order_id)
-      const { rows: txRows } = await pool.query('SELECT * FROM transactions WHERE invoice_number=$1 AND admin_id=$2', [order_id, tid])
+      const { rows: txRows } = await pool.query('SELECT * FROM transactions WHERE gopay_order_id=$1 AND admin_id=$2', [order_id, tid])
       if (txRows.length) {
         const { rows: its } = await pool.query('SELECT * FROM transaction_items WHERE transaction_id=$1', [txRows[0].id])
         txData = { ...txRows[0], items: its }
@@ -199,7 +204,7 @@ router.post('/cancel/:order_id', authenticate, async (req, res, next) => {
   try {
     const tid = tenantId(req.user)
     const { order_id } = req.params
-    const { rows: txRows } = await pool.query('SELECT * FROM transactions WHERE invoice_number=$1 AND admin_id=$2', [order_id, tid])
+    const { rows: txRows } = await pool.query('SELECT * FROM transactions WHERE gopay_order_id=$1 AND admin_id=$2', [order_id, tid])
     if (!txRows.length) return res.status(404).json({ error: 'Transaksi tidak ditemukan' })
     if (txRows[0].gopay_status === 'settlement') return res.status(400).json({ error: 'Pembayaran sudah lunas' })
     await failDana(tid, order_id)
@@ -213,7 +218,7 @@ router.post('/send-wa', authenticate, async (req, res, next) => {
     const tid = tenantId(req.user)
     const { order_id, phone } = req.body
     if (!order_id || !phone) return res.status(400).json({ error: 'order_id dan nomor WhatsApp wajib diisi' })
-    const { rows: txRows } = await pool.query('SELECT * FROM transactions WHERE invoice_number=$1 AND admin_id=$2', [order_id, tid])
+    const { rows: txRows } = await pool.query('SELECT * FROM transactions WHERE gopay_order_id=$1 AND admin_id=$2', [order_id, tid])
     if (!txRows.length) return res.status(404).json({ error: 'Transaksi tidak ditemukan' })
     const tx  = txRows[0]
     const url = tx.gopay_deeplink || tx.gopay_qr_url
@@ -235,7 +240,7 @@ router.post('/notification', async (req, res) => {
     const orderId = extractOrderRef(body)
     if (!orderId) return res.status(200).json({ responseCode: '2005600', responseMessage: 'Successful' })
 
-    const { rows: txRows } = await pool.query('SELECT id, admin_id FROM transactions WHERE invoice_number = $1', [orderId])
+    const { rows: txRows } = await pool.query('SELECT id, admin_id FROM transactions WHERE gopay_order_id = $1', [orderId])
     if (!txRows.length) return res.status(200).json({ responseCode: '2005600', responseMessage: 'Successful' })
     const adminId = txRows[0].admin_id
     const { rows: stgRows } = await pool.query('SELECT dana_public_key FROM store_settings WHERE admin_id = $1', [adminId])
@@ -250,7 +255,7 @@ router.post('/notification', async (req, res) => {
     }
 
     const mapped = mapStatus(extractStatus(body))
-    await pool.query('UPDATE transactions SET gopay_status = $1 WHERE invoice_number = $2', [mapped, orderId])
+    await pool.query('UPDATE transactions SET gopay_status = $1 WHERE gopay_order_id = $2', [mapped, orderId])
     if (mapped === 'settlement') await settleDana(adminId, orderId)
     else if (mapped !== 'pending') await failDana(adminId, orderId)
 
