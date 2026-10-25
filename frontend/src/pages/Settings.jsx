@@ -26,7 +26,8 @@ const defaultSettings = {
   qris_enabled: true,
   doku_client_id: '', doku_secret_key: '', doku_is_production: false, doku_enabled: false,
   whacenter_device_id: '', whacenter_enabled: false,
-  dana_partner_id: '', dana_client_id: '', dana_public_key: '', dana_is_production: false, dana_enabled: false,
+  dana_partner_id: '', dana_client_id: '', dana_client_secret: '', dana_merchant_id: '', dana_channel_id: '',
+  dana_private_key: '', dana_public_key: '', dana_is_production: false, dana_enabled: false,
 }
 
 const SECTIONS = [
@@ -1035,14 +1036,19 @@ function PanelDana({ form, set, setForm }) {
           </label>
         </div>
 
-        <Field label="Partner ID (X-PARTNER-ID)">
-          <input className="input font-mono text-sm" value={form.dana_partner_id || ''}
-            onChange={set('dana_partner_id')} placeholder="mis. 2021XXXXXXXXXXX" />
+        <Field label="Client ID" hint="Juga dipakai sebagai X-PARTNER-ID (DANA PG tak punya Partner ID terpisah)">
+          <input className="input font-mono text-sm" value={form.dana_client_id || ''}
+            onChange={set('dana_client_id')} placeholder="mis. 2026102516461156253552" />
         </Field>
 
-        <Field label="Client ID">
-          <input className="input font-mono text-sm" value={form.dana_client_id || ''}
-            onChange={set('dana_client_id')} placeholder="Client ID DANA" />
+        <Field label="Client Secret" hint="Dari dashboard DANA (opsional untuk alur ini)">
+          <input className="input font-mono text-sm" value={form.dana_client_secret || ''}
+            onChange={set('dana_client_secret')} placeholder="Client Secret DANA" />
+        </Field>
+
+        <Field label="Partner ID (opsional)" hint="Kosongkan bila sama dengan Client ID">
+          <input className="input font-mono text-sm" value={form.dana_partner_id || ''}
+            onChange={set('dana_partner_id')} placeholder="Kosongkan = pakai Client ID" />
         </Field>
 
         <Field label="Merchant ID" hint="Wajib untuk membuat pembayaran (field merchantId)">

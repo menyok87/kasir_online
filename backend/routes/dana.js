@@ -86,8 +86,8 @@ router.post('/charge', authenticate, async (req, res, next) => {
     const tid = tenantId(req.user)
     const { rows: stgRows } = await pool.query('SELECT * FROM store_settings WHERE admin_id = $1', [tid])
     const stg = stgRows[0] || {}
-    if (!stg.dana_private_key || !stg.dana_partner_id || !stg.dana_merchant_id) {
-      return res.status(400).json({ error: 'DANA belum lengkap. Isi Partner ID, Merchant ID & Private Key di Pengaturan → DANA.' })
+    if (!stg.dana_private_key || !(stg.dana_client_id || stg.dana_partner_id) || !stg.dana_merchant_id) {
+      return res.status(400).json({ error: 'DANA belum lengkap. Isi Client ID, Merchant ID & Private Key di Pengaturan → DANA.' })
     }
 
     await client.query('BEGIN')

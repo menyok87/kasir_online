@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS store_settings (
   whacenter_enabled       BOOLEAN               NOT NULL DEFAULT FALSE,
   dana_partner_id         TEXT                  DEFAULT '',
   dana_client_id          TEXT                  DEFAULT '',
+  dana_client_secret      TEXT                  DEFAULT '',
   dana_merchant_id        TEXT                  DEFAULT '',
   dana_channel_id         TEXT                  DEFAULT '',
   dana_private_key        TEXT                  DEFAULT '',

@@ -23,6 +23,35 @@ function normalizeKey(key, type) {
   return `-----BEGIN ${type}-----\n${body}\n-----END ${type}-----`
 }
 
+// Muat private key yang robust: jika sudah PEM → pakai apa adanya; jika base64
+// DER mentah → coba PKCS#8 lalu PKCS#1 (DANA bisa memberi salah satunya).
+function loadPrivateKey(raw) {
+  if (!raw) throw Object.assign(new Error('Private Key DANA kosong'), { status: 400 })
+  const k = raw.trim()
+  if (k.includes('BEGIN')) {
+    try { return crypto.createPrivateKey(k) } catch (e) {
+      throw Object.assign(new Error('Private Key DANA tidak valid: ' + e.message), { status: 400 })
+    }
+  }
+  const der = Buffer.from(k.replace(/\s+/g, ''), 'base64')
+  for (const type of ['pkcs8', 'pkcs1']) {
+    try { return crypto.createPrivateKey({ key: der, format: 'der', type }) } catch { /* coba format lain */ }
+  }
+  throw Object.assign(new Error('Private Key DANA tidak dikenali (bukan PKCS#8/PKCS#1). Tempel isi key apa adanya dari dashboard DANA.'), { status: 400 })
+}
+
+// Muat public key DANA: PEM apa adanya, atau base64 DER → coba SPKI lalu PKCS#1.
+function loadPublicKey(raw) {
+  const k = (raw || '').trim()
+  if (!k) return null
+  if (k.includes('BEGIN')) { try { return crypto.createPublicKey(k) } catch { return null } }
+  const der = Buffer.from(k.replace(/\s+/g, ''), 'base64')
+  for (const type of ['spki', 'pkcs1']) {
+    try { return crypto.createPublicKey({ key: der, format: 'der', type }) } catch { /* coba format lain */ }
+  }
+  return null
+}
+
 // Tanda tangan request (dikirim ke DANA): base64(RSA-SHA256(stringToSign, privateKey))
 // stringToSign = METHOD:RELATIVE_PATH:lowerhex(sha256(minifiedBody)):X-TIMESTAMP
 function signRequest(privateKeyPem, { method, path, bodyString, timestamp }) {
@@ -31,12 +60,13 @@ function signRequest(privateKeyPem, { method, path, bodyString, timestamp }) {
   const signer = crypto.createSign('RSA-SHA256')
   signer.update(stringToSign, 'utf8')
   signer.end()
-  return signer.sign(normalizeKey(privateKeyPem, 'PRIVATE KEY'), 'base64')
+  return signer.sign(loadPrivateKey(privateKeyPem), 'base64')
 }
 
 function assertConfigured(settings) {
-  if (!settings.dana_private_key || !settings.dana_partner_id || !settings.dana_merchant_id) {
-    throw Object.assign(new Error('DANA belum lengkap. Isi Partner ID, Merchant ID & Private Key di Pengaturan → DANA.'), { status: 400 })
+  const partner = settings.dana_partner_id || settings.dana_client_id
+  if (!settings.dana_private_key || !partner || !settings.dana_merchant_id) {
+    throw Object.assign(new Error('DANA belum lengkap. Isi Client ID, Merchant ID & Private Key di Pengaturan → DANA.'), { status: 400 })
   }
 }
 
@@ -51,7 +81,8 @@ async function danaPost(settings, path, body) {
       'Content-Type': 'application/json',
       'X-TIMESTAMP': timestamp,
       'X-SIGNATURE': signature,
-      'X-PARTNER-ID': settings.dana_partner_id,
+      // DANA PG: X-PARTNER-ID = Client ID (dashboard tak punya Partner ID terpisah)
+      'X-PARTNER-ID': settings.dana_partner_id || settings.dana_client_id,
       'X-EXTERNAL-ID': crypto.randomUUID(),
       'CHANNEL-ID': settings.dana_channel_id || '95221',
       'ORIGIN': settings.dana_origin || '',
@@ -123,10 +154,12 @@ function verifySignature(publicKeyPem, { method, path, rawBody, timestamp, signa
     if (!publicKeyPem || !signature || !timestamp) return false
     const bodyHash = crypto.createHash('sha256').update(rawBody || '', 'utf8').digest('hex').toLowerCase()
     const stringToSign = `${method}:${path}:${bodyHash}:${timestamp}`
+    const pubKey = loadPublicKey(publicKeyPem)
+    if (!pubKey) return false
     const verifier = crypto.createVerify('RSA-SHA256')
     verifier.update(stringToSign, 'utf8')
     verifier.end()
-    return verifier.verify(normalizeKey(publicKeyPem, 'PUBLIC KEY'), signature, 'base64')
+    return verifier.verify(pubKey, signature, 'base64')
   } catch { return false }
 }
 
