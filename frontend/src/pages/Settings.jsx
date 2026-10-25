@@ -28,6 +28,7 @@ const defaultSettings = {
   whacenter_device_id: '', whacenter_enabled: false,
   dana_partner_id: '', dana_client_id: '', dana_client_secret: '', dana_merchant_id: '', dana_channel_id: '',
   dana_private_key: '', dana_public_key: '', dana_is_production: false, dana_enabled: false,
+  dana_mcc: '', dana_external_store_id: '', dana_sub_merchant_id: '',
 }
 
 const SECTIONS = [
@@ -1059,6 +1060,21 @@ function PanelDana({ form, set, setForm }) {
         <Field label="Channel ID" hint="Header CHANNEL-ID (mis. 95221)">
           <input className="input font-mono text-sm" value={form.dana_channel_id || ''}
             onChange={set('dana_channel_id')} placeholder="95221" />
+        </Field>
+
+        <Field label="MCC" hint="Kode kategori merchant dari DANA (mis. 5013 untuk suku cadang/ban)">
+          <input className="input font-mono text-sm" value={form.dana_mcc || ''}
+            onChange={set('dana_mcc')} placeholder="mis. 5013" />
+        </Field>
+
+        <Field label="External Store ID" hint="Dari contoh/registrasi DANA (opsional)">
+          <input className="input font-mono text-sm" value={form.dana_external_store_id || ''}
+            onChange={set('dana_external_store_id')} placeholder="mis. bf24846e" />
+        </Field>
+
+        <Field label="Sub Merchant ID" hint="Dari contoh/registrasi DANA (opsional)">
+          <input className="input font-mono text-sm" value={form.dana_sub_merchant_id || ''}
+            onChange={set('dana_sub_merchant_id')} placeholder="mis. 2c8e1df8" />
         </Field>
 
         <Field label="Private Key Merchant" hint="Wajib untuk menandatangani request ke DANA (RSA, SHA256withRSA)">

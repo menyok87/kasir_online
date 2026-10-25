@@ -113,12 +113,12 @@ async function createCheckout(settings, { invoiceNumber, amount, returnUrl, noti
     ],
     additionalInfo: {
       order: { orderTitle: (settings.store_name || 'Kasir Online').slice(0, 64), scenario: 'API' },
-      mcc: settings.dana_mcc || '5411',
       envInfo: { sourcePlatform: 'IPG', terminalType: 'SYSTEM' },
     },
   }
-  if (settings.dana_sub_merchant_id)  body.subMerchantId  = settings.dana_sub_merchant_id
-  if (settings.dana_external_store_id) body.externalStoreId = settings.dana_external_store_id
+  if (settings.dana_mcc)               body.additionalInfo.mcc = settings.dana_mcc
+  if (settings.dana_sub_merchant_id)   body.subMerchantId      = settings.dana_sub_merchant_id
+  if (settings.dana_external_store_id) body.externalStoreId    = settings.dana_external_store_id
 
   console.log('[DANA] createCheckout request:', JSON.stringify(body))
   const { resp, data, text } = await danaPost(settings, path, body)

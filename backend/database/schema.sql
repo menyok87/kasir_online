@@ -115,6 +115,9 @@ CREATE TABLE IF NOT EXISTS store_settings (
   dana_public_key         TEXT                  DEFAULT '',
   dana_is_production      BOOLEAN               NOT NULL DEFAULT FALSE,
   dana_enabled            BOOLEAN               NOT NULL DEFAULT FALSE,
+  dana_mcc                TEXT                  DEFAULT '',
+  dana_external_store_id  TEXT                  DEFAULT '',
+  dana_sub_merchant_id    TEXT                  DEFAULT '',
   updated_at              TIMESTAMPTZ           DEFAULT NOW()
 );
 

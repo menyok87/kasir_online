@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS = {
   whacenter_device_id: '', whacenter_enabled: false,
   dana_partner_id: '', dana_client_id: '', dana_client_secret: '', dana_merchant_id: '', dana_channel_id: '',
   dana_private_key: '', dana_public_key: '', dana_is_production: false, dana_enabled: false,
+  dana_mcc: '', dana_external_store_id: '', dana_sub_merchant_id: '',
 };
 
 // GET /api/settings — pengaturan toko milik tenant
@@ -39,6 +40,7 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
       whacenter_device_id, whacenter_enabled,
       dana_partner_id, dana_client_id, dana_client_secret, dana_merchant_id, dana_channel_id,
       dana_private_key, dana_public_key, dana_is_production, dana_enabled,
+      dana_mcc, dana_external_store_id, dana_sub_merchant_id,
     } = req.body;
 
     if (!store_name?.trim()) return res.status(400).json({ error: 'Nama toko wajib diisi' });
@@ -67,6 +69,7 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
       dana_merchant_id?.trim() || '', dana_channel_id?.trim() || '',
       dana_private_key?.trim() || '', dana_public_key?.trim() || '',
       dana_is_production === true, dana_enabled === true,
+      dana_mcc?.trim() || '', dana_external_store_id?.trim() || '', dana_sub_merchant_id?.trim() || '',
     ];
 
     let rows;
@@ -84,8 +87,9 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
           dana_partner_id=$25, dana_client_id=$26, dana_client_secret=$27, dana_merchant_id=$28,
           dana_channel_id=$29, dana_private_key=$30, dana_public_key=$31,
           dana_is_production=$32, dana_enabled=$33,
+          dana_mcc=$34, dana_external_store_id=$35, dana_sub_merchant_id=$36,
           updated_at=NOW()
-        WHERE admin_id=$34 RETURNING *`,
+        WHERE admin_id=$37 RETURNING *`,
         [...vals, tid]
       );
       rows = result.rows;
@@ -99,8 +103,9 @@ router.put('/', authenticate, requireAdmin, async (req, res, next) => {
            doku_client_id, doku_secret_key, doku_is_production, doku_enabled,
            whacenter_device_id, whacenter_enabled,
            dana_partner_id, dana_client_id, dana_client_secret, dana_merchant_id, dana_channel_id,
-           dana_private_key, dana_public_key, dana_is_production, dana_enabled, admin_id)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34) RETURNING *`,
+           dana_private_key, dana_public_key, dana_is_production, dana_enabled,
+           dana_mcc, dana_external_store_id, dana_sub_merchant_id, admin_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37) RETURNING *`,
         [...vals, tid]
       );
       rows = result.rows;
