@@ -117,7 +117,9 @@ async function createCheckout(settings, { invoiceNumber, amount, returnUrl, noti
   try {
     resp = await dana.paymentGatewayApi.createOrder(request)
   } catch (e) {
-    console.error('[DANA] createOrder error:', e?.rawResponse || e?.message)
+    let info
+    try { info = JSON.stringify(e?.rawResponse || e?.response || { message: e?.message }) } catch { info = String(e?.message) }
+    console.error('[DANA] createOrder error (status ' + (e?.status || '-') + '):', info)
     throw danaError(e)
   }
   const url = resp?.webRedirectUrl
