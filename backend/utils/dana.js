@@ -74,15 +74,17 @@ function danaClient(settings, origin) {
     clientSecret: settings.dana_client_secret || undefined,
     origin:       origin || settings.dana_origin || process.env.PUBLIC_BASE_URL || undefined,
     env:          settings.dana_is_production ? 'production' : 'sandbox',
+    debugMode:    'true',   // DANA kembalikan additionalInfo.debugMessage saat gagal
   })
 }
 
 // Ekstrak responseCode/message dari error SDK (ResponseError).
 function danaError(e) {
-  const raw  = e?.rawResponse || e?.response
-  const code = raw?.responseCode
-  const msg  = raw?.responseMessage || e?.errorMessage || e?.message || 'DANA gagal'
-  const err  = new Error(`${msg}${code ? ' (' + code + ')' : ''}`)
+  const raw   = e?.rawResponse || e?.response
+  const code  = raw?.responseCode
+  const debug = raw?.additionalInfo?.debugMessage
+  const msg   = raw?.responseMessage || e?.errorMessage || e?.message || 'DANA gagal'
+  const err   = new Error(`${msg}${code ? ' (' + code + ')' : ''}${debug ? ' — ' + debug : ''}`)
   err.status = 400
   err.dana   = raw
   return err
