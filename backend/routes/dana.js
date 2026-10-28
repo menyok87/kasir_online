@@ -167,7 +167,7 @@ router.post('/charge', authenticate, async (req, res, next) => {
     })
   } catch (err) {
     await client.query('ROLLBACK')
-    if (err.status === 400 || err.status === 404) return res.status(err.status).json({ error: err.message })
+    if (err.status) return res.status(err.status).json({ error: err.message })
     next(err)
   } finally { client.release() }
 })
