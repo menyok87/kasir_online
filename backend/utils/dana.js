@@ -88,15 +88,21 @@ async function danaPost(settings, path, body, opts = {}) {
   if (settings.dana_origin) headers['ORIGIN'] = settings.dana_origin
 
   let resp
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 20000)   // 20 dtk agar tak menggantung
   try {
-    resp = await fetch(baseUrl(settings) + path, { method: 'POST', headers, body: bodyString })
+    resp = await fetch(baseUrl(settings) + path, { method: 'POST', headers, body: bodyString, signal: controller.signal })
   } catch (e) {
-    const cause = e?.cause?.code || e?.cause?.message || e?.message || 'network error'
+    const cause = e?.name === 'AbortError'
+      ? 'timeout (DANA tidak merespons dalam 20 detik)'
+      : (e?.cause?.code || e?.cause?.message || e?.message || 'network error')
     console.error('[DANA] fetch gagal ke', baseUrl(settings) + path, '→', cause)
     throw Object.assign(
       new Error(`Tidak bisa menghubungi server DANA (${baseUrl(settings)}): ${cause}. Cek DNS/koneksi internet server.`),
       { status: 502 }
     )
+  } finally {
+    clearTimeout(timer)
   }
   const text = await resp.text()
   let data = {}
