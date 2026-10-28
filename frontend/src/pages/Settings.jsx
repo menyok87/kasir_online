@@ -981,6 +981,23 @@ function PanelDana({ form, set, setForm }) {
   const webhook = origin + '/api/dana/notification'
   const [testBusy, setTestBusy]     = useState('')
   const [testResult, setTestResult] = useState(null)
+  const [checklist, setChecklist]   = useState(null)
+
+  function checkGoLive() {
+    const must = [
+      { label: 'Client ID terisi',                         ok: !!form.dana_client_id },
+      { label: 'Merchant ID terisi',                       ok: !!form.dana_merchant_id },
+      { label: 'Private Key merchant terisi',              ok: !!form.dana_private_key },
+      { label: 'Public Key DANA terisi (verifikasi webhook)', ok: !!form.dana_public_key },
+      { label: 'MCC terisi',                               ok: !!form.dana_mcc },
+      { label: 'Channel ID terisi',                        ok: !!form.dana_channel_id },
+      { label: 'URL webhook HTTPS',                        ok: webhook.startsWith('https://') },
+      { label: 'DANA diaktifkan',                          ok: !!form.dana_enabled },
+      { label: 'Simulasi webhook error DIMATIKAN',         ok: !form.dana_sim_notify_error },
+    ]
+    const prod = { label: 'Mode Production aktif', ok: !!form.dana_is_production, info: true }
+    setChecklist({ must, prod, ready: must.every(i => i.ok) })
+  }
 
   async function runTest(key, fn, expectCode) {
     setTestBusy(key); setTestResult(null)
@@ -1152,6 +1169,37 @@ function PanelDana({ form, set, setForm }) {
               after:transition-all peer-checked:bg-amber-500" />
           </label>
         </div>
+      </SectionCard>
+
+      <SectionCard title="Kesiapan Go-Live" subtitle="Cek konfigurasi sebelum pindah ke Production" icon={CheckCircle} color="cyan">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Simpan dulu pengaturan, lalu cek. Semua item wajib harus ✔ sebelum go-live. Pastikan juga semua
+          skenario sertifikasi di dashboard DANA sudah <strong>Verified</strong>.
+        </p>
+        <button type="button" onClick={checkGoLive}
+          className="w-full flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm py-2.5 rounded-xl">
+          Cek Kesiapan Go-Live
+        </button>
+        {checklist && (
+          <div className="space-y-2">
+            <div className={`rounded-xl px-4 py-2.5 text-xs font-semibold border ${checklist.ready
+              ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30 text-green-700 dark:text-green-300'
+              : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'}`}>
+              {checklist.ready ? '✔ Semua item wajib siap. Siap diajukan go-live ke DANA.' : '⚠ Masih ada item wajib yang belum lengkap.'}
+            </div>
+            <ul className="space-y-1">
+              {checklist.must.map((it, i) => (
+                <li key={i} className={`flex items-center gap-2 text-xs ${it.ok ? 'text-gray-600 dark:text-gray-300' : 'text-red-600 dark:text-red-400 font-semibold'}`}>
+                  <span>{it.ok ? '✔' : '✗'}</span> {it.label}
+                </li>
+              ))}
+              <li className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <span>{checklist.prod.ok ? '🟢' : '🟡'}</span>
+                {checklist.prod.ok ? 'Mode Production AKTIF' : 'Mode masih Sandbox (ganti ke Production saat go-live)'}
+              </li>
+            </ul>
+          </div>
+        )}
       </SectionCard>
     </div>
   )
