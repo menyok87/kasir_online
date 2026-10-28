@@ -132,9 +132,12 @@ async function createCheckout(settings, { invoiceNumber, amount, returnUrl, noti
     const snippet = (text || '').replace(/\s+/g, ' ').trim().slice(0, 200)
     const base = data?.responseMessage || data?.message
       || `DANA menolak (HTTP ${resp.status}${data?.responseCode ? ', code ' + data.responseCode : ''})`
+    const invalidClient = String(data?.responseCode) === '4015400' || /invalid client/i.test(base)
     const hint = resp.status === 403
       ? ' — kemungkinan kredensial belum aktif (tunggu ~30 menit) atau IP server belum di-allowlist di dashboard DANA.'
-      : ''
+      : invalidClient
+        ? ` — Client ID tidak dikenali di mode ${settings.dana_is_production ? 'Production' : 'Sandbox'}. Pastikan Mode cocok dengan kredensial (sandbox vs production) & akses sudah aktif di DANA.`
+        : ''
     throw Object.assign(new Error(base + hint + (snippet ? ` [${snippet}]` : '')), { status: 400, dana: data })
   }
   return { url, referenceNo: data?.referenceNo || null, raw: data }
