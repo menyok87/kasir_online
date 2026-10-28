@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1024px; height:500px; overflow:hidden; font-family:'Segoe UI',Arial,sans-serif; }
+
+  .root {
+    width:1024px; height:500px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 45%, #1d4ed8 100%);
+    display:flex; align-items:center;
+    position:relative; overflow:hidden;
+  }
+
+  /* decorative circles */
+  .c1 { position:absolute; top:-120px; right:260px; width:320px; height:320px; background:rgba(255,255,255,0.04); border-radius:50%; }
+  .c2 { position:absolute; bottom:-100px; right:-60px; width:280px; height:280px; background:rgba(255,255,255,0.03); border-radius:50%; }
+  .c3 { position:absolute; top:40px; left:460px; width:140px; height:140px; background:rgba(99,102,241,0.12); border-radius:50%; }
+
+  /* Left text block */
+  .left { padding:52px 56px; flex:1; z-index:2; }
+
+  .chip {
+    display:inline-flex; align-items:center; gap:7px;
+    background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2);
+    color:rgba(255,255,255,0.9); font-size:12px; font-weight:700;
+    padding:5px 14px; border-radius:100px; margin-bottom:22px;
+    letter-spacing:0.5px; text-transform:uppercase;
+  }
+  .chip-dot { width:6px; height:6px; background:#4ade80; border-radius:50%; }
+
+  .title { color:#fff; font-size:58px; font-weight:800; line-height:1.05; letter-spacing:-2px; margin-bottom:14px; }
+  .title em { color:#93c5fd; font-style:normal; }
+
+  .desc { color:rgba(255,255,255,0.65); font-size:18px; line-height:1.6; margin-bottom:32px; max-width:380px; }
+
+  .pills { display:flex; flex-wrap:wrap; gap:8px; }
+  .pill {
+    display:flex; align-items:center; gap:6px;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15);
+    color:rgba(255,255,255,0.9); font-size:13px; font-weight:500;
+    padding:7px 14px; border-radius:100px;
+  }
+  .pill-check { color:#4ade80; font-size:11px; }
+
+  /* Right: real app mockup */
+  .right { width:360px; height:100%; position:relative; z-index:2; flex-shrink:0; display:flex; align-items:flex-end; justify-content:center; }
+
+  .phone {
+    width:210px; height:400px;
+    background:#030712;
+    border-radius:34px; border:3px solid rgba(255,255,255,0.12);
+    box-shadow: -16px 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+    overflow:hidden; position:relative; transform:translateY(28px);
+  }
+  .notch { width:80px; height:20px; background:#030712; border-radius:0 0 12px 12px; position:absolute; top:0; left:50%; transform:translateX(-50%); z-index:10; }
+
+  .screen { width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; }
+
+  /* topbar */
+  .topbar { background:#fff; border-bottom:1px solid #f1f5f9; padding:26px 12px 8px; display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .menu-icon { width:18px; height:18px; display:flex; flex-direction:column; gap:3px; justify-content:center; }
+  .menu-line { height:2px; background:#94a3b8; border-radius:2px; }
+  .menu-line:nth-child(2) { width:12px; }
+  .topbar-title { font-size:11px; font-weight:700; color:#1e293b; flex:1; }
+  .topbar-user { font-size:8px; color:#94a3b8; }
+
+  /* content */
+  .content { flex:1; background:#f8fafc; overflow:hidden; padding:8px; display:flex; flex-direction:column; gap:6px; }
+
+  /* search */
+  .search { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:6px 10px; font-size:9px; color:#94a3b8; display:flex; align-items:center; gap:5px; flex-shrink:0; }
+
+  /* product grid */
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+  .pcard { background:#fff; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; }
+  .pthumb { height:40px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .pinfo { padding:4px 6px 6px; }
+  .pname { font-size:7.5px; font-weight:600; color:#1e293b; margin-bottom:2px; }
+  .pprice { font-size:8.5px; font-weight:700; color:#2563eb; }
+  .pbadge { display:inline-block; background:#f0fdf4; color:#16a34a; font-size:6px; font-weight:700; padding:1px 4px; border-radius:4px; margin-top:2px; }
+
+  /* cart bar */
+  .cart { background:linear-gradient(to right,#2563eb,#4f46e5); padding:8px 10px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .cart-left { color:#fff; }
+  .cart-count { font-size:7.5px; opacity:.8; }
+  .cart-total { font-size:12px; font-weight:800; }
+  .cart-btn { background:#fff; color:#2563eb; font-size:8px; font-weight:700; padding:5px 10px; border-radius:8px; }
+</style>
+</head>
+<body>
+<div class="root">
+  <div class="c1"></div><div class="c2"></div><div class="c3"></div>
+
+  <div class="left">
+    <div class="chip"><div class="chip-dot"></div>Aplikasi Kasir Modern</div>
+    <div class="title">Kasir<br><em>Online</em></div>
+    <div class="desc">Kelola penjualan, produk, dan laporan keuangan bisnis Anda dari HP</div>
+    <div class="pills">
+      <div class="pill"><span class="pill-check">✓</span> Point of Sale</div>
+      <div class="pill"><span class="pill-check">✓</span> Laporan Real-time</div>
+      <div class="pill"><span class="pill-check">✓</span> Struk Digital</div>
+      <div class="pill"><span class="pill-check">✓</span> Multi Kasir</div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="menu-icon"><div class="menu-line"></div><div class="menu-line"></div><div class="menu-line" style="width:12px"></div></div>
+          <div class="topbar-title">Kasir (POS)</div>
+          <div class="topbar-user">Admin ▸</div>
+        </div>
+        <div class="content">
+          <div class="search">🔍 Cari produk...</div>
+          <div class="grid2">
+            <div class="pcard"><div class="pthumb" style="background:#fef9c3">☕</div><div class="pinfo"><div class="pname">Kopi Susu</div><div class="pprice">Rp 15.000</div><div class="pbadge">Stok: 24</div></div></div>
+            <div class="pcard"><div class="pthumb" style="background:#dcfce7">🍵</div><div class="pinfo"><div class="pname">Teh Manis</div><div class="pprice">Rp 8.000</div><div class="pbadge">Stok: 30</div></div></div>
+            <div class="pcard"><div class="pthumb" style="background:#fee2e2">🍞</div><div class="pinfo"><div class="pname">Roti Bakar</div><div class="pprice">Rp 12.000</div><div class="pbadge">Stok: 15</div></div></div>
+            <div class="pcard"><div class="pthumb" style="background:#ede9fe">🥤</div><div class="pinfo"><div class="pname">Jus Alpukat</div><div class="pprice">Rp 18.000</div><div class="pbadge">Stok: 10</div></div></div>
+          </div>
+        </div>
+        <div class="cart">
+          <div class="cart-left"><div class="cart-count">🛒 3 item</div><div class="cart-total">Rp 43.000</div></div>
+          <div class="cart-btn">Bayar →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
