@@ -6,6 +6,9 @@
 const crypto = require('crypto')
 
 function baseUrl(settings) {
+  // Override manual (dari dashboard DANA) bila diisi; selain itu default SNAP.
+  const custom = (settings.dana_api_url || '').trim().replace(/\/$/, '')
+  if (custom) return custom
   return settings.dana_is_production ? 'https://api.dana.id' : 'https://api.sandbox.dana.id'
 }
 

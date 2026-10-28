@@ -29,6 +29,7 @@ const defaultSettings = {
   dana_partner_id: '', dana_client_id: '', dana_client_secret: '', dana_merchant_id: '', dana_channel_id: '',
   dana_private_key: '', dana_public_key: '', dana_is_production: false, dana_enabled: false,
   dana_mcc: '', dana_external_store_id: '', dana_sub_merchant_id: '', dana_sim_notify_error: false,
+  dana_api_url: '',
 }
 
 const SECTIONS = [
@@ -1035,6 +1036,11 @@ function PanelDana({ form, set, setForm }) {
               after:transition-all peer-checked:bg-cyan-500" />
           </label>
         </div>
+
+        <Field label="API URL (override, opsional)" hint="Kosongkan = otomatis (sandbox/production). Isi bila dashboard DANA memberi URL berbeda, mis. https://api.dana.id">
+          <input className="input font-mono text-sm" value={form.dana_api_url || ''}
+            onChange={set('dana_api_url')} placeholder="https://api.dana.id" />
+        </Field>
 
         <Field label="Client ID" hint="Juga dipakai sebagai X-PARTNER-ID (DANA PG tak punya Partner ID terpisah)">
           <input className="input font-mono text-sm" value={form.dana_client_id || ''}

@@ -163,6 +163,7 @@ async function seed() {
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_external_store_id TEXT DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_sub_merchant_id TEXT DEFAULT ''`,
       `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_sim_notify_error BOOLEAN NOT NULL DEFAULT FALSE`,
+      `ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS dana_api_url TEXT DEFAULT ''`,
     ];
     for (const sql of settingsCols) await client.query(sql).catch(() => {});
     // Default settings per admin
