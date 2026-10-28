@@ -4,7 +4,7 @@ const crypto  = require('crypto')
 const pool    = require('../database/db')
 const { authenticate, tenantId } = require('../middleware/authMiddleware')
 const { postSale } = require('../utils/ledger')
-const { createCheckout, queryStatus, testInvalidSignature, testInconsistentRequest, verifySignature, extractOrderRef, extractStatus, mapStatus } = require('../utils/dana')
+const { createCheckout, queryStatus, verifySignature, extractOrderRef, extractStatus, mapStatus } = require('../utils/dana')
 const { sendWhatsApp } = require('../utils/whacenter')
 
 const NOTIFICATION_PATH = '/api/dana/notification'
@@ -180,7 +180,9 @@ router.get('/status/:order_id', authenticate, async (req, res, next) => {
     const { rows: stgRows } = await pool.query('SELECT * FROM store_settings WHERE admin_id = $1', [tid])
     if (!stgRows.length || !stgRows[0].dana_private_key) return res.status(400).json({ error: 'DANA belum dikonfigurasi' })
 
-    const { status } = await queryStatus(stgRows[0], order_id)
+    const host = (req.get('host') || '').replace(/^https?:\/\//, '')
+    const origin = (process.env.PUBLIC_BASE_URL || `https://${host}`).replace(/\/$/, '')
+    const { status } = await queryStatus(stgRows[0], order_id, { origin })
     const mapped = mapStatus(status)
     await pool.query('UPDATE transactions SET gopay_status=$1 WHERE gopay_order_id=$2 AND admin_id=$3', [mapped, order_id, tid])
 
@@ -227,41 +229,6 @@ router.post('/send-wa', authenticate, async (req, res, next) => {
     const stg = stgRows[0] || {}
     await sendWhatsApp(stg.whacenter_device_id, phone, buildWaMessage(stg, order_id, tx.grand_total, url))
     res.json({ message: 'Link pembayaran dikirim ke WhatsApp pelanggan' })
-  } catch (err) {
-    if (err.status) return res.status(err.status).json({ error: err.message })
-    next(err)
-  }
-})
-
-// POST /api/dana/test-invalid-signature — skenario sertifikasi: kirim signature
-// tidak valid, harus dapat 4015400 dari DANA.
-router.post('/test-invalid-signature', authenticate, async (req, res, next) => {
-  try {
-    const tid = tenantId(req.user)
-    const { rows: stgRows } = await pool.query('SELECT * FROM store_settings WHERE admin_id = $1', [tid])
-    const stg = stgRows[0] || {}
-    const host = (req.get('host') || '').replace(/^https?:\/\//, '')
-    const notifyUrl = (process.env.PUBLIC_BASE_URL || `https://${host}`).replace(/\/$/, '') + NOTIFICATION_PATH
-    const result = await testInvalidSignature(stg, { notifyUrl })
-    const pass = String(result.responseCode) === '4015400'
-    res.json({ ...result, pass })
-  } catch (err) {
-    if (err.status) return res.status(err.status).json({ error: err.message })
-    next(err)
-  }
-})
-
-// POST /api/dana/test-inconsistent — skenario: ref sama, amount beda → 4045418.
-router.post('/test-inconsistent', authenticate, async (req, res, next) => {
-  try {
-    const tid = tenantId(req.user)
-    const { rows: stgRows } = await pool.query('SELECT * FROM store_settings WHERE admin_id = $1', [tid])
-    const stg = stgRows[0] || {}
-    const host = (req.get('host') || '').replace(/^https?:\/\//, '')
-    const notifyUrl = (process.env.PUBLIC_BASE_URL || `https://${host}`).replace(/\/$/, '') + NOTIFICATION_PATH
-    const result = await testInconsistentRequest(stg, { notifyUrl })
-    const pass = String(result.responseCode) === '4045418'
-    res.json({ ...result, pass })
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message })
     next(err)
