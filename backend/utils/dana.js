@@ -6,10 +6,11 @@
 const crypto = require('crypto')
 
 function baseUrl(settings) {
-  // Override manual (dari dashboard DANA) bila diisi; selain itu default SNAP.
+  // Override manual (dari dashboard DANA) bila diisi; selain itu default resmi.
   const custom = (settings.dana_api_url || '').trim().replace(/\/$/, '')
   if (custom) return custom
-  return settings.dana_is_production ? 'https://api.dana.id' : 'https://api.sandbox.dana.id'
+  // Host production DANA = api.saas.dana.id (sesuai SDK resmi), BUKAN api.dana.id.
+  return settings.dana_is_production ? 'https://api.saas.dana.id' : 'https://api.sandbox.dana.id'
 }
 
 // Timestamp DANA: ISO8601 waktu WIB dengan offset +07:00, mis. 2026-10-25T16:46:41+07:00
