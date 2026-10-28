@@ -7,7 +7,7 @@ import {
   Lock, Eye, EyeOff, ShieldCheck, Smartphone, ExternalLink, AlertTriangle, Fingerprint,
   Printer, Bluetooth, RefreshCw, Trash2
 } from 'lucide-react'
-import { getSettings, updateSettings, uploadProductImage, deleteProductImage, changePassword, danaTestInvalidSig, danaTestInconsistent } from '../api'
+import { getSettings, updateSettings, uploadProductImage, deleteProductImage, changePassword } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
 import { getImageUrl } from '../utils/getImageUrl'
 import { biometricAvailable, verifyBiometric, isBiometricEnabled, setBiometricEnabled, isBiometricLoginEnabled, enableBiometricLogin, disableBiometricLogin } from '../utils/biometric'
@@ -979,37 +979,6 @@ function PanelDoku({ form, set, setForm }) {
 function PanelDana({ form, set, setForm }) {
   const origin  = import.meta.env.VITE_API_BASE_URL || window.location.origin
   const webhook = origin + '/api/dana/notification'
-  const [testBusy, setTestBusy]     = useState('')
-  const [testResult, setTestResult] = useState(null)
-  const [checklist, setChecklist]   = useState(null)
-
-  function checkGoLive() {
-    const must = [
-      { label: 'Client ID terisi',                         ok: !!form.dana_client_id },
-      { label: 'Merchant ID terisi',                       ok: !!form.dana_merchant_id },
-      { label: 'Private Key merchant terisi',              ok: !!form.dana_private_key },
-      { label: 'Public Key DANA terisi (verifikasi webhook)', ok: !!form.dana_public_key },
-      { label: 'MCC terisi',                               ok: !!form.dana_mcc },
-      { label: 'Channel ID terisi',                        ok: !!form.dana_channel_id },
-      { label: 'URL webhook HTTPS',                        ok: webhook.startsWith('https://') },
-      { label: 'DANA diaktifkan',                          ok: !!form.dana_enabled },
-      { label: 'Simulasi webhook error DIMATIKAN',         ok: !form.dana_sim_notify_error },
-    ]
-    const prod = { label: 'Mode Production aktif', ok: !!form.dana_is_production, info: true }
-    setChecklist({ must, prod, ready: must.every(i => i.ok) })
-  }
-
-  async function runTest(key, fn, expectCode) {
-    setTestBusy(key); setTestResult(null)
-    try {
-      const { data } = await fn()
-      setTestResult({ ...data, key, expectCode })
-      if (data.pass) toast.success(`Lulus: ${expectCode}`)
-      else toast.error(`Respons: ${data.responseCode || data.httpStatus} — ${data.responseMessage || ''}`)
-    } catch (err) { toast.error(err.message) }
-    finally { setTestBusy('') }
-  }
-
   return (
     <div className="space-y-4">
       <SectionCard title="Webhook DANA" subtitle="URL notifikasi pembayaran untuk didaftarkan di dashboard DANA" icon={QrCode} color="cyan">
@@ -1077,11 +1046,6 @@ function PanelDana({ form, set, setForm }) {
             onChange={set('dana_client_secret')} placeholder="Client Secret DANA" />
         </Field>
 
-        <Field label="Partner ID (opsional)" hint="Kosongkan bila sama dengan Client ID">
-          <input className="input font-mono text-sm" value={form.dana_partner_id || ''}
-            onChange={set('dana_partner_id')} placeholder="Kosongkan = pakai Client ID" />
-        </Field>
-
         <Field label="Merchant ID" hint="Wajib untuk membuat pembayaran (field merchantId)">
           <input className="input font-mono text-sm" value={form.dana_merchant_id || ''}
             onChange={set('dana_merchant_id')} placeholder="mis. 216620070006049705942" />
@@ -1095,16 +1059,6 @@ function PanelDana({ form, set, setForm }) {
         <Field label="MCC" hint="Kode kategori merchant dari DANA (mis. 5013 untuk suku cadang/ban)">
           <input className="input font-mono text-sm" value={form.dana_mcc || ''}
             onChange={set('dana_mcc')} placeholder="mis. 5013" />
-        </Field>
-
-        <Field label="External Store ID" hint="Dari contoh/registrasi DANA (opsional)">
-          <input className="input font-mono text-sm" value={form.dana_external_store_id || ''}
-            onChange={set('dana_external_store_id')} placeholder="mis. bf24846e" />
-        </Field>
-
-        <Field label="Sub Merchant ID" hint="Dari contoh/registrasi DANA (opsional)">
-          <input className="input font-mono text-sm" value={form.dana_sub_merchant_id || ''}
-            onChange={set('dana_sub_merchant_id')} placeholder="mis. 2c8e1df8" />
         </Field>
 
         <Field label="Private Key Merchant" hint="Wajib untuk menandatangani request ke DANA (RSA, SHA256withRSA)">
@@ -1128,78 +1082,20 @@ function PanelDana({ form, set, setForm }) {
         </div>
       </SectionCard>
 
-      <SectionCard title="Uji Sertifikasi Sandbox" subtitle="Jalankan skenario DANA & lihat responseCode" icon={ShieldCheck} color="cyan">
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Simpan kredensial dulu, lalu jalankan skenario. Hasil benar bila responseCode sesuai yang diharapkan.
-        </p>
-        <button type="button" onClick={() => runTest('sig', danaTestInvalidSig, '4015400')} disabled={!!testBusy}
-          className="w-full flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm py-2.5 rounded-xl disabled:opacity-60">
-          {testBusy === 'sig' ? 'Menguji…' : 'Uji Tanda Tangan Invalid (→ 4015400)'}
-        </button>
-        <button type="button" onClick={() => runTest('inc', danaTestInconsistent, '4045418')} disabled={!!testBusy}
-          className="w-full flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm py-2.5 rounded-xl disabled:opacity-60">
-          {testBusy === 'inc' ? 'Menguji…' : 'Uji Inconsistent Request (→ 4045418)'}
-        </button>
-        {testResult && (
-          <div className={`rounded-xl px-4 py-3 border text-xs ${testResult.pass
-            ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30 text-green-700 dark:text-green-300'
-            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'}`}>
-            <p className="font-semibold">{testResult.pass ? `✔ Lulus (${testResult.expectCode})` : '✗ Belum sesuai'}</p>
-            <p className="mt-1 font-mono break-all">
-              HTTP {testResult.httpStatus} · code {testResult.responseCode || '-'} · {testResult.responseMessage}
-            </p>
-          </div>
-        )}
-
-        {/* Simulasi Internal Server Error untuk uji webhook */}
-        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700 mt-1">
-          <div className="min-w-0 pr-3">
-            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Simulasi webhook error (5005601)</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Saat aktif, webhook membalas <code>5005601</code> ke DANA (DANA akan retry). Untuk uji skenario
-              "Internal Server Error". <strong>Nonaktifkan</strong> setelah selesai agar pembayaran normal.
-            </p>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-            <input type="checkbox" className="sr-only peer" checked={!!form.dana_sim_notify_error}
-              onChange={e => setForm(f => ({ ...f, dana_sim_notify_error: e.target.checked }))} />
-            <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700
-              peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px]
-              after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
-              after:transition-all peer-checked:bg-amber-500" />
-          </label>
+      <SectionCard title="Mode Production" subtitle="Panduan singkat agar DANA siap dipakai" icon={ShieldCheck} color="cyan">
+        <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-3.5 border border-cyan-100 dark:border-cyan-900/30">
+          <p className="text-xs font-semibold text-cyan-700 dark:text-cyan-300 mb-1.5">Langkah go-live:</p>
+          <ol className="text-xs text-cyan-700 dark:text-cyan-400 space-y-1 list-decimal list-inside leading-relaxed">
+            <li>Dapatkan kredensial <strong>Production</strong> dari DANA (Client ID, Merchant ID, Private Key, Public Key).</li>
+            <li>Isi semua kredensial Production di atas, lalu aktifkan <strong>Mode = Production</strong>.</li>
+            <li>Daftarkan URL webhook di dashboard DANA Production.</li>
+            <li>Simpan, lalu lakukan 1 transaksi uji kecil.</li>
+          </ol>
         </div>
-      </SectionCard>
-
-      <SectionCard title="Kesiapan Go-Live" subtitle="Cek konfigurasi sebelum pindah ke Production" icon={CheckCircle} color="cyan">
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Simpan dulu pengaturan, lalu cek. Semua item wajib harus ✔ sebelum go-live. Pastikan juga semua
-          skenario sertifikasi di dashboard DANA sudah <strong>Verified</strong>.
+          <strong>Penting:</strong> Mode harus cocok dengan kredensial — Sandbox dengan kredensial sandbox,
+          Production dengan kredensial production. Campur = error "Invalid Client".
         </p>
-        <button type="button" onClick={checkGoLive}
-          className="w-full flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm py-2.5 rounded-xl">
-          Cek Kesiapan Go-Live
-        </button>
-        {checklist && (
-          <div className="space-y-2">
-            <div className={`rounded-xl px-4 py-2.5 text-xs font-semibold border ${checklist.ready
-              ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30 text-green-700 dark:text-green-300'
-              : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'}`}>
-              {checklist.ready ? '✔ Semua item wajib siap. Siap diajukan go-live ke DANA.' : '⚠ Masih ada item wajib yang belum lengkap.'}
-            </div>
-            <ul className="space-y-1">
-              {checklist.must.map((it, i) => (
-                <li key={i} className={`flex items-center gap-2 text-xs ${it.ok ? 'text-gray-600 dark:text-gray-300' : 'text-red-600 dark:text-red-400 font-semibold'}`}>
-                  <span>{it.ok ? '✔' : '✗'}</span> {it.label}
-                </li>
-              ))}
-              <li className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                <span>{checklist.prod.ok ? '🟢' : '🟡'}</span>
-                {checklist.prod.ok ? 'Mode Production AKTIF' : 'Mode masih Sandbox (ganti ke Production saat go-live)'}
-              </li>
-            </ul>
-          </div>
-        )}
       </SectionCard>
     </div>
   )
