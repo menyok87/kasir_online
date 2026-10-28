@@ -89,7 +89,10 @@ async function danaPost(settings, path, body, opts = {}) {
     'X-EXTERNAL-ID': crypto.randomUUID(),
     'CHANNEL-ID': settings.dana_channel_id || '95221',
   }
-  if (settings.dana_origin) headers['ORIGIN'] = settings.dana_origin
+  // ORIGIN wajib untuk Production (domain aplikasi). Pakai yang diteruskan dari
+  // request, lalu fallback ke setting, lalu PUBLIC_BASE_URL.
+  const originHeader = opts.origin || settings.dana_origin || process.env.PUBLIC_BASE_URL
+  if (originHeader) headers['ORIGIN'] = originHeader
 
   let resp
   const controller = new AbortController()
@@ -115,7 +118,7 @@ async function danaPost(settings, path, body, opts = {}) {
 }
 
 // Buat pembayaran (Hosted Checkout). Mengembalikan { url, referenceNo, raw }.
-async function createCheckout(settings, { invoiceNumber, amount, returnUrl, notifyUrl }) {
+async function createCheckout(settings, { invoiceNumber, amount, returnUrl, notifyUrl, origin }) {
   assertConfigured(settings)
   const path   = '/payment-gateway/v1.0/debit/payment-host-to-host.htm'
   const val    = Number(amount).toFixed(2)
@@ -140,7 +143,7 @@ async function createCheckout(settings, { invoiceNumber, amount, returnUrl, noti
   if (settings.dana_external_store_id) body.externalStoreId    = settings.dana_external_store_id
 
   console.log('[DANA] createCheckout request:', JSON.stringify(body))
-  const { resp, data, text } = await danaPost(settings, path, body)
+  const { resp, data, text } = await danaPost(settings, path, body, { origin })
   const url = data?.webRedirectUrl || data?.redirectUrl
     || data?.additionalInfo?.webRedirectUrl
     || data?.actions?.find?.(a => /redirect|checkout|pay/i.test(a?.name || ''))?.url

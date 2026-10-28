@@ -143,7 +143,7 @@ router.post('/charge', authenticate, async (req, res, next) => {
 
     // Buat order DANA SEBELUM commit — gagal → rollback (stok kembali)
     const checkout = await createCheckout(stg, {
-      invoiceNumber: danaRef, amount: grandTotal, returnUrl: notifyUrl, notifyUrl,
+      invoiceNumber: danaRef, amount: grandTotal, returnUrl: notifyUrl, notifyUrl, origin,
     })
 
     await client.query(
