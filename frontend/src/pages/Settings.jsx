@@ -7,7 +7,7 @@ import {
   Lock, Eye, EyeOff, ShieldCheck, Smartphone, ExternalLink, AlertTriangle, Fingerprint,
   Printer, Bluetooth, RefreshCw, Trash2
 } from 'lucide-react'
-import { getSettings, updateSettings, uploadProductImage, deleteProductImage, changePassword } from '../api'
+import { getSettings, updateSettings, uploadProductImage, deleteProductImage, changePassword, danaPublicKey } from '../api'
 import { FullPageSpinner } from '../components/ui/Spinner'
 import { getImageUrl } from '../utils/getImageUrl'
 import { biometricAvailable, verifyBiometric, isBiometricEnabled, setBiometricEnabled, isBiometricLoginEnabled, enableBiometricLogin, disableBiometricLogin } from '../utils/biometric'
@@ -980,6 +980,15 @@ function PanelDoku({ form, set, setForm }) {
 function PanelDana({ form, set, setForm }) {
   const origin  = import.meta.env.VITE_API_BASE_URL || window.location.origin
   const webhook = origin + '/api/dana/notification'
+  const [pubKey, setPubKey]   = useState('')
+  const [pubBusy, setPubBusy] = useState(false)
+
+  async function showPublicKey() {
+    setPubBusy(true)
+    try { const { data } = await danaPublicKey(); setPubKey(data.publicKey) }
+    catch (err) { toast.error(err.message) }
+    finally { setPubBusy(false) }
+  }
   return (
     <div className="space-y-4">
       <SectionCard title="Webhook DANA" subtitle="URL notifikasi pembayaran untuk didaftarkan di dashboard DANA" icon={QrCode} color="cyan">
@@ -1102,6 +1111,21 @@ function PanelDana({ form, set, setForm }) {
           <strong>Penting:</strong> Mode harus cocok dengan kredensial — Sandbox dengan kredensial sandbox,
           Production dengan kredensial production. Campur = error "Invalid Client".
         </p>
+
+        <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+          <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">
+            <strong>Atasi "Invalid Signature":</strong> public key berikut berpasangan dengan Private Key Anda.
+            Daftarkan <strong>persis</strong> ini di dashboard DANA (harus sama dengan yang diupload).
+          </p>
+          <button type="button" onClick={showPublicKey} disabled={pubBusy}
+            className="w-full flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm py-2.5 rounded-xl disabled:opacity-60">
+            {pubBusy ? 'Memuat…' : 'Tampilkan Public Key (dari Private Key saya)'}
+          </button>
+          {pubKey && (
+            <textarea readOnly value={pubKey} onFocus={e => e.target.select()}
+              className="input font-mono text-[11px] min-h-[110px] mt-2 select-all" />
+          )}
+        </div>
       </SectionCard>
     </div>
   )

@@ -4,7 +4,7 @@ const crypto  = require('crypto')
 const pool    = require('../database/db')
 const { authenticate, tenantId } = require('../middleware/authMiddleware')
 const { postSale } = require('../utils/ledger')
-const { createCheckout, queryStatus, verifySignature, extractOrderRef, extractStatus, mapStatus } = require('../utils/dana')
+const { createCheckout, queryStatus, derivePublicKeyPem, verifySignature, extractOrderRef, extractStatus, mapStatus } = require('../utils/dana')
 const { sendWhatsApp } = require('../utils/whacenter')
 
 const NOTIFICATION_PATH = '/api/dana/notification'
@@ -232,6 +232,20 @@ router.post('/send-wa', authenticate, async (req, res, next) => {
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message })
     next(err)
+  }
+})
+
+// GET /api/dana/public-key — public key (SPKI) yang berpasangan dgn private key.
+// Daftarkan ini di DANA agar tanda tangan cocok (atasi Invalid Signature).
+router.get('/public-key', authenticate, async (req, res, next) => {
+  try {
+    const tid = tenantId(req.user)
+    const { rows } = await pool.query('SELECT dana_private_key FROM store_settings WHERE admin_id = $1', [tid])
+    if (!rows.length || !rows[0].dana_private_key) return res.status(400).json({ error: 'Private Key DANA belum diisi.' })
+    res.json({ publicKey: derivePublicKeyPem(rows[0].dana_private_key) })
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message })
+    res.status(400).json({ error: 'Private Key tidak valid: ' + err.message })
   }
 })
 

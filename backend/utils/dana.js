@@ -58,6 +58,13 @@ function privateKeyPem(raw) {
   return loadPrivateKey(raw).export({ type: 'pkcs8', format: 'pem' })
 }
 
+// Public key (SPKI PEM) yang BERPASANGAN dengan private key — untuk didaftarkan
+// ke DANA. Jika ini tak cocok dengan yang diupload ke DANA → Invalid Signature.
+function derivePublicKeyPem(privateKeyRaw) {
+  const priv = loadPrivateKey(privateKeyRaw)
+  return crypto.createPublicKey(priv).export({ type: 'spki', format: 'pem' })
+}
+
 function assertConfigured(settings) {
   const partner = settings.dana_partner_id || settings.dana_client_id
   if (!settings.dana_private_key || !partner || !settings.dana_merchant_id) {
@@ -181,4 +188,4 @@ function mapStatus(danaStatus) {
   return 'pending'
 }
 
-module.exports = { createCheckout, queryStatus, verifySignature, extractOrderRef, extractStatus, mapStatus }
+module.exports = { createCheckout, queryStatus, derivePublicKeyPem, verifySignature, extractOrderRef, extractStatus, mapStatus }

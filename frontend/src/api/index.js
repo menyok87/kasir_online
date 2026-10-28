@@ -95,6 +95,7 @@ export const danaCharge      = (data)     => api.post('/dana/charge', data);
 export const danaStatus      = (order_id) => api.get(`/dana/status/${order_id}`);
 export const danaCancel      = (order_id) => api.post(`/dana/cancel/${order_id}`);
 export const danaSendWa      = (data)     => api.post('/dana/send-wa', data);
+export const danaPublicKey   = ()         => api.get('/dana/public-key');
 export const danaTestInvalidSig  = ()     => api.post('/dana/test-invalid-signature');
 export const danaTestInconsistent = ()     => api.post('/dana/test-inconsistent');
 
