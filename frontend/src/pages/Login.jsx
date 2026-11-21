@@ -25,16 +25,16 @@ export default function Login() {
       {/* Dark mode toggle */}
       <button
         onClick={toggle}
-        className="fixed top-4 right-4 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm"
+        className="fixed top-4 right-4 p-2.5 rounded-full bg-white/15 hover:bg-white/25 text-white transition-colors"
         title={dark ? 'Mode Terang' : 'Mode Gelap'}
       >
         {dark ? <Sun size={18} /> : <Moon size={18} />}
       </button>
 
-      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-sm border border-white/20 dark:border-gray-800 animate-fade-in overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl w-full max-w-sm border border-white/20 dark:border-gray-800 animate-fade-in overflow-hidden">
         {/* Logo */}
         <div className="text-center pt-8 pb-4 px-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl mb-3 shadow-xl shadow-blue-500/30">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-3">
             <Store size={26} className="text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Kasir Online</h1>

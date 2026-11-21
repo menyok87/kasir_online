@@ -13,7 +13,7 @@ export default function Layout() {
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-30 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

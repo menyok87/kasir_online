@@ -78,7 +78,7 @@ function ProductCard({ product, onAdd }) {
         }`}
     >
       {/* Gambar / Placeholder */}
-      <div className="relative w-full aspect-square overflow-hidden rounded-t-2xl bg-gradient-to-br from-slate-100 to-blue-50 dark:from-gray-700 dark:to-gray-800">
+      <div className="relative w-full aspect-square overflow-hidden rounded-t-2xl bg-gray-100 dark:bg-gray-800">
         {product.image_url ? (
           <img
             src={getImageUrl(product.image_url)}
@@ -99,14 +99,14 @@ function ProductCard({ product, onAdd }) {
           <div className={`absolute top-1.5 left-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-lg
             ${lowStock
               ? 'bg-amber-400 text-amber-900'
-              : 'bg-white/80 dark:bg-gray-900/70 text-gray-500 dark:text-gray-400 backdrop-blur-sm'
+              : 'bg-white/90 dark:bg-gray-900/80 text-gray-500 dark:text-gray-400'
             }`}>
             {lowStock ? `Sisa ${product.stock}` : `${product.stock}`}
           </div>
         )}
 
         {outOfStock && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
             <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Habis</span>
           </div>
         )}
@@ -138,7 +138,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
   return (
     <div className="flex items-center gap-3 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
       {/* Thumbnail */}
-      <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden bg-gradient-to-br from-blue-50 to-slate-100 dark:from-gray-700 dark:to-gray-800 border border-gray-100 dark:border-gray-700">
+      <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
         {item.product.image_url ? (
           <img src={getImageUrl(item.product.image_url)} alt={item.product.name} loading="lazy" decoding="async"
             className="w-full h-full object-cover"
@@ -341,15 +341,11 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
       {cartCount > 0 && (
         <button
           onClick={onShowCart}
-          className="lg:hidden mt-3 w-full relative overflow-hidden rounded-2xl font-bold text-sm flex items-center justify-between px-4 py-0
-            bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white
-            shadow-xl shadow-blue-300 dark:shadow-blue-900/50
-            active:scale-95 transition-all duration-200"
+          className="lg:hidden mt-3 w-full relative overflow-hidden rounded-full font-bold text-sm flex items-center justify-between px-4 py-0
+            bg-blue-600 text-white
+            active:scale-95 transition-transform duration-200"
           style={{ minHeight: 56 }}
         >
-          {/* Shimmer layer */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2.5s_ease-in-out_infinite]" />
-
           <div className="flex items-center gap-3 py-3 relative z-10">
             {/* Cart icon with badge */}
             <div className="relative">
@@ -384,14 +380,14 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
 // ── QR Payment Modal (dipakai GoPay & QRIS) ──────────────────────────────────
 const PAY_BRANDS = {
   gopay: {
-    title: 'Pembayaran GoPay', Icon: Smartphone, header: 'from-green-500 to-emerald-600',
+    title: 'Pembayaran GoPay', Icon: Smartphone, header: 'bg-emerald-600',
     scanText: 'Scan QR dengan app Gojek / GoPay', successNote: 'Dana GoPay diterima · struk siap dicetak',
     qrBox: 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30',
     imgBorder: 'border-green-200', scan: 'text-green-700 dark:text-green-400',
     spin: 'border-green-400/40 border-t-green-500', amount: 'text-green-600 dark:text-green-400',
   },
   qris: {
-    title: 'Pembayaran QRIS', Icon: QrCode, header: 'from-blue-500 to-indigo-600',
+    title: 'Pembayaran QRIS', Icon: QrCode, header: 'bg-blue-600',
     scanText: 'Scan dengan DANA · OVO · GoPay · ShopeePay · m-banking', successNote: 'Pembayaran diterima · struk siap dicetak',
     qrBox: 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900/30',
     imgBorder: 'border-blue-200', scan: 'text-blue-700 dark:text-blue-400',
@@ -445,9 +441,9 @@ function QrPaymentModal({ isOpen, data, brand = 'gopay', statusFn, cancelFn, onS
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
-        <div className={`bg-gradient-to-r ${b.header} px-5 py-4 flex items-center justify-between`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl w-full max-w-sm overflow-hidden">
+        <div className={`${b.header} px-5 py-4 flex items-center justify-between`}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
               <Icon size={17} className="text-white" />
@@ -583,9 +579,9 @@ function DokuPaymentModal({ isOpen, data, initialPhone = '', title = 'Pembayaran
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
-        <div className="bg-gradient-to-r from-rose-500 to-pink-600 px-5 py-4 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl w-full max-w-sm overflow-hidden">
+        <div className="bg-rose-600 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
               <Smartphone size={17} className="text-white" />
@@ -701,7 +697,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
       w-full lg:w-[22rem] lg:flex-shrink-0 h-full">
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3.5 flex items-center justify-between flex-shrink-0">
+      <div className="bg-blue-600 px-4 py-3.5 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2.5">
           <button onClick={onBack} className="lg:hidden p-1 -ml-1 rounded-lg hover:bg-white/20 text-white transition-colors">
             <ArrowLeft size={18} />
@@ -993,13 +989,13 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
         {/* Tombol Checkout */}
         <button onClick={onCheckout}
           disabled={!canCheckout || checkoutLoading}
-          className={`w-full py-4 rounded-2xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2
+          className={`w-full py-4 rounded-full text-sm font-bold transition-colors duration-200 flex items-center justify-center gap-2
             ${canCheckout && !checkoutLoading
               ? isGoPay
-                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-300 dark:shadow-green-900/50 hover:from-green-600 hover:to-green-700 active:scale-[0.98]'
+                ? 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]'
                 : isQrisAuto
-                  ? 'bg-gradient-to-r from-cyan-500 to-sky-600 text-white shadow-lg shadow-cyan-300 dark:shadow-cyan-900/50 hover:from-cyan-600 hover:to-sky-700 active:scale-[0.98]'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-300 dark:shadow-blue-900/50 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98]'
+                  ? 'bg-sky-600 text-white hover:bg-sky-700 active:scale-[0.98]'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98]'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
             }`}
         >

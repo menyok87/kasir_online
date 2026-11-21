@@ -65,7 +65,7 @@ export default function Sidebar({ onClose }) {
     <aside className="w-64 bg-gray-950 dark:bg-gray-900 text-white flex flex-col h-screen border-r border-gray-800">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-800">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-700 p-2 rounded-xl flex-shrink-0 shadow-lg shadow-blue-500/20">
+        <div className="bg-blue-600 p-2.5 rounded-2xl flex-shrink-0">
           <Store size={18} className="text-white" />
         </div>
         <div className="flex-1 min-w-0">
@@ -87,9 +87,9 @@ export default function Sidebar({ onClose }) {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              `flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                  ? 'bg-blue-600 text-white'
                   : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
               }`
             }
@@ -118,7 +118,7 @@ export default function Sidebar({ onClose }) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-sm font-bold shadow">
+              <div className="w-full h-full bg-blue-600 flex items-center justify-center text-sm font-bold">
                 {user?.name?.charAt(0).toUpperCase()}
               </div>
             )}
@@ -140,7 +140,7 @@ export default function Sidebar({ onClose }) {
         </div>
         <button
           onClick={logout}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-gray-500 hover:bg-red-900/30 hover:text-red-400 transition-all"
+          className="w-full flex items-center gap-2 px-4 py-2 rounded-full text-sm text-gray-500 hover:bg-red-900/30 hover:text-red-400 transition-colors"
         >
           <LogOut size={14} />
           Keluar

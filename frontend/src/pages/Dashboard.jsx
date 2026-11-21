@@ -18,11 +18,11 @@ function RevenueChart({ data }) {
         return (
           <div key={i} className="group relative flex-1 h-full flex flex-col items-center justify-end">
             <div className="pointer-events-none absolute bottom-full mb-1 z-10 hidden group-hover:block whitespace-nowrap
-              bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 px-2.5 py-1.5 text-xs">
+              bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 px-2.5 py-1.5 text-xs">
               <div className="font-bold text-gray-800 dark:text-gray-100">{formatRupiah(d.revenue)}</div>
               <div className="text-gray-400 dark:text-gray-500">{d.orders} transaksi</div>
             </div>
-            <div className="w-full max-w-[38px] rounded-t-lg bg-gradient-to-t from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 transition-colors"
+            <div className="w-full max-w-[38px] rounded-t-lg bg-blue-500 hover:bg-blue-600 transition-colors"
               style={{ height: `${pct}%` }} />
             <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 whitespace-nowrap">{d.date}</span>
           </div>
