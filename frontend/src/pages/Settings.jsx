@@ -149,7 +149,7 @@ function FloatingSave({ saving }) {
   return (
     <div className="lg:hidden fixed bottom-4 right-4 z-50">
       <button type="submit" disabled={saving}
-        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60 text-white font-semibold text-sm px-5 py-3 rounded-2xl shadow-xl shadow-blue-500/40 transition-all">
+        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60 text-white font-semibold text-sm px-5 py-3 rounded-full shadow-md transition-colors">
         {saving
           ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Menyimpan...</>
           : <><Save size={15} />Simpan</>}
@@ -202,7 +202,7 @@ function PanelToko({ form, set, setForm, onSave }) {
                 <img src={getImageUrl(form.store_logo)} alt="Logo"
                   className="w-20 h-20 object-contain rounded-2xl border-2 border-blue-200 dark:border-blue-700 bg-white dark:bg-gray-800 p-1.5 shadow-md" />
                 <button type="button" onClick={handleLogoRemove} disabled={uploading}
-                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-full flex items-center justify-center shadow-lg transition-colors">
+                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-full flex items-center justify-center shadow-md transition-colors">
                   <X size={10} />
                 </button>
               </>
@@ -252,7 +252,7 @@ function PanelToko({ form, set, setForm, onSave }) {
           {form.store_logo
             ? <img src={getImageUrl(form.store_logo)} alt="Logo"
                 className="w-9 h-9 object-contain rounded-xl bg-white dark:bg-gray-800 p-0.5 flex-shrink-0 border border-blue-100 dark:border-blue-800" />
-            : <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow shadow-blue-400/30">
+            : <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0">
                 {form.store_name.charAt(0).toUpperCase()}
               </div>
           }
@@ -345,7 +345,7 @@ function PanelQris({ form, setForm, onSave }) {
               <img src={getImageUrl(form.qris_image)} alt="QRIS"
                 className="w-36 h-36 object-contain rounded-2xl border-2 border-violet-200 dark:border-violet-700 bg-white dark:bg-gray-800 p-2 shadow-md" />
               <button type="button" onClick={handleRemove} disabled={uploading}
-                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-full flex items-center justify-center shadow-lg transition-colors">
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-full flex items-center justify-center shadow-md transition-colors">
                 <X size={11} />
               </button>
               <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow whitespace-nowrap">
@@ -422,7 +422,7 @@ function PanelBank({ form, set }) {
 
       {hasData && (
         <div className="rounded-2xl overflow-hidden border border-amber-200 dark:border-amber-800/50 shadow-sm">
-          <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 flex items-center justify-between">
+          <div className="bg-amber-500 px-4 py-2.5 flex items-center justify-between">
             <span className="text-white font-bold text-sm tracking-wide">{form.bank_name || 'NAMA BANK'}</span>
             <CreditCard size={17} className="text-white/80" />
           </div>
@@ -475,9 +475,9 @@ function PanelStruk({ form, set, setCheck, setForm }) {
           <Receipt size={14} className="text-gray-400" />
           <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Preview Struk</p>
         </div>
-        <div className="max-w-xs mx-auto bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800">
+        <div className="max-w-xs mx-auto bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-md border border-gray-100 dark:border-gray-800">
           {/* Header */}
-          <div className="bg-gradient-to-b from-gray-800 to-gray-900 text-white px-4 py-4 text-center">
+          <div className="bg-gray-900 text-white px-4 py-4 text-center">
             {form.store_logo && (
               <img src={getImageUrl(form.store_logo)} alt="Logo"
                 className="w-12 h-12 object-contain mx-auto mb-2 rounded-lg bg-white/10 p-1" />

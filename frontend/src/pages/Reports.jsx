@@ -116,10 +116,10 @@ export default function Reports() {
         <>
           {/* KPI */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Kpi label="Pendapatan" value={formatRupiah(s.gross_sales)} sub={`${s.transactions} transaksi`} icon={Coins} gradient="bg-gradient-to-br from-blue-500 to-indigo-700" />
-            <Kpi label="Rata-rata / Transaksi" value={formatRupiah(s.aov)} sub="AOV" icon={Receipt} gradient="bg-gradient-to-br from-violet-500 to-purple-700" />
-            <Kpi label="Laba Kotor" value={formatRupiah(s.gross_profit)} sub={`Margin ${formatPct(s.gross_margin_pct)}`} icon={TrendingUp} gradient="bg-gradient-to-br from-emerald-500 to-green-700" />
-            <Kpi label={s.net_profit >= 0 ? 'Laba Bersih' : 'Rugi Bersih'} value={formatRupiah(Math.abs(s.net_profit))} sub="Setelah beban operasional" icon={s.net_profit >= 0 ? ArrowUpRight : TrendingDown} gradient={s.net_profit >= 0 ? 'bg-gradient-to-br from-teal-500 to-cyan-700' : 'bg-gradient-to-br from-red-600 to-rose-700'} />
+            <Kpi label="Pendapatan" value={formatRupiah(s.gross_sales)} sub={`${s.transactions} transaksi`} icon={Coins} gradient="bg-blue-600" />
+            <Kpi label="Rata-rata / Transaksi" value={formatRupiah(s.aov)} sub="AOV" icon={Receipt} gradient="bg-violet-600" />
+            <Kpi label="Laba Kotor" value={formatRupiah(s.gross_profit)} sub={`Margin ${formatPct(s.gross_margin_pct)}`} icon={TrendingUp} gradient="bg-emerald-600" />
+            <Kpi label={s.net_profit >= 0 ? 'Laba Bersih' : 'Rugi Bersih'} value={formatRupiah(Math.abs(s.net_profit))} sub="Setelah beban operasional" icon={s.net_profit >= 0 ? ArrowUpRight : TrendingDown} gradient={s.net_profit >= 0 ? 'bg-teal-600' : 'bg-rose-600'} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

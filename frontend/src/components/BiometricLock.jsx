@@ -41,7 +41,7 @@ export default function BiometricLock() {
 
   return (
     <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 p-6">
-      <div className="w-20 h-20 rounded-3xl bg-white/10 flex items-center justify-center mb-6 backdrop-blur-sm">
+      <div className="w-20 h-20 rounded-3xl bg-white/10 flex items-center justify-center mb-6">
         <Lock size={34} className="text-white" />
       </div>
       <h1 className="text-xl font-bold text-white">Kasir Online Terkunci</h1>
@@ -54,7 +54,7 @@ export default function BiometricLock() {
       )}
 
       <button onClick={prompt} disabled={busy}
-        className="mt-8 flex items-center gap-2.5 bg-white text-blue-700 font-bold px-6 py-3.5 rounded-2xl shadow-xl active:scale-95 transition-all disabled:opacity-60">
+        className="mt-8 flex items-center gap-2.5 bg-white text-blue-700 font-bold px-6 py-3.5 rounded-full shadow-md active:scale-95 transition-colors disabled:opacity-60">
         {busy
           ? <><span className="w-5 h-5 border-2 border-blue-300 border-t-blue-700 rounded-full animate-spin" />Memverifikasi...</>
           : <><Fingerprint size={22} /> Buka dengan Sidik Jari</>}

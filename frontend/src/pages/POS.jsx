@@ -74,7 +74,7 @@ function ProductCard({ product, onAdd }) {
       className={`group relative bg-white dark:bg-gray-800 rounded-2xl border text-left transition-all duration-200 w-full overflow-hidden
         ${outOfStock
           ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-700'
-          : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg hover:shadow-blue-100 dark:hover:shadow-blue-900/20 active:scale-95'
+          : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md active:scale-95'
         }`}
     >
       {/* Gambar / Placeholder */}
@@ -115,7 +115,7 @@ function ProductCard({ product, onAdd }) {
         {!outOfStock && (
           <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/10 transition-colors duration-200 flex items-center justify-center">
             <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center
-              opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-200 shadow-lg">
+              opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-200 shadow-md">
               <Plus size={16} />
             </div>
           </div>
@@ -744,7 +744,7 @@ function CartPanel({ cart, discount, setDiscount, paymentMethod, setPaymentMetho
       <div className="border-t border-gray-100 dark:border-gray-800 p-3.5 space-y-3 flex-shrink-0">
 
         {/* Total */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl px-4 py-3 border border-blue-100 dark:border-blue-900/30">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 py-3 border border-blue-100 dark:border-blue-900/30">
           {subtotal !== grandTotal && (
             <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-1">
               <span>Subtotal</span><span>{formatRupiah(subtotal)}</span>

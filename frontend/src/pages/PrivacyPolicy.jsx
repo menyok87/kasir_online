@@ -134,7 +134,7 @@ export default function PrivacyPolicy() {
           </div>
 
           <div className="flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-5 shadow-xl shadow-black/20">
+            <div className="w-16 h-16 bg-white/15 rounded-2xl flex items-center justify-center mb-5">
               <Store size={28} className="text-white" />
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Kebijakan Privasi</h1>

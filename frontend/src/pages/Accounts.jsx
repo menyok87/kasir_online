@@ -792,10 +792,10 @@ function TabBukuBesar({ accounts, onPosted }) {
 
       {/* Ringkasan bulan terpilih */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Pendapatan" value={formatRupiah(s.pendapatan)} sub={monthLabel(month)} icon={TrendingUp}   gradient="bg-gradient-to-br from-emerald-500 to-green-700" />
-        <StatCard label="Beban"      value={formatRupiah(s.beban)}      sub={monthLabel(month)} icon={TrendingDown} gradient="bg-gradient-to-br from-orange-500 to-amber-600" />
-        <StatCard label={s.laba >= 0 ? 'Laba' : 'Rugi'} value={formatRupiah(Math.abs(s.laba))} sub={s.pendapatan > 0 ? `${((s.laba / s.pendapatan) * 100).toFixed(1)}% margin` : 'Pendapatan − Beban'} icon={s.laba >= 0 ? TrendingUp : TrendingDown} gradient={s.laba >= 0 ? 'bg-gradient-to-br from-teal-500 to-cyan-700' : 'bg-gradient-to-br from-red-600 to-rose-700'} />
-        <StatCard label="Total Mutasi" value={formatRupiah(data?.totals.debit || 0)} sub={balanced ? '✓ Debit = Kredit' : '✗ Tidak seimbang'} icon={Scale} gradient="bg-gradient-to-br from-blue-500 to-indigo-700" />
+        <StatCard label="Pendapatan" value={formatRupiah(s.pendapatan)} sub={monthLabel(month)} icon={TrendingUp}   gradient="bg-emerald-600" />
+        <StatCard label="Beban"      value={formatRupiah(s.beban)}      sub={monthLabel(month)} icon={TrendingDown} gradient="bg-orange-500" />
+        <StatCard label={s.laba >= 0 ? 'Laba' : 'Rugi'} value={formatRupiah(Math.abs(s.laba))} sub={s.pendapatan > 0 ? `${((s.laba / s.pendapatan) * 100).toFixed(1)}% margin` : 'Pendapatan − Beban'} icon={s.laba >= 0 ? TrendingUp : TrendingDown} gradient={s.laba >= 0 ? 'bg-teal-600' : 'bg-rose-600'} />
+        <StatCard label="Total Mutasi" value={formatRupiah(data?.totals.debit || 0)} sub={balanced ? '✓ Debit = Kredit' : '✗ Tidak seimbang'} icon={Scale} gradient="bg-blue-600" />
       </div>
 
       {/* Rekap tahunan per bulan */}
@@ -1002,17 +1002,17 @@ export default function Accounts() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        <StatCard label="Total Aset"      value={formatRupiah(totalAset)}       sub="Kas + Bank + Piutang"  icon={Wallet}       gradient="bg-gradient-to-br from-blue-500 to-blue-700" />
-        <StatCard label="Kewajiban"       value={formatRupiah(totalKewajiban)}  sub="Hutang"                icon={TrendingDown} gradient="bg-gradient-to-br from-red-500 to-rose-600" />
-        <StatCard label="Modal Bersih"    value={formatRupiah(modalBersih)}     sub="Aset − Kewajiban"      icon={Users}        gradient="bg-gradient-to-br from-violet-500 to-purple-700" />
-        <StatCard label="Pendapatan"      value={formatRupiah(totalPendapatan)} sub="Total pemasukan"       icon={TrendingUp}   gradient="bg-gradient-to-br from-emerald-500 to-green-700" />
-        <StatCard label="Beban"           value={formatRupiah(totalBeban)}      sub="Total pengeluaran"     icon={ReceiptText}  gradient="bg-gradient-to-br from-orange-500 to-amber-600" />
+        <StatCard label="Total Aset"      value={formatRupiah(totalAset)}       sub="Kas + Bank + Piutang"  icon={Wallet}       gradient="bg-blue-600" />
+        <StatCard label="Kewajiban"       value={formatRupiah(totalKewajiban)}  sub="Hutang"                icon={TrendingDown} gradient="bg-rose-600" />
+        <StatCard label="Modal Bersih"    value={formatRupiah(modalBersih)}     sub="Aset − Kewajiban"      icon={Users}        gradient="bg-violet-600" />
+        <StatCard label="Pendapatan"      value={formatRupiah(totalPendapatan)} sub="Total pemasukan"       icon={TrendingUp}   gradient="bg-emerald-600" />
+        <StatCard label="Beban"           value={formatRupiah(totalBeban)}      sub="Total pengeluaran"     icon={ReceiptText}  gradient="bg-orange-500" />
         <StatCard
           label={labaBersih >= 0 ? 'Laba Bersih' : 'Rugi Bersih'}
           value={formatRupiah(Math.abs(labaBersih))}
           sub={totalPendapatan > 0 ? `${((labaBersih / totalPendapatan) * 100).toFixed(1)}% margin` : 'Pendapatan − Beban'}
           icon={labaBersih >= 0 ? TrendingUp : TrendingDown}
-          gradient={labaBersih >= 0 ? 'bg-gradient-to-br from-teal-500 to-cyan-700' : 'bg-gradient-to-br from-red-600 to-rose-700'}
+          gradient={labaBersih >= 0 ? 'bg-teal-600' : 'bg-rose-600'}
         />
       </div>
 
