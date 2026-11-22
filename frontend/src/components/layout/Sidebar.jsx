@@ -1,25 +1,11 @@
 import { useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import {
-  LayoutDashboard, Tags, Package,
-  ShoppingCart, Receipt, Store, X, LogOut, Users, Settings, BookOpen, Camera, BarChart3
-} from 'lucide-react'
+import { Store, X, LogOut, Camera } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../contexts/AuthContext'
 import { uploadProductImage } from '../../api'
 import { getImageUrl } from '../../utils/getImageUrl'
-
-const allMenus = [
-  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard',       feature: 'dashboard' },
-  { to: '/pos',          icon: ShoppingCart,    label: 'Kasir (POS)',     feature: 'pos' },
-  { to: '/products',     icon: Package,         label: 'Produk',          feature: 'products' },
-  { to: '/categories',   icon: Tags,            label: 'Kategori',        feature: 'categories' },
-  { to: '/transactions', icon: Receipt,         label: 'Transaksi',       feature: 'transactions' },
-  { to: '/accounts',     icon: BookOpen,        label: 'Daftar Akun',     feature: 'accounts' },
-  { to: '/reports',      icon: BarChart3,       label: 'Laporan',         feature: 'reports' },
-  { to: '/users',        icon: Users,           label: 'Manajemen User',  feature: 'users' },
-  { to: '/settings',     icon: Settings,        label: 'Pengaturan',      feature: 'settings' },
-]
+import { allMenus } from './menus'
 
 const roleLabel = {
   superadmin: 'Super Admin',

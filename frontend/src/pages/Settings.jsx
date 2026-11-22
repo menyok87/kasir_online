@@ -147,7 +147,7 @@ function MobileTabs({ active, onChange }) {
 // ── Floating Save (mobile) ────────────────────────────────────────────────────
 function FloatingSave({ saving }) {
   return (
-    <div className="lg:hidden fixed bottom-4 right-4 z-50">
+    <div className="lg:hidden fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40">
       <button type="submit" disabled={saving}
         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60 text-white font-semibold text-sm px-5 py-3 rounded-full shadow-md transition-colors">
         {saving
