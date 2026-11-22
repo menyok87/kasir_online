@@ -1,6 +1,6 @@
 # Catatan Rilis — Kasir Online
 
-## Versi 1.3.2 (versionCode 23)
+## Versi 1.3.3 (versionCode 24)
 
 ### 🎨 Tampilan Baru (Material 3 / Material You)
 - **Desain menyeluruh lebih segar & modern** — mengikuti gaya Material 3: warna rata (flat) & tonal, tombol berbentuk pil, sudut lebih membulat, dan tampilan yang lebih bersih di seluruh aplikasi (kasir, produk, laporan, pengaturan, dll).
@@ -16,6 +16,7 @@
 - **Printer thermal Bluetooth kini berfungsi normal** — sebelumnya pencarian/penyambungan printer gagal di Android 12 ke atas karena izin Bluetooth belum lengkap. Izin yang diperlukan kini ditambahkan.
 - **Login sidik jari** lebih andal (izin biometrik dilengkapi).
 - **Dukungan perangkat dipertahankan** — fitur lokasi/GPS dinyatakan tidak wajib agar perangkat tanpa GPS tetap dapat memasang & memperbarui aplikasi.
+- **Pindah domain ke kasirku.org** — aplikasi kini memuat dari `https://kasirku.org` (sebelumnya kasir.keuangan99.com). Memperbaiki kendala pendaftaran/akses di aplikasi Android yang masih menunjuk domain lama.
 - Berbagai perbaikan kestabilan.
 
 ---

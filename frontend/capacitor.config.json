@@ -4,7 +4,7 @@
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
-    "url": "https://kasir.keuangan99.com",
+    "url": "https://kasirku.org",
     "cleartext": false,
     "androidScheme": "https"
   },

@@ -70,17 +70,17 @@ sudo ./deploy/deploy.sh
 ```
 
 ### Domain
-Domain sudah dikonfigurasi: **kasir.keuangan99.com**
+Domain sudah dikonfigurasi: **kasirku.org**
 
 Pastikan DNS A record domain sudah mengarah ke IP server sebelum deploy:
 ```
-kasir.keuangan99.com  →  A  →  [IP Server Anda]
+kasirku.org  →  A  →  [IP Server Anda]
 ```
 
 ### HTTPS dengan Certbot
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d kasir.keuangan99.com
+sudo certbot --nginx -d kasirku.org
 # Certbot akan otomatis mengisi blok SSL di nginx.conf
 ```
 
