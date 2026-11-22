@@ -1289,8 +1289,9 @@ export default function POS() {
         <CartPanel {...cartProps} />
       </div>
 
-      {/* Mobile */}
-      <div className="lg:hidden flex flex-col h-[calc(100vh-64px)]">
+      {/* Mobile — h-full agar mengisi area konten (main sudah menyisakan
+          ruang bawah untuk bottom navbar, jadi keranjang tampil di atasnya) */}
+      <div className="lg:hidden flex flex-col h-full min-h-0">
         {mobileTab === 'products' ? (
           <ProductPanel
             products={products} categories={categories}
