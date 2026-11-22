@@ -157,6 +157,91 @@ router.post('/register', async (req, res, next) => {
   } finally { client.release() }
 })
 
+// POST /api/auth/demo — mode tamu: buat akun demo terisolasi + contoh data.
+// Setiap tamu mendapat sandbox sendiri sehingga tidak saling mengganggu.
+// Akun demo lama dibersihkan otomatis agar database tidak menumpuk.
+router.post('/demo', async (req, res, next) => {
+  const client = await pool.connect()
+  try {
+    // Bersihkan akun demo lebih dari 24 jam (best-effort; CASCADE hapus datanya).
+    pool.query(
+      `DELETE FROM users WHERE username LIKE 'demo\\_%' AND created_at < NOW() - INTERVAL '24 hours'`
+    ).catch(() => {})
+
+    const suffix = crypto.randomBytes(4).toString('hex')
+    const uname  = `demo_${suffix}`
+    const email  = `${uname}@demo.kasirku.org`
+    const hash   = await bcrypt.hash(crypto.randomBytes(12).toString('hex'), 10)
+
+    await client.query('BEGIN')
+
+    const { rows: userRows } = await client.query(
+      `INSERT INTO users (username, password, role, name, email, email_verified)
+       VALUES ($1,$2,'admin',$3,$4,TRUE)
+       RETURNING id, username, role, name`,
+      [uname, hash, 'Akun Demo', email]
+    )
+    const user = userRows[0]
+
+    await client.query(
+      `INSERT INTO store_settings (admin_id, store_name, store_tagline, store_email, footer_msg)
+       VALUES ($1,'Toko Demo','Mode Demo — Kasir Online',$2,'Terima kasih telah berbelanja!')`,
+      [user.id, email]
+    )
+
+    // Chart of accounts default (sama seperti pendaftaran biasa)
+    const defaultAccounts = [
+      ['1-1001','Kas Tunai','kas','Uang tunai di tangan'],
+      ['1-1002','Bank','bank','Rekening bank utama'],
+      ['1-2001','Piutang Dagang','piutang','Tagihan kepada pelanggan'],
+      ['2-1001','Hutang Dagang','hutang','Kewajiban kepada pemasok'],
+      ['3-1001','Modal Usaha','modal','Modal awal pemilik usaha'],
+      ['4-1001','Pendapatan Penjualan','pendapatan','Penerimaan dari penjualan'],
+      ['5-1001','Beban Operasional','beban','Biaya operasional usaha'],
+    ]
+    for (const [code, accName, type, desc] of defaultAccounts) {
+      await client.query(
+        `INSERT INTO accounts (admin_id,code,name,type,description) VALUES ($1,$2,$3,$4,$5)`,
+        [user.id, code, accName, type, desc]
+      ).catch(() => {})
+    }
+
+    // Kategori + produk contoh agar POS langsung bisa dicoba
+    const catId = {}
+    for (const c of ['Minuman', 'Makanan', 'Snack']) {
+      const { rows } = await client.query(
+        `INSERT INTO categories (admin_id, name) VALUES ($1,$2) RETURNING id`, [user.id, c])
+      catId[c] = rows[0].id
+    }
+    const demoProducts = [
+      ['Kopi Susu',         '8990001', 18000,  9000,  50, 'Minuman'],
+      ['Teh Manis',         '8990002',  8000,  3000,  60, 'Minuman'],
+      ['Air Mineral 600ml', '8990003',  5000,  2500, 100, 'Minuman'],
+      ['Nasi Goreng',       '8990004', 20000, 12000,  30, 'Makanan'],
+      ['Mie Ayam',          '8990005', 18000, 10000,  30, 'Makanan'],
+      ['Roti Bakar',        '8990006', 15000,  7000,  25, 'Makanan'],
+      ['Keripik Singkong',  '8990007', 10000,  6000,  40, 'Snack'],
+      ['Coklat Bar',        '8990008', 12000,  7000,  35, 'Snack'],
+    ]
+    for (const [name, sku, price, cost, stock, cat] of demoProducts) {
+      await client.query(
+        `INSERT INTO products (admin_id, category_id, name, sku, price, cost_price, stock)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [user.id, catId[cat], name, sku, price, cost, stock]
+      )
+    }
+
+    await client.query('COMMIT')
+
+    const payload = { id: user.id, username: user.username, role: user.role, name: user.name }
+    const token   = jwt.sign(payload, JWT_SECRET, { expiresIn: '12h' })
+    res.status(201).json({ token, user: payload, demo: true })
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {})
+    next(err)
+  } finally { client.release() }
+})
+
 // GET /api/auth/verify-email?token=xxx
 router.get('/verify-email', async (req, res, next) => {
   try {

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   Store, Eye, EyeOff, AlertCircle, Moon, Sun,
-  UserPlus, LogIn, KeyRound, ArrowLeft, CheckCircle2, Copy, Mail, RefreshCw, Timer, Fingerprint,
+  UserPlus, LogIn, KeyRound, ArrowLeft, CheckCircle2, Copy, Mail, RefreshCw, Timer, Fingerprint, Rocket,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -90,6 +90,7 @@ function LoginForm({ login, navigate, onForgot }) {
   const [form, setForm]             = useState({ username: '', password: '' })
   const [showPass, setShowPass]     = useState(false)
   const [loading, setLoading]       = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
   const [error, setError]           = useState('')
   // state untuk email belum terverifikasi
   const [unverified, setUnverified] = useState(null)  // { email: 'j***@...' }
@@ -136,6 +137,21 @@ function LoginForm({ login, navigate, onForgot }) {
     } catch {
       setError('Verifikasi sidik jari gagal atau dibatalkan.')
     } finally { setBioBusy(false) }
+  }
+
+  // Mode tamu: buat akun demo terisolasi (berisi contoh data) & langsung masuk.
+  async function handleDemo() {
+    setError('')
+    setDemoLoading(true)
+    try {
+      const { data } = await api.post('/auth/demo')
+      login(data.token, data.user)
+      goHome(data.user)
+    } catch (err) {
+      setError(err.message || 'Gagal memulai mode demo. Coba lagi.')
+    } finally {
+      setDemoLoading(false)
+    }
   }
 
   async function handleSubmit(e) {
@@ -326,6 +342,19 @@ function LoginForm({ login, navigate, onForgot }) {
           ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Memproses...</span>
           : 'Masuk'
         }
+      </button>
+
+      {/* Mode tamu / demo — coba aplikasi tanpa mendaftar */}
+      <div className="flex items-center gap-3 pt-1">
+        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+        <span className="text-xs text-gray-400 dark:text-gray-500">atau</span>
+        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+      </div>
+      <button type="button" onClick={handleDemo} disabled={demoLoading || loading}
+        className="w-full flex items-center justify-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold py-2.5 rounded-full active:scale-[0.98] transition-colors disabled:opacity-60">
+        {demoLoading
+          ? <><span className="w-4 h-4 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" />Menyiapkan demo...</>
+          : <><Rocket size={16} /> Coba Mode Demo (Tanpa Daftar)</>}
       </button>
     </form>
   )
