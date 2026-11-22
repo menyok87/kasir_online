@@ -29,7 +29,7 @@ export default function Layout() {
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto px-3 pt-3 pb-[calc(5rem+env(safe-area-inset-bottom))] md:px-6 md:pt-6 lg:pb-6 animate-fade-in">
+        <main className="flex-1 overflow-y-auto px-3 pt-3 pb-[calc(5rem_+_env(safe-area-inset-bottom))] md:px-6 md:pt-6 lg:pb-6 animate-fade-in">
           <Outlet />
         </main>
       </div>
