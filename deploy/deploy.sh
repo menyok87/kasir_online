@@ -105,20 +105,21 @@ fi
 # Test konfigurasi nginx
 nginx -t || error "Konfigurasi Nginx tidak valid!"
 
-# ── 8. Setup & start systemd service ──────────────────────────────────────
-info "Mengkonfigurasi systemd service..."
-cp "${APP_DIR}/deploy/kasir-online.service" /etc/systemd/system/kasir-online.service
-systemctl daemon-reload
-systemctl enable "${SERVICE_NAME}"
+# ── 8. Setup & start backend via PM2 ──────────────────────────────────────
+info "Mengelola backend dengan PM2..."
+command -v pm2 >/dev/null 2>&1 || npm install -g pm2
 
-# Restart backend
-if systemctl is-active --quiet "${SERVICE_NAME}"; then
-    info "Merestart backend service..."
-    systemctl restart "${SERVICE_NAME}"
+cd "${APP_DIR}"
+if pm2 describe "${SERVICE_NAME}" >/dev/null 2>&1; then
+    info "Merestart backend (PM2)..."
+    pm2 restart "${SERVICE_NAME}" --update-env
 else
-    info "Menjalankan backend service untuk pertama kali..."
-    systemctl start "${SERVICE_NAME}"
+    info "Menjalankan backend pertama kali (PM2)..."
+    pm2 start ecosystem.config.cjs --env production
 fi
+# Simpan daftar proses agar otomatis hidup lagi setelah server reboot.
+# (Sekali saja jalankan `pm2 startup` lalu ikuti perintah yang ditampilkan.)
+pm2 save
 
 # Reload nginx
 systemctl reload nginx
@@ -127,10 +128,10 @@ systemctl reload nginx
 sleep 2
 info "Memeriksa status service..."
 
-if systemctl is-active --quiet "${SERVICE_NAME}"; then
+if pm2 describe "${SERVICE_NAME}" 2>/dev/null | grep -q "online"; then
     echo -e "${GREEN}✔ Backend berjalan${NC} (port 3002)"
 else
-    error "Backend gagal berjalan! Cek log: journalctl -u ${SERVICE_NAME} -n 50"
+    error "Backend gagal berjalan! Cek log: pm2 logs ${SERVICE_NAME} --lines 50"
 fi
 
 if systemctl is-active --quiet nginx; then
@@ -151,6 +152,6 @@ echo -e ""
 echo -e "  Aktifkan HTTPS:"
 echo -e "    sudo certbot --nginx -d kasirku.org"
 echo ""
-echo -e "  Log backend : journalctl -u ${SERVICE_NAME} -f"
+echo -e "  Log backend : pm2 logs ${SERVICE_NAME}"
 echo -e "  Log nginx   : tail -f /var/log/nginx/kasir_online_access.log"
 echo ""

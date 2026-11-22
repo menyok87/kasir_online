@@ -129,7 +129,16 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ### 6. Jalankan backend (pilih salah satu)
 
-**Opsi A — Systemd (direkomendasikan):**
+**Opsi A — PM2 (direkomendasikan):**
+```bash
+npm install -g pm2
+cd /var/www/kasir_online
+pm2 start ecosystem.config.cjs --env production
+pm2 save
+pm2 startup   # jalankan sekali, lalu ikuti perintah yang ditampilkan (boot otomatis)
+```
+
+**Opsi B — Systemd:**
 ```bash
 sudo cp /var/www/kasir_online/deploy/kasir-online.service \
         /etc/systemd/system/
@@ -138,27 +147,19 @@ sudo systemctl enable --now kasir-online
 sudo systemctl status kasir-online
 ```
 
-**Opsi B — PM2:**
-```bash
-npm install -g pm2
-cd /var/www/kasir_online
-pm2 start ecosystem.config.cjs --env production
-pm2 save && pm2 startup
-```
-
 ---
 
 ## Manajemen Service
 
 ```bash
 # Cek status backend
-sudo systemctl status kasir-online
+pm2 status
 
 # Restart backend (setelah update)
-sudo systemctl restart kasir-online
+pm2 restart kasir-online
 
 # Lihat log backend
-journalctl -u kasir-online -f
+pm2 logs kasir-online
 
 # Lihat log nginx
 tail -f /var/log/nginx/kasir_online_access.log
@@ -177,7 +178,7 @@ sudo git pull origin claude/build-online-cashier-p4jw2
 cd frontend && npm run build
 
 # Restart backend
-sudo systemctl restart kasir-online
+pm2 restart kasir-online
 sudo systemctl reload nginx
 ```
 
