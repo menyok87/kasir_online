@@ -321,8 +321,8 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
         {search && <span className="ml-1">untuk "<em>{search}</em>"</span>}
       </p>
 
-      {/* Product Grid */}
-      <div className="flex-1 overflow-y-auto pb-2">
+      {/* Product Grid — beri ruang bawah ekstra saat bar keranjang mengambang */}
+      <div className={`flex-1 overflow-y-auto ${cartCount > 0 ? 'pb-24' : 'pb-2'}`}>
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3 text-gray-400">
             <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
@@ -337,12 +337,12 @@ function ProductPanel({ products, categories, search, setSearch, activeCatId, se
         )}
       </div>
 
-      {/* ── Cart FAB — mobile only ─────────────────── */}
+      {/* ── Cart FAB — mengambang di atas bottom navbar (mobile) ─────── */}
       {cartCount > 0 && (
         <button
           onClick={onShowCart}
-          className="lg:hidden mt-3 w-full relative overflow-hidden rounded-full font-bold text-sm flex items-center justify-between px-4 py-0
-            bg-blue-600 text-white
+          className="lg:hidden fixed left-3 right-3 bottom-[calc(4rem_+_env(safe-area-inset-bottom))] z-30 overflow-hidden rounded-full font-bold text-sm flex items-center justify-between px-4 py-0
+            bg-blue-600 text-white shadow-lg shadow-blue-600/30
             active:scale-95 transition-transform duration-200"
           style={{ minHeight: 56 }}
         >
