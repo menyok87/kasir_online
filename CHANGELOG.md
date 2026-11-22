@@ -1,5 +1,25 @@
 # Catatan Rilis — Kasir Online
 
+## Versi 1.3.1 (versionCode 22)
+
+### 🎨 Tampilan Baru (Material 3 / Material You)
+- **Desain menyeluruh lebih segar & modern** — mengikuti gaya Material 3: warna rata (flat) & tonal, tombol berbentuk pil, sudut lebih membulat, dan tampilan yang lebih bersih di seluruh aplikasi (kasir, produk, laporan, pengaturan, dll).
+- **Performa lebih ringan** — efek berat (gradien, blur, animasi berkelanjutan) diganti warna solid sehingga tampilan terasa lebih gesit, terutama di HP kelas menengah.
+- **Mode gelap** tetap didukung penuh dan ikut disegarkan.
+
+### 📱 Navigasi Lebih Mudah di HP
+- **Menu navigasi bawah (bottom bar)** — menu utama kini di bawah layar, mudah dijangkau dengan jempol. Menu lain tetap tersedia lewat tombol **"Lainnya"**.
+- **Tombol keranjang mengambang** di layar Kasir — selalu terlihat jelas di atas menu bawah, lengkap dengan jumlah item & total.
+- Penyesuaian **tepi layar (edge-to-edge/safe-area)** agar tampilan pas di HP modern dengan gesture navigation.
+
+### 🐛 Perbaikan
+- **Printer thermal Bluetooth kini berfungsi normal** — sebelumnya pencarian/penyambungan printer gagal di Android 12 ke atas karena izin Bluetooth belum lengkap. Izin yang diperlukan kini ditambahkan.
+- **Login sidik jari** lebih andal (izin biometrik dilengkapi).
+- Berbagai perbaikan kestabilan.
+
+---
+
+
 ## Versi 1.2.8 (versionCode 20)
 
 ### ✨ Baru

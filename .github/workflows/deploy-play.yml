@@ -117,6 +117,7 @@ jobs:
           track: ${{ github.event.inputs.track }}
           status: ${{ github.event.inputs.status }}
           inAppUpdatePriority: ${{ github.event.inputs.priority }}
+          whatsNewDirectory: frontend/android/whatsnew
 
       - name: Remove keystore
         if: always()
