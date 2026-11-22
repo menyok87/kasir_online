@@ -1,0 +1,42 @@
+# =============================================================
+#  Systemd Service — Kasir Online Backend
+#  Simpan di: /etc/systemd/system/kasir-online.service
+#
+#  Aktifkan:
+#    sudo systemctl daemon-reload
+#    sudo systemctl enable kasir-online
+#    sudo systemctl start kasir-online
+#
+#  Cek status:
+#    sudo systemctl status kasir-online
+#    journalctl -u kasir-online -f
+# =============================================================
+
+[Unit]
+Description=Kasir Online Backend (Node.js / Express)
+Documentation=https://github.com/menyok87/kasir_online
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/kasir_online/backend
+
+# File environment (buat file ini di server)
+EnvironmentFile=/var/www/kasir_online/.env
+
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kasir-online
+
+# Batasan resource
+LimitNOFILE=65535
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/www/kasir_online/data
+
+[Install]
+WantedBy=multi-user.target

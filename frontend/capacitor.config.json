@@ -1,0 +1,14 @@
+{
+  "appId": "com.kasir.mnxcreations",
+  "appName": "Kasir Online",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://kasirku.org",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

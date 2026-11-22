@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{width:1080px;height:1920px;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;}
+
+  .bg{
+    width:1080px;height:1920px;
+    background:linear-gradient(160deg,#431407 0%,#9a3412 45%,#ea580c 100%);
+    display:flex;flex-direction:column;align-items:center;
+    padding:72px 52px 56px;gap:40px;position:relative;overflow:hidden;
+  }
+  .bg::before{content:'';position:absolute;top:-100px;left:-80px;width:360px;height:360px;background:rgba(255,255,255,0.04);border-radius:50%;}
+
+  .caption{text-align:center;z-index:2;}
+  .caption h1{color:#fff;font-size:52px;font-weight:800;letter-spacing:-1px;margin-bottom:10px;}
+  .caption p{color:rgba(255,255,255,0.65);font-size:28px;}
+
+  .phone{
+    width:490px;flex-shrink:0;
+    background:#0f172a;border-radius:60px;
+    border:5px solid rgba(255,255,255,0.12);
+    box-shadow:0 40px 100px rgba(0,0,0,0.7);
+    overflow:hidden;position:relative;
+  }
+  .notch{width:140px;height:32px;background:#0f172a;border-radius:0 0 22px 22px;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:10;}
+
+  .app{display:flex;flex-direction:column;height:100%;background:#f8fafc;}
+
+  /* topbar */
+  .topbar{background:#fff;border-bottom:1.5px solid #e2e8f0;padding:38px 20px 12px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .menu-btn{display:flex;flex-direction:column;gap:4px;width:22px;flex-shrink:0;}
+  .menu-btn span{display:block;height:2.5px;background:#64748b;border-radius:2px;}
+  .topbar-body{flex:1;}
+  .topbar-title{font-size:22px;font-weight:700;color:#1e293b;}
+  .topbar-date{font-size:14px;color:#94a3b8;margin-top:2px;}
+  .add-btn{background:linear-gradient(to right,#ea580c,#f97316);color:#fff;font-size:12px;font-weight:700;padding:8px 14px;border-radius:12px;white-space:nowrap;box-shadow:0 2px 8px rgba(234,88,12,0.35);}
+
+  .content{flex:1;overflow:hidden;padding:14px;display:flex;flex-direction:column;gap:10px;background:#f8fafc;}
+
+  /* search */
+  .search{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:10px 16px;font-size:14px;color:#94a3b8;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+
+  /* count line */
+  .count-line{font-size:12px;color:#94a3b8;flex-shrink:0;}
+  .count-line strong{color:#374151;}
+
+  /* product table card */
+  .table-card{background:#fff;border:1.5px solid #f1f5f9;border-radius:18px;overflow:hidden;flex:1;}
+
+  /* table header */
+  .th{background:#f8fafc;border-bottom:1.5px solid #e2e8f0;padding:10px 14px;display:flex;align-items:center;gap:10px;}
+  .th-text{font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;}
+
+  /* product row */
+  .prow{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid #f1f5f9;}
+  .prow:last-child{border-bottom:none;}
+
+  .prow-thumb{width:44px;height:44px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;}
+  .prow-body{flex:1;min-width:0;}
+  .prow-name{font-size:12px;font-weight:700;color:#1e293b;margin-bottom:1px;}
+  .prow-cat{font-size:10px;color:#94a3b8;}
+
+  /* price stack */
+  .prow-prices{text-align:right;flex-shrink:0;}
+  .prow-sell{font-size:13px;font-weight:800;color:#ea580c;}
+  .prow-margin{font-size:10px;font-weight:600;color:#16a34a;}
+  .prow-cost{font-size:9px;color:#94a3b8;}
+
+  /* action icons */
+  .prow-actions{display:flex;gap:4px;flex-shrink:0;}
+  .act-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+  .act-edit{background:#eff6ff;}
+  .act-del{background:#fef2f2;}
+
+  .label{text-align:center;z-index:2;}
+  .label h2{color:#fff;font-size:40px;font-weight:800;margin-bottom:8px;}
+  .label p{color:rgba(255,255,255,0.6);font-size:24px;}
+  .dots{display:flex;gap:8px;justify-content:center;margin-top:28px;}
+  .dot{width:10px;height:10px;background:rgba(255,255,255,0.3);border-radius:50%;}
+  .dot.on{background:#fff;width:28px;border-radius:6px;}
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="caption">
+    <h1>Manajemen Produk</h1>
+    <p>Kelola stok &amp; pantau margin keuntungan</p>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="app">
+      <div class="topbar">
+        <div class="menu-btn"><span></span><span></span><span style="width:14px"></span></div>
+        <div class="topbar-body">
+          <div class="topbar-title">Manajemen Produk</div>
+          <div class="topbar-date">Sabtu, 19 April 2026</div>
+        </div>
+        <div class="add-btn">+ Tambah</div>
+      </div>
+
+      <div class="content">
+        <div class="search">🔍&nbsp; Cari nama atau kode produk...</div>
+        <div class="count-line"><strong>12 produk</strong> ditemukan</div>
+
+        <div class="table-card">
+          <div class="th">
+            <div class="th-text" style="flex:1">Produk</div>
+            <div class="th-text" style="width:80px;text-align:right">Harga / Margin</div>
+            <div class="th-text" style="width:52px"></div>
+          </div>
+
+          <!-- rows -->
+          <div class="prow">
+            <div class="prow-thumb" style="background:#fef9c3">☕</div>
+            <div class="prow-body">
+              <div class="prow-name">Kopi Susu Premium</div>
+              <div class="prow-cat">Minuman · KOP-001</div>
+            </div>
+            <div class="prow-prices">
+              <div class="prow-sell">Rp 15.000</div>
+              <div class="prow-margin">+53%</div>
+              <div class="prow-cost">Modal Rp 7.000</div>
+            </div>
+            <div class="prow-actions"><div class="act-icon act-edit">✏️</div><div class="act-icon act-del">🗑</div></div>
+          </div>
+
+          <div class="prow">
+            <div class="prow-thumb" style="background:#dcfce7">🍵</div>
+            <div class="prow-body">
+              <div class="prow-name">Teh Tarik</div>
+              <div class="prow-cat">Minuman · TEH-001</div>
+            </div>
+            <div class="prow-prices">
+              <div class="prow-sell">Rp 8.000</div>
+              <div class="prow-margin">+56%</div>
+              <div class="prow-cost">Modal Rp 3.500</div>
+            </div>
+            <div class="prow-actions"><div class="act-icon act-edit">✏️</div><div class="act-icon act-del">🗑</div></div>
+          </div>
+
+          <div class="prow">
+            <div class="prow-thumb" style="background:#fee2e2">🍞</div>
+            <div class="prow-body">
+              <div class="prow-name">Roti Bakar Coklat</div>
+              <div class="prow-cat">Makanan · MKN-001</div>
+            </div>
+            <div class="prow-prices">
+              <div class="prow-sell">Rp 12.000</div>
+              <div class="prow-margin">+58%</div>
+              <div class="prow-cost">Modal Rp 5.000</div>
+            </div>
+            <div class="prow-actions"><div class="act-icon act-edit">✏️</div><div class="act-icon act-del">🗑</div></div>
+          </div>
+
+          <div class="prow">
+            <div class="prow-thumb" style="background:#ede9fe">🥤</div>
+            <div class="prow-body">
+              <div class="prow-name">Jus Alpukat</div>
+              <div class="prow-cat">Minuman · JUS-002</div>
+            </div>
+            <div class="prow-prices">
+              <div class="prow-sell">Rp 18.000</div>
+              <div class="prow-margin">+50%</div>
+              <div class="prow-cost">Modal Rp 9.000</div>
+            </div>
+            <div class="prow-actions"><div class="act-icon act-edit">✏️</div><div class="act-icon act-del">🗑</div></div>
+          </div>
+
+          <div class="prow">
+            <div class="prow-thumb" style="background:#fce7f3">🍰</div>
+            <div class="prow-body">
+              <div class="prow-name">Kue Brownies</div>
+              <div class="prow-cat">Kue · KUE-001</div>
+            </div>
+            <div class="prow-prices">
+              <div class="prow-sell">Rp 22.000</div>
+              <div class="prow-margin">+55%</div>
+              <div class="prow-cost">Modal Rp 10.000</div>
+            </div>
+            <div class="prow-actions"><div class="act-icon act-edit">✏️</div><div class="act-icon act-del">🗑</div></div>
+          </div>
+
+          <div class="prow">
+            <div class="prow-thumb" style="background:#e0f2fe">🧊</div>
+            <div class="prow-body">
+              <div class="prow-name">Es Krim Vanila</div>
+              <div class="prow-cat">Makanan · ES-001</div>
+            </div>
+            <div class="prow-prices">
+              <div class="prow-sell">Rp 10.000</div>
+              <div class="prow-margin">+50%</div>
+              <div class="prow-cost">Modal Rp 5.000</div>
+            </div>
+            <div class="prow-actions"><div class="act-icon act-edit">✏️</div><div class="act-icon act-del">🗑</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="label">
+    <h2>Kelola Produk Mudah</h2>
+    <p>Stok &amp; margin keuntungan jelas terlihat</p>
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot on"></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

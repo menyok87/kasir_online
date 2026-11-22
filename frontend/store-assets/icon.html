@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 512px; height: 512px; overflow: hidden; background: transparent; }
+  .icon {
+    width: 512px; height: 512px;
+    background: linear-gradient(145deg, #1d4ed8 0%, #2563eb 50%, #4f46e5 100%);
+    border-radius: 108px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  /* Subtle glow circle top-right */
+  .icon::before {
+    content: '';
+    position: absolute; top: -80px; right: -80px;
+    width: 280px; height: 280px;
+    background: rgba(255,255,255,0.08); border-radius: 50%;
+  }
+  /* Subtle circle bottom-left */
+  .icon::after {
+    content: '';
+    position: absolute; bottom: -60px; left: -40px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.05); border-radius: 50%;
+  }
+  .inner {
+    display: flex; flex-direction: column; align-items: center;
+    z-index: 1; gap: 18px;
+  }
+  /* White rounded square behind the icon */
+  .icon-bg {
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 44px;
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .wordmark {
+    text-align: center;
+    line-height: 1;
+  }
+  .word-kasir {
+    color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 62px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    display: block;
+  }
+  .word-online {
+    color: rgba(255,255,255,0.65);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+<div class="icon">
+  <div class="inner">
+    <div class="icon-bg">
+      <!-- Store icon from lucide — exact paths -->
+      <svg width="110" height="110" viewBox="0 0 24 24" fill="none"
+           stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l1-5h16l1 5"/>
+        <path d="M3 9a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2"/>
+        <path d="M5 11v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8"/>
+        <path d="M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/>
+      </svg>
+    </div>
+    <div class="wordmark">
+      <span class="word-kasir">Kasir</span>
+      <span class="word-online">Online</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
